@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
     "build": "next build",
-    "start": "node scripts/start.js"
+    "start": "node scripts/start.js",
+    "test": "node --test --test-concurrency=1 \"test/*.test.js\""
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
