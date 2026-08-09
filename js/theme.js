@@ -39,3 +39,8 @@ function applyTheme() {
   document.documentElement.setAttribute('data-theme', theme);
   updateThemeUI(theme);
 }
+
+// 确保 DOM 加载完成后执行
+document.addEventListener('DOMContentLoaded', function() {
+  applyTheme();
+});
