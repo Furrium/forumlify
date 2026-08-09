@@ -69,7 +69,7 @@ const admin = async (req, res, next) => {
 };
 
 // ============================================================
-//  论坛设置接口（新增）
+//  论坛设置接口
 // ============================================================
 
 // 获取论坛设置（公开）
@@ -207,12 +207,19 @@ app.get('/api/auth/me', auth, async (req, res) => {
 //  用户管理
 // ============================================================
 
-// 获取所有用户（管理员）
+// 获取用户信息（支持按用户名查询）
 app.get('/api/users', auth, admin, async (req, res) => {
   try {
-    const r = await pool.query(
-      'SELECT id, username, avatar_url, bio, role, created_at FROM users ORDER BY created_at DESC'
-    );
+    let query = 'SELECT id, username, avatar_url, bio, role, created_at FROM users';
+    const params = [];
+
+    if (req.query.username) {
+      query += ' WHERE username = $1';
+      params.push(req.query.username);
+    }
+
+    query += ' ORDER BY created_at DESC';
+    const r = await pool.query(query, params);
     res.json(r.rows);
   } catch (err) {
     res.status(500).json({ error: '服务器错误' });
@@ -265,12 +272,12 @@ app.put('/api/users/:id', auth, async (req, res) => {
 //  帖子接口
 // ============================================================
 
-// 获取帖子列表
+// 获取帖子列表（支持按用户筛选）
 app.get('/api/posts', async (req, res) => {
   const sort = req.query.sort === 'hot' ? 'updated_at' : 'created_at';
 
   try {
-    const r = await pool.query(`
+    let query = `
       SELECT
         p.*,
         u.username,
@@ -278,8 +285,17 @@ app.get('/api/posts', async (req, res) => {
         (SELECT COUNT(*) FROM replies WHERE post_id = p.id) as reply_count
       FROM posts p
       JOIN users u ON p.user_id = u.id
-      ORDER BY ${sort} DESC
-    `);
+    `;
+    const params = [];
+
+    // 如果传了 user_id，筛选该用户的帖子
+    if (req.query.user_id) {
+      query += ' WHERE p.user_id = $1';
+      params.push(req.query.user_id);
+    }
+
+    query += ` ORDER BY ${sort} DESC`;
+    const r = await pool.query(query, params);
     res.json(r.rows);
   } catch (err) {
     res.status(500).json({ error: '服务器错误' });
