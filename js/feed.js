@@ -3,7 +3,7 @@
 // ============================================================
 
 let currentSort = 'latest';
-let currentPage = 1;
+
 let totalPages = 1;
 const PAGE_SIZE = 20;
 
