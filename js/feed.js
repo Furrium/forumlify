@@ -73,25 +73,69 @@ function renderFeed() {
     });
     container.innerHTML = html;
 
-    // 分页控件
+    // ============================================================
+    //  完整分页控件
+    // ============================================================
     if (totalPages > 1) {
       let paginationHtml = `
-        <div style="display:flex;justify-content:center;align-items:center;gap:8px;padding:16px 0;margin-top:8px;border-top:1px solid var(--border);flex-wrap:wrap;">
+        <div style="display:flex;justify-content:center;align-items:center;gap:6px;padding:16px 0;margin-top:8px;border-top:1px solid var(--border);flex-wrap:wrap;">
           <button class="page-btn" data-page="${currentPage - 1}" ${currentPage <= 1 ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}
                   style="padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">
-            ← 上一页
+            &laquo;
           </button>
-          <span style="font-size:14px;color:var(--text-secondary);">
-            第 ${currentPage} / ${totalPages} 页（共 ${pagination.total} 帖）
-          </span>
+      `;
+
+      // 显示页码按钮
+      let startPage = Math.max(1, currentPage - 4);
+      let endPage = Math.min(totalPages, currentPage + 4);
+
+      // 如果当前页靠近开头，显示更多后面的页
+      if (currentPage <= 4) {
+        endPage = Math.min(totalPages, 9);
+      }
+      // 如果当前页靠近结尾，显示更多前面的页
+      if (currentPage > totalPages - 4) {
+        startPage = Math.max(1, totalPages - 8);
+      }
+
+      // 第一页
+      if (startPage > 1) {
+        paginationHtml += `<button class="page-btn" data-page="1" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">1</button>`;
+        if (startPage > 2) {
+          paginationHtml += `<span style="color:var(--text-light);padding:0 4px;">…</span>`;
+        }
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        const isActive = i === currentPage;
+        paginationHtml += `
+          <button class="page-btn" data-page="${i}" ${isActive ? 'disabled style="background:var(--primary);color:#fff;cursor:default;border-color:var(--primary);"' : ''}
+                  style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:${isActive ? 'var(--primary)' : 'var(--surface)'};color:${isActive ? '#fff' : 'var(--text)'};cursor:${isActive ? 'default' : 'pointer'};font-size:13px;min-width:32px;text-align:center;">
+            ${i}
+          </button>
+        `;
+      }
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          paginationHtml += `<span style="color:var(--text-light);padding:0 4px;">…</span>`;
+        }
+        paginationHtml += `<button class="page-btn" data-page="${totalPages}" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">${totalPages}</button>`;
+      }
+
+      paginationHtml += `
           <button class="page-btn" data-page="${currentPage + 1}" ${currentPage >= totalPages ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}
                   style="padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">
-            下一页 →
+            &raquo;
           </button>
+          <span style="font-size:13px;color:var(--text-light);margin-left:8px;">
+            ${pagination.total} 帖
+          </span>
         </div>
       `;
       container.innerHTML += paginationHtml;
 
+      // 绑定页码点击事件
       container.querySelectorAll('.page-btn:not([disabled])').forEach(btn => {
         btn.addEventListener('click', function() {
           const page = parseInt(this.dataset.page);
