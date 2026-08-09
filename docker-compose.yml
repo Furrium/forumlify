@@ -15,7 +15,7 @@ services:
   app:
     build: .
     ports:
-      - "3003：3003"
+      - "3003:3003"
     depends_on:
       - db
     environment:
