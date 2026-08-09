@@ -60,14 +60,26 @@ function switchPage(page, param) {
     return;
   }
 
+  if (page === 'custom' && param) {
+    url.searchParams.set('custom', param);
+    url.searchParams.delete('page');
+    url.searchParams.delete('post');
+    url.searchParams.delete('user');
+    window.history.pushState({ page: 'custom', custom: param }, '', url);
+    showCustomPage(param);
+    return;
+  }
+
   if (page === 'feed') {
     url.searchParams.delete('page');
     url.searchParams.delete('post');
     url.searchParams.delete('user');
+    url.searchParams.delete('custom');
   } else {
     url.searchParams.set('page', page);
     url.searchParams.delete('post');
     url.searchParams.delete('user');
+    url.searchParams.delete('custom');
   }
   window.history.pushState({ page: page }, '', url);
 
@@ -75,6 +87,13 @@ function switchPage(page, param) {
   document.querySelectorAll('.page-slide').forEach(el => {
     el.classList.remove('active', 'slide-out');
   });
+
+  // 隐藏自定义页面容器
+  const customContainer = document.getElementById('customPageContainer');
+  if (customContainer) {
+    customContainer.classList.remove('active');
+    customContainer.style.display = 'none';
+  }
 
   if (page === 'feed') {
     document.getElementById('app').style.display = 'flex';
@@ -335,6 +354,114 @@ function handleImageFiles(files) {
 }
 
 // ============================================================
+//  📄 自定义页面导航
+// ============================================================
+
+let customPagesNav = [];
+
+async function loadCustomPagesNav() {
+  try {
+    const pages = await API.getCustomPages();
+    customPagesNav = pages;
+    renderCustomPagesNav();
+  } catch (e) {
+    customPagesNav = [];
+  }
+}
+
+function renderCustomPagesNav() {
+  const userDropdown = document.getElementById('userDropdown');
+  const existingLinks = userDropdown.querySelectorAll('.custom-page-nav-link');
+  existingLinks.forEach(el => el.remove());
+
+  const messageBtn = document.getElementById('messageBtn');
+  if (!messageBtn) return;
+
+  customPagesNav.forEach(page => {
+    const link = document.createElement('a');
+    link.className = 'custom-page-nav-link';
+    link.href = '#';
+    link.dataset.page = 'custom';
+    link.dataset.custom = page.name;
+    link.textContent = page.title;
+    link.style.cssText = 'padding:6px 10px;border-radius:4px;color:var(--text-secondary);text-decoration:none;font-size:13px;transition:color 0.15s;margin-right:4px;';
+    link.addEventListener('mouseenter', function() {
+      this.style.color = 'var(--text)';
+    });
+    link.addEventListener('mouseleave', function() {
+      this.style.color = 'var(--text-secondary)';
+    });
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      switchPage('custom', page.name);
+    });
+    userDropdown.insertBefore(link, messageBtn.nextSibling);
+  });
+}
+
+// ============================================================
+//  📄 自定义页面渲染
+// ============================================================
+
+function showCustomPage(pageName) {
+  document.getElementById('app').style.display = 'none';
+  document.querySelectorAll('.page-slide').forEach(el => {
+    el.classList.remove('active', 'slide-out');
+  });
+
+  let container = document.getElementById('customPageContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'customPageContainer';
+    container.className = 'page-slide';
+    container.style.cssText = 'display:none;position:fixed;inset:0;background:var(--bg);z-index:50;padding:84px 32px 40px;overflow-y:auto;transition:background 0.2s;';
+    document.body.appendChild(container);
+  }
+
+  container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
+  container.classList.add('active');
+  container.style.display = 'block';
+  currentPage = 'custom';
+
+  API.getCustomPage(pageName).then(page => {
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'width:100%;min-height:70vh;border:none;border-radius:8px;background:var(--surface);';
+    iframe.sandbox = 'allow-scripts allow-modals allow-same-origin';
+    iframe.srcdoc = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 24px;
+            background: var(--bg, #f6f8fc);
+            color: var(--text, #0a0e1a);
+          }
+          @media (prefers-color-scheme: dark) {
+            body { background: #0f1117; color: #e8edf5; }
+          }
+        </style>
+        ${page.content}
+      </head>
+      <body></body>
+      </html>
+    `;
+    container.innerHTML = '';
+    container.appendChild(iframe);
+
+    document.querySelectorAll('.custom-page-nav-link').forEach(el => {
+      el.style.color = el.dataset.custom === pageName ? 'var(--primary)' : 'var(--text-secondary)';
+    });
+  }).catch(err => {
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px 0;">页面加载失败：' + err.message + '</div>';
+  });
+}
+
+// ============================================================
 //  🚀 初始化
 // ============================================================
 async function init() {
@@ -358,6 +485,7 @@ async function init() {
   }
   renderNav();
   await loadForumName();
+  await loadCustomPagesNav();
   renderStats();
   renderLinks();
 
@@ -366,12 +494,15 @@ async function init() {
   const pageParam = urlParams.get('page');
   const userParam = urlParams.get('user');
   const postPageParam = urlParams.get('postpage');
+  const customParam = urlParams.get('custom');
 
   if (postPageParam) {
     currentPageNum = parseInt(postPageParam) || 1;
   }
 
-  if (userParam) {
+  if (customParam) {
+    showCustomPage(customParam);
+  } else if (userParam) {
     showUserPage(userParam);
   } else if (postParam) {
     showPostPage(postParam);
@@ -558,10 +689,13 @@ async function init() {
     const page = state.page || 'feed';
     const postId = state.postId || null;
     const username = state.username || null;
+    const custom = state.custom || null;
     if (postId) {
       showPostPage(postId);
     } else if (username) {
       showUserPage(username);
+    } else if (custom) {
+      showCustomPage(custom);
     } else {
       switchPage(page);
     }
