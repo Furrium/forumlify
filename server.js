@@ -282,6 +282,27 @@ app.put('/api/users/:id', auth, async (req, res) => {
   }
 });
 
+// 更新用户头像
+app.put('/api/users/:id/avatar', auth, async (req, res) => {
+  const { avatar_url } = req.body;
+  const userId = req.params.id;
+
+  if (userId !== req.user.id) {
+    return res.status(403).json({ error: '无权限修改他人头像' });
+  }
+
+  if (!avatar_url) {
+    return res.status(400).json({ error: '请提供头像地址' });
+  }
+
+  try {
+    await pool.query('UPDATE users SET avatar_url = $1 WHERE id = $2', [avatar_url, userId]);
+    res.json({ success: true, avatar_url });
+  } catch (err) {
+    res.status(500).json({ error: '更新失败，请稍后重试' });
+  }
+});
+
 // ============================================================
 //  帖子接口（含分页）
 // ============================================================
@@ -380,7 +401,6 @@ app.post('/api/posts', auth, async (req, res) => {
 // 删除帖子
 app.delete('/api/posts/:id', auth, async (req, res) => {
   try {
-    // 获取帖子作者
     const post = await pool.query('SELECT user_id FROM posts WHERE id = $1', [req.params.id]);
     if (post.rows.length === 0) {
       return res.status(404).json({ error: '帖子不存在' });
@@ -394,7 +414,6 @@ app.delete('/api/posts/:id', auth, async (req, res) => {
       return res.status(403).json({ error: '无权限删除此帖子' });
     }
 
-    // 如果不是作者（是管理员），通知作者
     if (!isAuthor && isAdmin) {
       await createNotification(
         post.rows[0].user_id,
@@ -449,7 +468,6 @@ app.post('/api/posts/:id/replies', auth, async (req, res) => {
     );
     await pool.query('UPDATE posts SET updated_at = NOW() WHERE id = $1', [req.params.id]);
 
-    // 通知帖子作者
     const postAuthor = await pool.query('SELECT user_id FROM posts WHERE id = $1', [req.params.id]);
     if (postAuthor.rows[0] && postAuthor.rows[0].user_id !== req.user.id) {
       await createNotification(
@@ -550,7 +568,6 @@ app.put('/api/reports/:id', auth, admin, async (req, res) => {
   }
 
   try {
-    // 获取举报信息
     const report = await pool.query('SELECT reporter_id, post_id FROM reports WHERE id = $1', [req.params.id]);
 
     await pool.query(
@@ -560,7 +577,6 @@ app.put('/api/reports/:id', auth, admin, async (req, res) => {
       [status, req.user.id, note || '', req.params.id]
     );
 
-    // 通知举报人
     if (report.rows[0]) {
       const statusText = status === 'approved' ? '已删除' : '已驳回';
       await createNotification(
