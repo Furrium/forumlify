@@ -244,7 +244,178 @@ function renderAdminSettings() {
   });
 }
 
-// 管理后台Tab切换
+// ============================================================
+//  📄 自定义页面管理
+// ============================================================
+
+let editingPageId = null;
+
+function renderAdminCustomPages() {
+  const container = document.getElementById('adminContent');
+  container.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;">📄 自定义页面</h3>
+      <button id="addCustomPageBtn" class="btn-primary" style="padding:8px 16px;">➕ 添加页面</button>
+    </div>
+    <div id="customPageList"></div>
+  `;
+
+  loadCustomPageList();
+
+  document.getElementById('addCustomPageBtn').addEventListener('click', function() {
+    editingPageId = null;
+    openCustomPageEditor();
+  });
+}
+
+function loadCustomPageList() {
+  const container = document.getElementById('customPageList');
+  container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px 0;">加载中...</div>';
+  API.getAdminCustomPages().then(pages => {
+    if (pages.length === 0) {
+      container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px 0;">暂无自定义页面</div>';
+      return;
+    }
+    let html = `<div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <thead>
+          <tr style="text-align:left;border-bottom:2px solid var(--border);">
+            <th style="padding:8px 12px;">名称</th>
+            <th style="padding:8px 12px;">标题</th>
+            <th style="padding:8px 12px;">URL</th>
+            <th style="padding:8px 12px;">排序</th>
+            <th style="padding:8px 12px;">状态</th>
+            <th style="padding:8px 12px;text-align:center;">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    pages.forEach(p => {
+      html += `
+        <tr style="border-bottom:1px solid var(--border-light);">
+          <td style="padding:8px 12px;"><code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px;">${p.name}</code></td>
+          <td style="padding:8px 12px;">${p.title}</td>
+          <td style="padding:8px 12px;"><code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px;">?custom=${p.name}</code></td>
+          <td style="padding:8px 12px;">${p.sort_order}</td>
+          <td style="padding:8px 12px;"><span style="color:${p.enabled ? '#22c55e' : '#ef4444'};">${p.enabled ? '✅ 启用' : '❌ 禁用'}</span></td>
+          <td style="padding:8px 12px;text-align:center;display:flex;gap:6px;justify-content:center;">
+            <button class="btn-sm btn-secondary" data-id="${p.id}" data-action="edit">✏️</button>
+            <button class="btn-sm btn-danger" data-id="${p.id}" data-action="delete">🗑️</button>
+          </td>
+        </tr>
+      `;
+    });
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+
+    container.querySelectorAll('[data-action="edit"]').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const page = pages.find(p => p.id === this.dataset.id);
+        if (page) {
+          editingPageId = page.id;
+          openCustomPageEditor(page);
+        }
+      });
+    });
+
+    container.querySelectorAll('[data-action="delete"]').forEach(btn => {
+      btn.addEventListener('click', function() {
+        if (!confirm('确定要删除这个页面吗？')) return;
+        API.deleteCustomPage(this.dataset.id).then(() => {
+          loadCustomPageList();
+          loadCustomPagesNav();
+        }).catch(err => alert('删除失败：' + err.message));
+      });
+    });
+  }).catch(err => {
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
+  });
+}
+
+function openCustomPageEditor(page) {
+  const isEdit = !!page;
+  const modal = document.createElement('div');
+  modal.className = 'modal active';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:600px;max-height:90vh;overflow-y:auto;">
+      <span class="close" style="position:absolute;top:12px;right:16px;font-size:24px;cursor:pointer;color:var(--text-light);">&times;</span>
+      <h2 style="margin-bottom:16px;">${isEdit ? '✏️ 编辑页面' : '📄 添加页面'}</h2>
+      <div style="margin-bottom:12px;">
+        <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">页面名称</label>
+        <input type="text" id="editorPageName" value="${isEdit ? page.name : ''}" ${isEdit ? 'readonly style="background:var(--border-light);color:var(--text-light);"' : ''}
+               placeholder="about (用于 URL: ?custom=about)" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
+        ${isEdit ? '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">⚠️ 名称不可修改</div>' : '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">只允许字母、数字、短横线和下划线</div>'}
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">导航栏显示名称</label>
+        <input type="text" id="editorPageTitle" value="${isEdit ? page.title : ''}"
+               placeholder="关于我们" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">排序（数字越小越靠左）</label>
+        <input type="number" id="editorSortOrder" value="${isEdit ? page.sort_order : 0}"
+               style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">状态</label>
+        <select id="editorEnabled" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);">
+          <option value="true" ${isEdit && page.enabled ? 'selected' : ''}>启用</option>
+          <option value="false" ${isEdit && !page.enabled ? 'selected' : ''}>禁用</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">页面内容（HTML + CSS + JS）</label>
+        <textarea id="editorContent" rows="12" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:13px;font-family:monospace;background:var(--bg);color:var(--text);resize:vertical;">${isEdit ? page.content : ''}</textarea>
+        <div style="font-size:12px;color:var(--text-light);margin-top:2px;">支持 HTML、CSS（&lt;style&gt;）、JS（&lt;script&gt;），内容会在独立的沙盒中渲染</div>
+      </div>
+      <button id="editorSaveBtn" class="btn-primary" style="padding:10px 24px;width:100%;">保存</button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  modal.querySelector('.close').addEventListener('click', function() {
+    modal.remove();
+  });
+  modal.addEventListener('click', function(e) {
+    if (e.target === this) modal.remove();
+  });
+
+  modal.querySelector('#editorSaveBtn').addEventListener('click', async function() {
+    const name = document.getElementById('editorPageName').value.trim();
+    const title = document.getElementById('editorPageTitle').value.trim();
+    const content = document.getElementById('editorContent').value.trim();
+    const sort_order = parseInt(document.getElementById('editorSortOrder').value) || 0;
+    const enabled = document.getElementById('editorEnabled').value === 'true';
+
+    if (!name) { alert('请输入页面名称'); return; }
+    if (!title) { alert('请输入导航栏显示名称'); return; }
+    if (!content) { alert('请输入页面内容'); return; }
+    if (!/^[a-zA-Z0-9\-_]+$/.test(name)) {
+      alert('页面名称只允许字母、数字、短横线和下划线');
+      return;
+    }
+
+    try {
+      if (isEdit) {
+        await API.updateCustomPage(page.id, title, content, sort_order, enabled);
+      } else {
+        await API.createCustomPage(name, title, content, sort_order);
+      }
+      modal.remove();
+      loadCustomPageList();
+      loadCustomPagesNav();
+    } catch (err) {
+      alert('保存失败：' + err.message);
+    }
+  });
+}
+
+// ============================================================
+//  管理后台Tab切换
+// ============================================================
+
 document.querySelectorAll('.admin-tab').forEach(tab => {
   tab.addEventListener('click', function() {
     document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
@@ -254,7 +425,8 @@ document.querySelectorAll('.admin-tab').forEach(tab => {
       users: renderAdminUsers,
       logs: renderAdminLogs,
       links: renderAdminLinks,
-      settings: renderAdminSettings
+      settings: renderAdminSettings,
+      custom: renderAdminCustomPages
     };
     if (tabMap[this.dataset.tab]) tabMap[this.dataset.tab]();
   });
