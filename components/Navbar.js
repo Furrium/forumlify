@@ -22,6 +22,13 @@ export default function Navbar({ onOpenModal }) {
     navigate(page);
   };
 
+  const openMessages = (e) => {
+    e.preventDefault();
+    setMenuOpen(false);
+    // 打开私信列表（ChatManager 监听）
+    window.dispatchEvent(new CustomEvent('forumlify-open-messages'));
+  };
+
   return (
     <nav id="navbar">
       <div className="nav-left">
@@ -46,7 +53,7 @@ export default function Navbar({ onOpenModal }) {
               />
               {menuOpen && (
                 <div className="dropdown-menu show" onClick={(e) => e.stopPropagation()}>
-                  <a href="#" onClick={(e) => { e.preventDefault(); goPage('messages'); }}>
+                  <a href="#" onClick={openMessages}>
                     <Icon name="message" /> 消息
                   </a>
                   <a href="#" onClick={(e) => { e.preventDefault(); goPage('settings'); }}>

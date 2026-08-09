@@ -11,6 +11,7 @@ import NewPost from '@/components/NewPost';
 import AdminPage from '@/components/AdminPage';
 import SettingsPage from '@/components/SettingsPage';
 import UserProfile from '@/components/UserProfile';
+import ChatManager from '@/components/chat/ChatManager';
 import Modals from '@/components/Modals';
 
 function HomeInner() {
@@ -23,7 +24,12 @@ function HomeInner() {
 
   return (
     <>
-      <Navbar onOpenModal={openModal} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Navbar onOpenModal={openModal} style={{ flex: 1 }} />
+        <div style={{ paddingRight: 16 }}>
+          <ChatManager />
+        </div>
+      </div>
 
       <div id="app" style={{ display: view === 'feed' ? 'flex' : 'none' }}>
         <Sidebar />

@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { API } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
+import { useOpenPrivateChat } from './chat/ChatManager';
 
 function avatar(username, size = 128) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || 'U') +
@@ -12,7 +13,8 @@ function avatar(username, size = 128) {
 }
 
 export default function UserProfile({ username }) {
-  const { openPost } = useApp();
+  const { currentUser, openPost } = useApp();
+  const openPrivateChat = useOpenPrivateChat();
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const [error, setError] = useState(null);
@@ -57,6 +59,15 @@ export default function UserProfile({ username }) {
           <img src={avatar(user.username)} style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }} alt="" />
           <h2 style={{ margin: '16px 0 4px', fontSize: 24 }}>{user.username}</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{user.bio || '这个人很懒，什么都没写'}</p>
+          {currentUser && currentUser.id !== user.id && (
+            <button
+              className="btn-primary"
+              style={{ marginTop: 12, padding: '8px 20px' }}
+              onClick={() => openPrivateChat(user.id, user.username)}
+            >
+              <Icon name="message" size={14} /> 发私信
+            </button>
+          )}
           <div style={{ display: 'flex', justifyContent: 'center', gap: 32, marginTop: 16, fontSize: 14, color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
             <span>📅 加入于 {user.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '未知'}</span>
             <span>📝 发了 {posts.length} 个帖子</span>
