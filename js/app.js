@@ -511,4 +511,99 @@ async function init() {
     const captchaInput = document.getElementById('postCaptchaInput').value.trim();
     const captchaAnswer = parseInt(document.getElementById('postCaptchaInput').dataset.answer);
     if (!content) { alert('请填写内容'); return; }
-    if (parseInt(captchaInput) !== captchaAnswer) { alert('
+    if (parseInt(captchaInput) !== captchaAnswer) { alert('验证码错误，请重新计算'); refreshCaptcha('post'); return; }
+    const images = [];
+    document.querySelectorAll('#imagePreview img').forEach(img => {
+      images.push(img.src);
+    });
+    try {
+      await API.createPost(title, content, images);
+      API.logEvent('create_post').catch(() => {});
+      alert('发布成功！');
+      switchPage('feed');
+      renderFeed();
+      renderStats();
+    } catch (err) {
+      alert('发布失败：' + err.message);
+    }
+  });
+
+  // 9. 验证码刷新
+  document.getElementById('postCaptchaQuestion').addEventListener('click', function() {
+    refreshCaptcha('post');
+  });
+
+  // 10. 图片上传预览
+  document.getElementById('imageUpload').addEventListener('change', function() {
+    const preview = document.getElementById('imagePreview');
+    preview.innerHTML = '';
+    for (let file of this.files) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:4px;border:1px solid #e2e8f0;';
+        preview.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // 11. 举报提交
+  document.getElementById('reportSubmit').addEventListener('click', async () => {
+    if (!reportTargetPostId) return;
+    const reason = document.getElementById('reportReason').value;
+    try {
+      await API.createReport(reportTargetPostId, reason);
+      document.getElementById('reportModal').classList.remove('active');
+      alert('举报已提交，管理员将尽快处理');
+      reportTargetPostId = null;
+    } catch (err) {
+      alert('举报失败：' + err.message);
+    }
+  });
+
+  // 12. 模态框关闭
+  document.querySelectorAll('.modal .close').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.getElementById(this.dataset.modal).classList.remove('active');
+    });
+  });
+  document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('active');
+    });
+  });
+
+  // 13. 浏览器前进后退
+  window.addEventListener('popstate', function(e) {
+    const state = e.state || {};
+    const page = state.page || 'feed';
+    const postId = state.postId || null;
+    const username = state.username || null;
+    if (postId) {
+      showPostPage(postId);
+    } else if (username) {
+      showUserPage(username);
+    } else {
+      switchPage(page);
+    }
+  });
+
+  // 14. 私信按钮（已在上面的 DOMContentLoaded 中绑定）
+  // 但如果用户登录后动态加载，需要重新绑定
+  // 这里再确保一次
+  const messageBtn = document.getElementById('messageBtn');
+  if (messageBtn) {
+    // 移除旧监听器（如果有）
+    const newBtn = messageBtn.cloneNode(true);
+    messageBtn.parentNode.replaceChild(newBtn, messageBtn);
+    newBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (!currentUser) { alert('请先登录'); return; }
+      openMessageList();
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
