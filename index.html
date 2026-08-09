@@ -20,14 +20,11 @@
           <button id="registerBtn" class="btn-primary">注册</button>
         </div>
         <div id="userDropdown" style="display:none">
-          <!-- 私信按钮（头像左边） -->
           <button id="messageBtn" class="nav-icon-btn" title="私信" style="position:relative;padding:6px 8px;background:none;border:none;cursor:pointer;color:var(--text-secondary);border-radius:4px;display:inline-flex;align-items:center;justify-content:center;">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <span id="messageBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;border-radius:50%;padding:2px 6px;font-size:10px;font-weight:600;min-width:18px;text-align:center;line-height:1.4;"></span>
           </button>
-          <!-- 头像 -->
           <img id="avatarImg" class="avatar" src="" alt="avatar" />
-          <!-- 下拉菜单 -->
           <div class="dropdown-menu" id="dropdownMenu">
             <a href="#" data-page="messages">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -42,7 +39,6 @@
               管理后台
             </a>
             <hr />
-            <!-- 主题切换在菜单里 -->
             <a href="#" id="themeToggle" style="display:flex;align-items:center;gap:8px;">
               <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
@@ -172,8 +168,16 @@
     <div style="max-width:600px;margin:0 auto;width:100%;">
       <input type="text" id="postTitle" placeholder="标题" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:15px;font-weight:600;margin-bottom:12px;font-family:inherit;" />
       <textarea id="postContent" rows="6" placeholder="说点什么..." style="width:100%;padding:12px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:15px;font-family:inherit;resize:vertical;"></textarea>
+      <!-- 拖拽上传区域 -->
+      <div id="dropZone" style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all 0.3s;margin:8px 0 12px;background:var(--bg);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 8px;color:var(--text-secondary);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <p style="color:var(--text-secondary);font-size:14px;margin:0;">
+          <span id="dropZoneText">点击或拖拽上传图片</span>
+        </p>
+        <p style="color:var(--text-light);font-size:12px;margin:4px 0 0;">支持 JPG、PNG、GIF、WebP，单张最大 5MB</p>
+        <input type="file" id="fileInput" accept="image/*" multiple style="display:none;" />
+      </div>
       <div id="imagePreview" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;"></div>
-      <input type="file" id="imageUpload" accept="image/*" multiple style="margin:8px 0 12px;" />
       <div class="captcha-row" style="margin:12px 0;">
         <span id="postCaptchaQuestion">3 + 5 = ?</span>
         <input type="text" id="postCaptchaInput" placeholder="答案" style="width:80px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:4px;" />
