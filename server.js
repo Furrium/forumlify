@@ -398,6 +398,34 @@ app.post('/api/posts', auth, async (req, res) => {
   }
 });
 
+// 编辑帖子
+app.put('/api/posts/:id', auth, async (req, res) => {
+  const { title, content } = req.body;
+  const postId = req.params.id;
+
+  if (!content || content.trim().length === 0) {
+    return res.status(400).json({ error: '请填写内容' });
+  }
+
+  try {
+    const post = await pool.query('SELECT user_id FROM posts WHERE id = $1', [postId]);
+    if (post.rows.length === 0) {
+      return res.status(404).json({ error: '帖子不存在' });
+    }
+    if (post.rows[0].user_id !== req.user.id) {
+      return res.status(403).json({ error: '无权限编辑此帖子' });
+    }
+
+    const r = await pool.query(
+      `UPDATE posts SET title = $1, content = $2, edited_at = NOW() WHERE id = $3 RETURNING *`,
+      [title || '无标题', content, postId]
+    );
+    res.json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: '编辑失败，请稍后重试' });
+  }
+});
+
 // 删除帖子
 app.delete('/api/posts/:id', auth, async (req, res) => {
   try {
