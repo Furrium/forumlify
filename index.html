@@ -156,6 +156,10 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
         友链
       </button>
+      <button class="admin-tab" data-tab="settings">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        论坛设置
+      </button>
     </div>
     <div id="adminContent">
       <div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>
@@ -546,7 +550,6 @@
     // ============================================================
 
     function renderNav() {
-      document.getElementById('forumName').textContent = CONFIG.FORUM_NAME || 'Forumlify';
       const authBtns = document.getElementById('authButtons');
       const userDropdown = document.getElementById('userDropdown');
       if (currentUser) {
@@ -558,6 +561,17 @@
       } else {
         authBtns.style.display = 'flex';
         userDropdown.style.display = 'none';
+      }
+    }
+
+    // 新增：加载论坛名称
+    async function loadForumName() {
+      try {
+        const data = await apiFetch('/settings');
+        const name = data.forum_name || CONFIG.FORUM_NAME || 'Forumlify';
+        document.getElementById('forumName').textContent = name;
+      } catch (e) {
+        document.getElementById('forumName').textContent = CONFIG.FORUM_NAME || 'Forumlify';
       }
     }
 
@@ -1056,6 +1070,46 @@
     }
 
     // ============================================================
+    //  论坛设置渲染（新增）
+    // ============================================================
+    function renderAdminSettings() {
+      const container = document.getElementById('adminContent');
+      container.innerHTML = `
+        <h3 style="margin-bottom:16px;">⚙️ 论坛设置</h3>
+        <div style="max-width:400px;">
+          <label style="font-weight:600;font-size:14px;display:block;margin-bottom:6px;">论坛名称</label>
+          <input type="text" id="settingsForumName" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:15px;margin-bottom:12px;font-family:inherit;background:var(--bg);color:var(--text);" />
+          <button id="settingsForumSave" class="btn-primary" style="padding:10px 24px;">保存</button>
+          <span id="settingsResult" style="margin-left:12px;font-size:14px;"></span>
+        </div>
+      `;
+
+      // 加载当前设置
+      apiFetch('/settings').then(data => {
+        document.getElementById('settingsForumName').value = data.forum_name || 'Forumlify';
+      }).catch(() => {});
+
+      // 保存
+      document.getElementById('settingsForumSave').addEventListener('click', async () => {
+        const name = document.getElementById('settingsForumName').value.trim();
+        if (!name) { alert('请输入论坛名称'); return; }
+        try {
+          await apiFetch('/settings', {
+            method: 'PUT',
+            body: JSON.stringify({ forum_name: name })
+          });
+          document.getElementById('settingsResult').textContent = '✅ 保存成功！';
+          document.getElementById('settingsResult').style.color = '#22c55e';
+          // 更新导航栏
+          document.getElementById('forumName').textContent = name;
+        } catch (err) {
+          document.getElementById('settingsResult').textContent = '❌ 保存失败';
+          document.getElementById('settingsResult').style.color = '#ef4444';
+        }
+      });
+    }
+
+    // ============================================================
     //  🔄 页面切换
     // ============================================================
 
@@ -1143,6 +1197,8 @@
         }
       }
       renderNav();
+      // 加载论坛名称
+      await loadForumName();
       renderStats();
       renderLinks();
 
@@ -1393,7 +1449,8 @@
             reports: renderAdminReports,
             users: renderAdminUsers,
             logs: renderAdminLogs,
-            links: renderAdminLinks
+            links: renderAdminLinks,
+            settings: renderAdminSettings
           };
           if (tabMap[this.dataset.tab]) tabMap[this.dataset.tab]();
         });
@@ -1406,7 +1463,6 @@
         const bio = document.getElementById('settingsBio').value.trim();
         if (!username) { alert('用户名不能为空'); return; }
         try {
-          // 使用更新用户信息接口
           const data = await apiFetch('/users/' + currentUser.id, {
             method: 'PUT',
             body: JSON.stringify({ username, bio })
