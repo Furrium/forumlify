@@ -512,7 +512,7 @@ async function renderMessagesPage() {
 }
 
 // ============================================================
-//  ⚙️ 设置页面（含头像上传）
+//  ⚙️ 设置页面（含头像上传和恢复码管理）
 // ============================================================
 
 async function renderSettingsPage() {
@@ -529,6 +529,13 @@ async function renderSettingsPage() {
   try {
     const userPosts = await apiFetch('/posts?user_id=' + user.id);
     const postCount = userPosts.data ? userPosts.data.length : 0;
+
+    // 获取恢复码数量
+    let recoveryCount = 0;
+    try {
+      const countData = await API.getRecoveryCodesCount();
+      recoveryCount = countData.count || 0;
+    } catch (e) {}
 
     container.innerHTML = `
       <div style="max-width:500px;margin:0 auto;padding:20px 0;">
@@ -561,6 +568,17 @@ async function renderSettingsPage() {
             <textarea id="settingsBio" rows="3" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);resize:vertical;">${user.bio || ''}</textarea>
           </div>
           <button id="settingsSaveBtn" class="btn-primary" style="width:100%;padding:10px;">保存设置</button>
+        </div>
+
+        <!-- 恢复码管理 -->
+        <div style="margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
+          <h3 style="font-size:16px;margin-bottom:8px;">🔑 恢复码</h3>
+          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">用于忘记密码时重置账户。每个恢复码只能使用一次。</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button id="viewRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">📋 查看恢复码</button>
+            <button id="regenerateRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">🔄 重新生成</button>
+          </div>
+          <div id="recoveryCodesStatus" style="font-size:13px;color:var(--text-light);margin-top:8px;">剩余 ${recoveryCount} 个可用恢复码</div>
         </div>
       </div>
     `;
@@ -625,6 +643,7 @@ async function renderSettingsPage() {
       });
     }
 
+    // 保存设置
     document.getElementById('settingsSaveBtn').addEventListener('click', async function() {
       const username = document.getElementById('settingsUsername').value.trim();
       const bio = document.getElementById('settingsBio').value.trim();
@@ -644,6 +663,39 @@ async function renderSettingsPage() {
         alert('保存失败：' + err.message);
       }
     });
+
+    // 恢复码管理
+    const viewBtn = document.getElementById('viewRecoveryCodesBtn');
+    const regenBtn = document.getElementById('regenerateRecoveryCodesBtn');
+    const statusText = document.getElementById('recoveryCodesStatus');
+
+    if (viewBtn) {
+      viewBtn.addEventListener('click', async function() {
+        try {
+          const data = await API.generateRecoveryCodes();
+          showRecoveryCodesModal(data.codes);
+          // 更新状态
+          const countData = await API.getRecoveryCodesCount();
+          if (statusText) statusText.textContent = '剩余 ' + (countData.count || 0) + ' 个可用恢复码';
+        } catch (err) {
+          alert('获取恢复码失败：' + err.message);
+        }
+      });
+    }
+
+    if (regenBtn) {
+      regenBtn.addEventListener('click', async function() {
+        if (!confirm('重新生成将替换所有旧的恢复码，确定继续吗？')) return;
+        try {
+          const data = await API.generateRecoveryCodes();
+          showRecoveryCodesModal(data.codes);
+          const countData = await API.getRecoveryCodesCount();
+          if (statusText) statusText.textContent = '剩余 ' + (countData.count || 0) + ' 个可用恢复码';
+        } catch (err) {
+          alert('重新生成失败：' + err.message);
+        }
+      });
+    }
 
   } catch (err) {
     container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
@@ -685,7 +737,6 @@ function openEditModal(postId, currentTitle, currentContent) {
     try {
       await API.updatePost(postId, title, content);
       modal.remove();
-      // 刷新当前视图
       if (currentPage === 'post') {
         renderPostDetail(currentPostId);
       } else {
@@ -695,6 +746,73 @@ function openEditModal(postId, currentTitle, currentContent) {
     } catch (err) {
       alert('编辑失败：' + err.message);
     }
+  });
+}
+
+// ============================================================
+//  🔑 恢复码显示模态框
+// ============================================================
+
+function showRecoveryCodesModal(codes) {
+  let modal = document.getElementById('recoveryCodesModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'recoveryCodesModal';
+    modal.className = 'modal active';
+    modal.style.display = 'flex';
+    document.body.appendChild(modal);
+  }
+
+  let codesHtml = '';
+  codes.forEach((code, i) => {
+    codesHtml += `
+      <div style="display:flex;justify-content:space-between;padding:6px 12px;background:var(--bg);border-radius:4px;margin-bottom:4px;font-family:monospace;font-size:14px;letter-spacing:0.5px;">
+        <span>${String(i + 1).padStart(2, '0')}.</span>
+        <span>${code}</span>
+      </div>
+    `;
+  });
+
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:480px;">
+      <h2 style="margin-bottom:8px;">🔑 恢复码</h2>
+      <p style="font-size:14px;color:var(--text-secondary);margin-bottom:16px;">
+        请妥善保存以下恢复码。当你忘记密码时，可以使用它们重置密码。
+        <strong style="color:#ef4444;">每个恢复码只能使用一次。</strong>
+      </p>
+      <div style="margin-bottom:16px;">${codesHtml}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="copyRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">📋 复制全部</button>
+        <button id="closeRecoveryCodesBtn" class="btn-primary" style="padding:8px 16px;">我已保存</button>
+      </div>
+      <div id="copyStatus" style="font-size:13px;margin-top:8px;color:var(--text-light);"></div>
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+  modal.classList.add('active');
+
+  document.getElementById('closeRecoveryCodesBtn').addEventListener('click', function() {
+    modal.remove();
+  });
+
+  document.getElementById('copyRecoveryCodesBtn').addEventListener('click', function() {
+    const text = codes.join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      document.getElementById('copyStatus').textContent = '✅ 已复制到剪贴板';
+    }).catch(() => {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      textarea.remove();
+      document.getElementById('copyStatus').textContent = '✅ 已复制到剪贴板';
+    });
+  });
+
+  modal.addEventListener('click', function(e) {
+    if (e.target === this) modal.remove();
   });
 }
 
@@ -896,6 +1014,49 @@ async function init() {
     m.addEventListener('click', function(e) {
       if (e.target === this) this.classList.remove('active');
     });
+  });
+
+  // 忘记密码事件
+  const forgotLink = document.getElementById('forgotPasswordLink');
+  if (forgotLink) {
+    forgotLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.getElementById('forgotPasswordModal').classList.add('active');
+      document.getElementById('resetStatus').textContent = '';
+    });
+  }
+
+  document.getElementById('resetPasswordSubmit').addEventListener('click', async function() {
+    const email = document.getElementById('resetEmail').value.trim();
+    const code = document.getElementById('resetRecoveryCode').value.trim().toUpperCase();
+    const newPassword = document.getElementById('resetNewPassword').value;
+    const statusEl = document.getElementById('resetStatus');
+
+    if (!email || !code || !newPassword) {
+      statusEl.textContent = '请填写完整信息';
+      statusEl.style.color = '#ef4444';
+      return;
+    }
+    if (newPassword.length < 6) {
+      statusEl.textContent = '密码至少6位';
+      statusEl.style.color = '#ef4444';
+      return;
+    }
+
+    try {
+      await API.resetPassword(email, code, newPassword);
+      statusEl.textContent = '✅ 重置成功！请登录';
+      statusEl.style.color = '#22c55e';
+      setTimeout(() => {
+        document.getElementById('forgotPasswordModal').classList.remove('active');
+        document.getElementById('resetEmail').value = '';
+        document.getElementById('resetRecoveryCode').value = '';
+        document.getElementById('resetNewPassword').value = '';
+      }, 1500);
+    } catch (err) {
+      statusEl.textContent = '❌ ' + err.message;
+      statusEl.style.color = '#ef4444';
+    }
   });
 
   window.addEventListener('popstate', function(e) {
