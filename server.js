@@ -288,7 +288,6 @@ app.get('/api/posts', async (req, res) => {
     `;
     const params = [];
 
-    // 如果传了 user_id，筛选该用户的帖子
     if (req.query.user_id) {
       query += ' WHERE p.user_id = $1';
       params.push(req.query.user_id);
@@ -628,6 +627,177 @@ app.post('/api/upload', auth, upload.single('file'), (req, res) => {
     return res.status(400).json({ error: '请选择图片' });
   }
   res.json({ url: '/uploads/' + req.file.filename });
+});
+
+// ============================================================
+//  私信系统
+// ============================================================
+
+// 获取会话列表
+app.get('/api/conversations', auth, async (req, res) => {
+  try {
+    const r = await pool.query(`
+      SELECT
+        c.id,
+        c.user1_id,
+        c.user2_id,
+        c.last_message_at,
+        c.created_at,
+        u.id as other_user_id,
+        u.username as other_username,
+        u.avatar_url as other_avatar_url,
+        (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND sender_id != $1 AND is_read = false) as unread_count,
+        (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
+        (SELECT created_at FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_time
+      FROM conversations c
+      JOIN users u ON (u.id = c.user1_id OR u.id = c.user2_id) AND u.id != $1
+      WHERE c.user1_id = $1 OR c.user2_id = $1
+      ORDER BY c.last_message_at DESC
+    `, [req.user.id]);
+    res.json(r.rows);
+  } catch (err) {
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// 获取或创建会话
+app.post('/api/conversations', auth, async (req, res) => {
+  const { other_user_id } = req.body;
+  if (!other_user_id) {
+    return res.status(400).json({ error: '缺少对方用户ID' });
+  }
+  if (other_user_id === req.user.id) {
+    return res.status(400).json({ error: '不能与自己私信' });
+  }
+
+  try {
+    // 检查用户是否存在
+    const userCheck = await pool.query('SELECT id FROM users WHERE id = $1', [other_user_id]);
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+
+    // 查找已有会话
+    const existing = await pool.query(`
+      SELECT id FROM conversations
+      WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)
+    `, [req.user.id, other_user_id]);
+
+    if (existing.rows.length > 0) {
+      return res.json({ id: existing.rows[0].id });
+    }
+
+    // 创建新会话
+    const r = await pool.query(`
+      INSERT INTO conversations (user1_id, user2_id)
+      VALUES ($1, $2)
+      RETURNING id
+    `, [req.user.id, other_user_id]);
+
+    res.json({ id: r.rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// 获取会话消息
+app.get('/api/conversations/:id/messages', auth, async (req, res) => {
+  const conversationId = req.params.id;
+
+  try {
+    // 检查用户是否属于该会话
+    const check = await pool.query(`
+      SELECT id FROM conversations
+      WHERE id = $1 AND (user1_id = $2 OR user2_id = $2)
+    `, [conversationId, req.user.id]);
+
+    if (check.rows.length === 0) {
+      return res.status(403).json({ error: '无权限访问此会话' });
+    }
+
+    // 获取消息
+    const r = await pool.query(`
+      SELECT
+        m.*,
+        u.username as sender_username,
+        u.avatar_url as sender_avatar_url
+      FROM messages m
+      JOIN users u ON m.sender_id = u.id
+      WHERE m.conversation_id = $1
+      ORDER BY m.created_at ASC
+    `, [conversationId]);
+
+    // 标记所有消息为已读
+    await pool.query(`
+      UPDATE messages SET is_read = true
+      WHERE conversation_id = $1 AND sender_id != $2 AND is_read = false
+    `, [conversationId, req.user.id]);
+
+    res.json(r.rows);
+  } catch (err) {
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// 发送消息
+app.post('/api/conversations/:id/messages', auth, async (req, res) => {
+  const conversationId = req.params.id;
+  const { content } = req.body;
+
+  if (!content || content.trim().length === 0) {
+    return res.status(400).json({ error: '请填写消息内容' });
+  }
+
+  try {
+    // 检查用户是否属于该会话
+    const check = await pool.query(`
+      SELECT id FROM conversations
+      WHERE id = $1 AND (user1_id = $2 OR user2_id = $2)
+    `, [conversationId, req.user.id]);
+
+    if (check.rows.length === 0) {
+      return res.status(403).json({ error: '无权限访问此会话' });
+    }
+
+    // 插入消息
+    const r = await pool.query(`
+      INSERT INTO messages (conversation_id, sender_id, content)
+      VALUES ($1, $2, $3)
+      RETURNING *
+    `, [conversationId, req.user.id, content]);
+
+    // 更新会话最后消息时间
+    await pool.query(`
+      UPDATE conversations SET last_message_at = NOW()
+      WHERE id = $1
+    `, [conversationId]);
+
+    // 获取发送者信息
+    const userInfo = await pool.query(`
+      SELECT username, avatar_url FROM users WHERE id = $1
+    `, [req.user.id]);
+
+    res.json({
+      ...r.rows[0],
+      sender_username: userInfo.rows[0].username,
+      sender_avatar_url: userInfo.rows[0].avatar_url
+    });
+  } catch (err) {
+    res.status(500).json({ error: '发送失败，请稍后重试' });
+  }
+});
+
+// 标记消息已读
+app.put('/api/messages/:id/read', auth, async (req, res) => {
+  try {
+    await pool.query(`
+      UPDATE messages SET is_read = true
+      WHERE id = $1 AND sender_id != $2
+    `, [req.params.id, req.user.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: '服务器错误' });
+  }
 });
 
 // ============================================================
