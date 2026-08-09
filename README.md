@@ -23,6 +23,11 @@ docker-compose up -d
 
 应用默认运行在 `http://localhost:3003`。
 
+---
+以下内容添加自NodeLoc @Lezi-fun的PR
+
+---
+
 ### 从源码构建
 
 > 适合二次开发、自定义部署或不想用 Docker 的场景。
