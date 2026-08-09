@@ -1,3 +1,5 @@
+cd /root/forumlify
+cat > js/user.js << 'EOF'
 // ============================================================
 //  👤 用户主页
 // ============================================================
@@ -18,8 +20,9 @@ async function renderUserProfile(username) {
 
     document.getElementById('userPageTitle').textContent = '👤 ' + user.username;
 
-    // 2. 获取该用户的帖子
-    const posts = await apiFetch('/posts?user_id=' + user.id);
+    // 2. 获取该用户的帖子（适配分页格式）
+    const result = await apiFetch('/posts?user_id=' + user.id + '&page=1&limit=100');
+    const posts = result.data || [];
 
     const avatar = user.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.username) + '&background=6366f1&color=fff&size=128';
 
@@ -86,3 +89,6 @@ function showUserPage(username) {
   currentPage = 'user';
   renderUserProfile(username);
 }
+EOF
+
+docker-compose restart app
