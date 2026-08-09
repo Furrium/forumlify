@@ -4,4 +4,8 @@ out/
 uploads/
 *.log
 .DS_Store
-.env
+
+# .env 允许提交到仓库（项目约定）
+# 仅忽略本地覆盖文件
+.env.local
+.env.*.local
