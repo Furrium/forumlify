@@ -80,6 +80,15 @@ const API = {
     return data;
   },
 
+  async updatePost(postId, title, content) {
+    const data = await apiFetch('/posts/' + postId, {
+      method: 'PUT',
+      body: JSON.stringify({ title, content })
+    });
+    if (data.error) throw new Error(data.error);
+    return data;
+  },
+
   async deletePost(postId) {
     const data = await apiFetch('/posts/' + postId, { method: 'DELETE' });
     if (data.error) throw new Error(data.error);
