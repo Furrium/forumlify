@@ -88,7 +88,6 @@ function switchPage(page, param) {
     el.classList.remove('active', 'slide-out');
   });
 
-  // 隐藏自定义页面容器
   const customContainer = document.getElementById('customPageContainer');
   if (customContainer) {
     customContainer.classList.remove('active');
@@ -370,21 +369,16 @@ async function loadCustomPagesNav() {
 }
 
 function renderCustomPagesNav() {
-  const userDropdown = document.getElementById('userDropdown');
-  const existingLinks = userDropdown.querySelectorAll('.custom-page-nav-link');
-  existingLinks.forEach(el => el.remove());
-
-  const messageBtn = document.getElementById('messageBtn');
-  if (!messageBtn) return;
+  const container = document.getElementById('customNavLinks');
+  if (!container) return;
+  container.innerHTML = '';
 
   customPagesNav.forEach(page => {
     const link = document.createElement('a');
-    link.className = 'custom-page-nav-link';
     link.href = '#';
-    link.dataset.page = 'custom';
     link.dataset.custom = page.name;
     link.textContent = page.title;
-    link.style.cssText = 'padding:6px 10px;border-radius:4px;color:var(--text-secondary);text-decoration:none;font-size:13px;transition:color 0.15s;margin-right:4px;';
+    link.style.cssText = 'color:var(--text-secondary);text-decoration:none;font-size:14px;padding:4px 10px;border-radius:4px;transition:color 0.15s;';
     link.addEventListener('mouseenter', function() {
       this.style.color = 'var(--text)';
     });
@@ -395,7 +389,7 @@ function renderCustomPagesNav() {
       e.preventDefault();
       switchPage('custom', page.name);
     });
-    userDropdown.insertBefore(link, messageBtn.nextSibling);
+    container.appendChild(link);
   });
 }
 
