@@ -1,1054 +1,916 @@
 // ============================================================
-//  Forumlify 后端服务
-//  一个文件搞定所有 API + 文件服务
+//  🚀 主入口
 // ============================================================
 
-const express = require('express');
-const cors = require('cors');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const { Pool } = require('pg');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+let currentUser = null;
+let currentPage = 'feed';
+let currentPageNum = 1;
 
-const app = express();
-
-// 服务端配置（config.js，浏览器端加载同名文件但不影响服务端）
-
-
-// 监听端口：环境变量 PORT 优先，其次 config.js 的 SERVER_PORT，最后默认 3000
-const PORT = process.env.PORT || CONFIG.SERVER_PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'forumlify-secret-key-change-me-in-production';
-
-// ============================================================
-//  数据库
-// ============================================================
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://forumlify:123456@localhost:5432/forumlify',
-});
-
-// ============================================================
-//  中间件
-// ============================================================
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// 确保上传目录存在
-if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
-app.use('/uploads', express.static('uploads'));
-
-// ============================================================
-//  认证中间件
-// ============================================================
-const auth = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ error: '请先登录' });
+function renderNav() {
+  const authBtns = document.getElementById('authButtons');
+  const userDropdown = document.getElementById('userDropdown');
+  if (currentUser) {
+    authBtns.style.display = 'none';
+    userDropdown.style.display = 'block';
+    document.getElementById('avatarImg').src = currentUser.avatar_url ||
+      'https://ui-avatars.com/api/?name=U&background=6366f1&color=fff';
+    document.getElementById('adminEntry').style.display = currentUser.role === 'admin' ? 'block' : 'none';
+    updateUnreadBadge();
+  } else {
+    authBtns.style.display = 'flex';
+    userDropdown.style.display = 'none';
   }
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (err) {
-    return res.status(401).json({ error: '登录已过期，请重新登录' });
-  }
-};
+}
 
-const admin = async (req, res, next) => {
+async function loadForumName() {
   try {
-    const r = await pool.query('SELECT role FROM users WHERE id = $1', [req.user.id]);
-    if (r.rows[0]?.role !== 'admin') {
-      return res.status(403).json({ error: '需要管理员权限' });
+    const data = await API.getSettings();
+    const name = data.forum_name || CONFIG.FORUM_NAME || 'Forumlify';
+    document.getElementById('forumName').textContent = name;
+    document.title = name;
+    const titleEl = document.getElementById('pageTitle');
+    if (titleEl) titleEl.textContent = name;
+  } catch (e) {
+    const name = CONFIG.FORUM_NAME || 'Forumlify';
+    document.getElementById('forumName').textContent = name;
+    document.title = name;
+    const titleEl = document.getElementById('pageTitle');
+    if (titleEl) titleEl.textContent = name;
+  }
+}
+
+function switchPage(page, param) {
+  const url = new URL(window.location);
+
+  if (page === 'user' && param) {
+    url.searchParams.set('user', param);
+    url.searchParams.delete('page');
+    url.searchParams.delete('post');
+    window.history.pushState({ page: 'user', username: param }, '', url);
+    showUserPage(param);
+    return;
+  }
+
+  if (page === 'post' && param) {
+    url.searchParams.set('post', param);
+    url.searchParams.delete('page');
+    url.searchParams.delete('user');
+    window.history.pushState({ page: 'post', postId: param }, '', url);
+    showPostPage(param);
+    return;
+  }
+
+  if (page === 'custom' && param) {
+    url.searchParams.set('custom', param);
+    url.searchParams.delete('page');
+    url.searchParams.delete('post');
+    url.searchParams.delete('user');
+    window.history.pushState({ page: 'custom', custom: param }, '', url);
+    showCustomPage(param);
+    return;
+  }
+
+  if (page === 'feed') {
+    url.searchParams.delete('page');
+    url.searchParams.delete('post');
+    url.searchParams.delete('user');
+    url.searchParams.delete('custom');
+  } else {
+    url.searchParams.set('page', page);
+    url.searchParams.delete('post');
+    url.searchParams.delete('user');
+    url.searchParams.delete('custom');
+  }
+  window.history.pushState({ page: page }, '', url);
+
+  document.getElementById('app').style.display = 'none';
+  document.querySelectorAll('.page-slide').forEach(el => {
+    el.classList.remove('active', 'slide-out');
+  });
+
+  const customContainer = document.getElementById('customPageContainer');
+  if (customContainer) {
+    customContainer.classList.remove('active');
+    customContainer.style.display = 'none';
+  }
+
+  if (page === 'feed') {
+    document.getElementById('app').style.display = 'flex';
+    currentPage = 'feed';
+    renderFeed();
+    renderStats();
+    renderLinks();
+    return;
+  }
+
+  const pageMap = {
+    messages: 'pageMessages',
+    settings: 'pageSettings',
+    admin: 'pageAdmin',
+    new: 'pageNew'
+  };
+  const el = document.getElementById(pageMap[page]);
+  if (el) {
+    el.classList.add('active');
+    el.style.animation = 'none';
+    void el.offsetHeight;
+    el.style.animation = '';
+    currentPage = page;
+
+    if (page === 'admin') {
+      document.querySelectorAll('.admin-tab').forEach((t, i) => {
+        t.classList.toggle('active', i === 0);
+      });
+      renderAdminReports();
     }
-    next();
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-};
-
-// ============================================================
-//  创建通知（内部函数）
-// ============================================================
-async function createNotification(userId, type, title, content, link = null) {
-  try {
-    await pool.query(
-      'INSERT INTO notifications (user_id, type, title, content, link) VALUES ($1, $2, $3, $4, $5)',
-      [userId, type, title, content, link]
-    );
-  } catch (err) {
-    // 静默失败，不影响主流程
+    if (page === 'settings') {
+      renderSettingsPage();
+    }
+    if (page === 'messages') {
+      renderMessagesPage();
+    }
+    if (page === 'new') {
+      document.getElementById('postTitle').value = '';
+      document.getElementById('postContent').value = '';
+      document.getElementById('imagePreview').innerHTML = '';
+      document.getElementById('fileInput').value = '';
+      document.getElementById('postCaptchaInput').value = '';
+      refreshCaptcha('post');
+      const dropText = document.getElementById('dropZoneText');
+      if (dropText) dropText.textContent = '点击或拖拽上传图片';
+    }
   }
 }
 
 // ============================================================
-//  论坛设置接口
+//  ✉️ 私信系统
 // ============================================================
 
-// 获取论坛设置（公开）
-app.get('/api/settings', async (req, res) => {
+let currentChatUserId = null;
+let currentChatUsername = null;
+let currentConversationId = null;
+let messagePollInterval = null;
+
+async function updateUnreadBadge() {
+  const badge = document.getElementById('messageBadge');
+  if (!badge || !currentUser) return;
   try {
-    const r = await pool.query('SELECT key, value FROM settings');
-    const settings = {};
-    r.rows.forEach(row => { settings[row.key] = row.value; });
-    res.json(settings);
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 更新论坛设置（管理员）
-app.put('/api/settings', auth, admin, async (req, res) => {
-  const { forum_name } = req.body;
-  if (!forum_name || forum_name.trim().length === 0) {
-    return res.status(400).json({ error: '论坛名称不能为空' });
-  }
-  try {
-    await pool.query(
-      `INSERT INTO settings (key, value) VALUES ($1, $2)
-       ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()`,
-      ['forum_name', forum_name.trim()]
-    );
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: '更新失败，请稍后重试' });
-  }
-});
-
-// ============================================================
-//  认证接口
-// ============================================================
-
-// 注册 - 第一个用户自动成为管理员
-app.post('/api/auth/register', async (req, res) => {
-  const { email, password, username } = req.body;
-
-  if (!email || !password || !username) {
-    return res.status(400).json({ error: '请填写完整信息' });
-  }
-  if (password.length < 6) {
-    return res.status(400).json({ error: '密码至少6位' });
-  }
-
-  try {
-    const countResult = await pool.query('SELECT COUNT(*) FROM users');
-    const isFirstUser = parseInt(countResult.rows[0].count) === 0;
-
-    const hash = await bcrypt.hash(password, 10);
-    const avatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username) + '&background=6366f1&color=fff&size=64';
-    const role = isFirstUser ? 'admin' : 'user';
-
-    const r = await pool.query(
-      `INSERT INTO users (email, password_hash, username, avatar_url, role)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, username, avatar_url, role, created_at`,
-      [email, hash, username, avatar, role]
-    );
-
-    res.json({
-      user: r.rows[0],
-      message: isFirstUser ? '🎉 你是第一个用户，已自动设为管理员！' : '注册成功'
-    });
-  } catch (err) {
-    if (err.code === '23505') {
-      res.status(400).json({ error: '邮箱或用户名已被注册' });
+    const conversations = await API.getConversations();
+    const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+    if (totalUnread > 0) {
+      badge.style.display = 'inline-block';
+      badge.textContent = totalUnread > 99 ? '99+' : totalUnread;
     } else {
-      res.status(500).json({ error: '注册失败，请稍后重试' });
+      badge.style.display = 'none';
     }
+  } catch (e) {}
+}
+
+function openMessageList() {
+  document.getElementById('messageListModal').classList.add('active');
+  renderMessageList();
+}
+
+function closeMessageList() {
+  document.getElementById('messageListModal').classList.remove('active');
+  if (messagePollInterval) {
+    clearInterval(messagePollInterval);
+    messagePollInterval = null;
   }
-});
+}
 
-// 登录
-app.post('/api/auth/login', async (req, res) => {
-  const { email, password } = req.body;
+async function renderMessageList() {
+  const container = document.getElementById('messageListContent');
+  container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
 
-  if (!email || !password) {
-    return res.status(400).json({ error: '请填写邮箱和密码' });
+  try {
+    const conversations = await API.getConversations();
+    if (conversations.length === 0) {
+      container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">暂无私信</div>';
+      return;
+    }
+    let html = '';
+    conversations.forEach(c => {
+      const unread = c.unread_count || 0;
+      const lastMsg = c.last_message || '暂无消息';
+      const time = c.last_message_time ? new Date(c.last_message_time).toLocaleString('zh-CN') : '';
+      html += `
+        <div class="message-list-item" style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s;" 
+             onclick="openChat('${c.id}', '${c.other_user_id}', '${c.other_username}')">
+          <img src="${c.other_avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.other_username) + '&background=6366f1&color=fff&size=64'}" 
+               style="width:40px;height:40px;border-radius:50%;object-fit:cover;" />
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-weight:600;">${c.other_username}</span>
+              <span style="font-size:12px;color:var(--text-light);">${time}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:13px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${lastMsg}</span>
+              ${unread > 0 ? `<span style="background:#ef4444;color:#fff;border-radius:50%;padding:2px 8px;font-size:11px;font-weight:600;">${unread}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
+  }
+}
+
+function openChat(conversationId, otherUserId, otherUsername) {
+  currentConversationId = conversationId;
+  currentChatUserId = otherUserId;
+  currentChatUsername = otherUsername;
+
+  document.getElementById('chatModal').classList.add('active');
+  document.getElementById('chatTitle').textContent = otherUsername;
+
+  renderMessages(conversationId);
+
+  if (messagePollInterval) clearInterval(messagePollInterval);
+  messagePollInterval = setInterval(() => {
+    if (currentConversationId) {
+      renderMessages(currentConversationId, true);
+    }
+  }, 3000);
+}
+
+function closeChat() {
+  document.getElementById('chatModal').classList.remove('active');
+  if (messagePollInterval) {
+    clearInterval(messagePollInterval);
+    messagePollInterval = null;
+  }
+  currentConversationId = null;
+  currentChatUserId = null;
+  currentChatUsername = null;
+  updateUnreadBadge();
+}
+
+async function renderMessages(conversationId, silent = false) {
+  const container = document.getElementById('chatMessages');
+  if (!silent) {
+    container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
   }
 
   try {
-    const r = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    const user = r.rows[0];
+    const messages = await API.getMessages(conversationId);
+    if (messages.length === 0) {
+      container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">还没有消息，打个招呼吧 👋</div>';
+      return;
+    }
+    let html = '';
+    messages.forEach(m => {
+      const isMine = m.sender_id === currentUser.id;
+      const time = m.created_at ? new Date(m.created_at).toLocaleString('zh-CN') : '';
+      html += `
+        <div style="display:flex;${isMine ? 'justify-content:flex-end;' : 'justify-content:flex-start;'} margin-bottom:12px;">
+          ${!isMine ? `<img src="${m.sender_avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(m.sender_username) + '&background=6366f1&color=fff&size=64'}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:8px;flex-shrink:0;" />` : ''}
+          <div style="max-width:70%;">
+            <div style="background:${isMine ? 'var(--primary)' : 'var(--surface)'};color:${isMine ? '#fff' : 'var(--text)'};padding:10px 14px;border-radius:12px;border:${isMine ? 'none' : '1px solid var(--border)'};word-break:break-word;">
+              ${m.content}
+            </div>
+            <div style="font-size:11px;color:var(--text-light);margin-top:4px;${isMine ? 'text-align:right;' : ''}">
+              ${time} ${isMine ? (m.is_read ? '✓✓' : '✓') : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+    container.scrollTop = container.scrollHeight;
+  } catch (err) {
+    if (!silent) {
+      container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
+    }
+  }
+}
 
-    if (!user) {
-      return res.status(401).json({ error: '邮箱或密码错误' });
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const content = input.value.trim();
+  if (!content || !currentConversationId) return;
+
+  try {
+    await API.sendMessage(currentConversationId, content);
+    input.value = '';
+    renderMessages(currentConversationId);
+    updateUnreadBadge();
+    if (document.getElementById('messageListModal').classList.contains('active')) {
+      renderMessageList();
+    }
+  } catch (err) {
+    alert('发送失败：' + err.message);
+  }
+}
+
+async function openPrivateChat(otherUserId, otherUsername) {
+  try {
+    const result = await API.getOrCreateConversation(otherUserId);
+    currentConversationId = result.id;
+    currentChatUserId = otherUserId;
+    currentChatUsername = otherUsername;
+
+    document.getElementById('chatModal').classList.add('active');
+    document.getElementById('chatTitle').textContent = otherUsername;
+
+    renderMessages(currentConversationId);
+
+    if (messagePollInterval) clearInterval(messagePollInterval);
+    messagePollInterval = setInterval(() => {
+      if (currentConversationId) {
+        renderMessages(currentConversationId, true);
+      }
+    }, 3000);
+  } catch (err) {
+    alert('打开私信失败：' + err.message);
+  }
+}
+
+// ============================================================
+//  📸 图片上传（拖拽上传）
+// ============================================================
+
+function handleImageFiles(files) {
+  const preview = document.getElementById('imagePreview');
+  if (!preview) return;
+  for (let file of files) {
+    if (!file.type.startsWith('image/')) continue;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('图片 ' + file.name + ' 超过 5MB，请压缩后上传');
+      continue;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:4px;border:1px solid var(--border);';
+      preview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  }
+  const fileInput = document.getElementById('fileInput');
+  if (fileInput) fileInput.value = '';
+}
+
+// ============================================================
+//  📄 自定义页面导航
+// ============================================================
+
+let customPagesNav = [];
+
+async function loadCustomPagesNav() {
+  try {
+    const pages = await API.getCustomPages();
+    customPagesNav = pages;
+    renderCustomPagesNav();
+  } catch (e) {
+    customPagesNav = [];
+  }
+}
+
+function renderCustomPagesNav() {
+  const container = document.getElementById('customNavLinks');
+  if (!container) return;
+  container.innerHTML = '';
+
+  customPagesNav.forEach(page => {
+    const link = document.createElement('a');
+    link.href = '#';
+    link.dataset.custom = page.name;
+    link.textContent = page.title;
+    link.style.cssText = 'color:var(--text-secondary);text-decoration:none;font-size:14px;padding:4px 10px;border-radius:4px;transition:color 0.15s;';
+    link.addEventListener('mouseenter', function() {
+      this.style.color = 'var(--text)';
+    });
+    link.addEventListener('mouseleave', function() {
+      this.style.color = 'var(--text-secondary)';
+    });
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      switchPage('custom', page.name);
+    });
+    container.appendChild(link);
+  });
+}
+
+// ============================================================
+//  📄 自定义页面渲染
+// ============================================================
+
+function showCustomPage(pageName) {
+  document.getElementById('app').style.display = 'none';
+  document.querySelectorAll('.page-slide').forEach(el => {
+    el.classList.remove('active', 'slide-out');
+  });
+
+  let container = document.getElementById('customPageContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'customPageContainer';
+    container.className = 'page-slide';
+    container.style.cssText = 'display:none;position:fixed;inset:0;background:var(--bg);z-index:50;padding:84px 32px 40px;overflow-y:auto;transition:background 0.2s;';
+    document.body.appendChild(container);
+  }
+
+  container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
+  container.classList.add('active');
+  container.style.display = 'block';
+  currentPage = 'custom';
+
+  API.getCustomPage(pageName).then(page => {
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'width:100%;min-height:70vh;border:none;border-radius:8px;background:var(--surface);';
+    iframe.sandbox = 'allow-scripts allow-modals allow-same-origin';
+    iframe.srcdoc = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 24px;
+            background: var(--bg, #f6f8fc);
+            color: var(--text, #0a0e1a);
+          }
+          @media (prefers-color-scheme: dark) {
+            body { background: #0f1117; color: #e8edf5; }
+          }
+        </style>
+        ${page.content}
+      </head>
+      <body></body>
+      </html>
+    `;
+    container.innerHTML = '';
+    container.appendChild(iframe);
+
+    document.querySelectorAll('.custom-page-nav-link').forEach(el => {
+      el.style.color = el.dataset.custom === pageName ? 'var(--primary)' : 'var(--text-secondary)';
+    });
+  }).catch(err => {
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px 0;">页面加载失败：' + err.message + '</div>';
+  });
+}
+
+// ============================================================
+//  📩 消息页面
+// ============================================================
+
+async function renderMessagesPage() {
+  const container = document.getElementById('messagesContent');
+  if (!container) return;
+  container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
+
+  try {
+    const notifications = await apiFetch('/notifications');
+    if (notifications.error) throw new Error(notifications.error);
+
+    if (notifications.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center;color:#94a3b8;padding:60px 0;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 16px;display:block;color:#94a3b8;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <p style="font-size:16px;">暂无消息</p>
+          <p style="font-size:13px;">当有人回复你的帖子或处理你的举报时，会在这里通知你</p>
+        </div>
+      `;
+      return;
     }
 
-    const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) {
-      return res.status(401).json({ error: '邮箱或密码错误' });
+    await apiFetch('/notifications/read-all', { method: 'PUT' });
+
+    let html = '';
+    const typeMap = {
+      reply: '💬',
+      post_deleted: '🗑️',
+      report_handled: '🛡️',
+      system: '📢'
+    };
+    notifications.forEach(n => {
+      const icon = typeMap[n.type] || '📌';
+      const time = n.created_at ? new Date(n.created_at).toLocaleString('zh-CN') : '';
+      html += `
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border-light);background:var(--surface);border-radius:6px;margin-bottom:6px;">
+          <span style="font-size:20px;">${icon}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:14px;">${n.title}</div>
+            <div style="color:var(--text-secondary);font-size:13px;margin-top:2px;">${n.content}</div>
+            ${n.link ? `<a href="${n.link}" style="color:var(--primary);font-size:13px;text-decoration:none;margin-top:4px;display:inline-block;">查看详情 →</a>` : ''}
+            <div style="font-size:12px;color:var(--text-light);margin-top:4px;">${time}</div>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
+  }
+}
+
+// ============================================================
+//  ⚙️ 设置页面（含头像上传）
+// ============================================================
+
+async function renderSettingsPage() {
+  const container = document.getElementById('settingsContent');
+  if (!container) return;
+
+  if (!currentUser) {
+    container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">请先登录</div>';
+    return;
+  }
+
+  const user = currentUser;
+
+  try {
+    const userPosts = await apiFetch('/posts?user_id=' + user.id);
+    const postCount = userPosts.data ? userPosts.data.length : 0;
+
+    container.innerHTML = `
+      <div style="max-width:500px;margin:0 auto;padding:20px 0;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="position:relative;display:inline-block;">
+            <img id="avatarPreview" src="${user.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.username) + '&background=6366f1&color=fff&size=128'}" 
+                 style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);" />
+            <button id="avatarUploadBtn" style="position:absolute;bottom:0;right:0;background:var(--primary);color:#fff;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(99,102,241,0.4);">
+              📷
+            </button>
+          </div>
+          <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" />
+          <h2 style="margin:12px 0 4px;">${user.username}</h2>
+          <p style="color:var(--text-secondary);font-size:14px;">${user.bio || '这个人很懒，什么都没写'}</p>
+          <div style="display:flex;justify-content:center;gap:16px;margin-top:8px;font-size:13px;color:var(--text-secondary);flex-wrap:wrap;">
+            <span>📅 加入 ${user.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '未知'}</span>
+            <span>📝 ${postCount} 帖</span>
+            ${user.role === 'admin' ? '<span style="color:var(--primary);font-weight:600;">🛡️ 管理员</span>' : ''}
+          </div>
+          <div id="avatarUploadStatus" style="font-size:13px;margin-top:8px;"></div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
+          <div style="margin-bottom:16px;">
+            <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">用户名</label>
+            <input type="text" id="settingsUsername" value="${user.username}" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">个人简介</label>
+            <textarea id="settingsBio" rows="3" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);resize:vertical;">${user.bio || ''}</textarea>
+          </div>
+          <button id="settingsSaveBtn" class="btn-primary" style="width:100%;padding:10px;">保存设置</button>
+        </div>
+      </div>
+    `;
+
+    // 头像上传
+    const avatarBtn = document.getElementById('avatarUploadBtn');
+    const avatarInput = document.getElementById('avatarFileInput');
+    const avatarPreview = document.getElementById('avatarPreview');
+    const statusEl = document.getElementById('avatarUploadStatus');
+
+    if (avatarBtn && avatarInput) {
+      avatarBtn.addEventListener('click', function() {
+        avatarInput.click();
+      });
+
+      avatarInput.addEventListener('change', async function() {
+        const file = this.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+          statusEl.textContent = '❌ 请选择图片文件';
+          statusEl.style.color = '#ef4444';
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          statusEl.textContent = '❌ 图片不能超过 5MB';
+          statusEl.style.color = '#ef4444';
+          return;
+        }
+
+        statusEl.textContent = '⏳ 上传中...';
+        statusEl.style.color = 'var(--text-secondary)';
+
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+
+          const uploadRes = await fetch(CONFIG.API_BASE_URL + '/upload', {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + localStorage.getItem('forumlify-token')
+            },
+            body: formData
+          });
+          const uploadData = await uploadRes.json();
+          if (uploadData.error) throw new Error(uploadData.error);
+
+          const avatarUrl = uploadData.url;
+
+          const updateRes = await API.updateAvatar(user.id, avatarUrl);
+          if (updateRes.error) throw new Error(updateRes.error);
+
+          currentUser.avatar_url = avatarUrl;
+          avatarPreview.src = avatarUrl;
+          statusEl.textContent = '✅ 头像更新成功！';
+          statusEl.style.color = '#22c55e';
+          renderNav();
+
+        } catch (err) {
+          statusEl.textContent = '❌ ' + err.message;
+          statusEl.style.color = '#ef4444';
+        }
+      });
     }
 
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        avatar_url: user.avatar_url,
-        bio: user.bio,
-        role: user.role,
+    document.getElementById('settingsSaveBtn').addEventListener('click', async function() {
+      const username = document.getElementById('settingsUsername').value.trim();
+      const bio = document.getElementById('settingsBio').value.trim();
+      if (!username) { alert('用户名不能为空'); return; }
+      try {
+        const data = await apiFetch('/users/' + user.id, {
+          method: 'PUT',
+          body: JSON.stringify({ username, bio })
+        });
+        if (data.error) throw new Error(data.error);
+        currentUser.username = username;
+        currentUser.bio = bio;
+        alert('保存成功！');
+        renderNav();
+        renderSettingsPage();
+      } catch (err) {
+        alert('保存失败：' + err.message);
       }
     });
-  } catch (err) {
-    res.status(500).json({ error: '登录失败，请稍后重试' });
-  }
-});
 
-// 获取当前用户信息
-app.get('/api/auth/me', auth, async (req, res) => {
-  try {
-    const r = await pool.query(
-      'SELECT id, username, avatar_url, bio, role, created_at FROM users WHERE id = $1',
-      [req.user.id]
-    );
-    if (!r.rows[0]) {
-      return res.status(404).json({ error: '用户不存在' });
-    }
-    res.json(r.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
   }
-});
+}
 
 // ============================================================
-//  用户管理
+//  🚀 初始化
 // ============================================================
+async function init() {
+  applyTheme();
 
-// 获取用户信息（支持按用户名查询）
-app.get('/api/users', auth, admin, async (req, res) => {
-  try {
-    let query = 'SELECT id, username, avatar_url, bio, role, created_at FROM users';
-    const params = [];
+  document.getElementById('forumName').textContent = CONFIG.FORUM_NAME || 'Forumlify';
 
-    if (req.query.username) {
-      query += ' WHERE username = $1';
-      params.push(req.query.username);
+  refreshCaptcha('reg');
+  refreshCaptcha('post');
+  refreshCaptcha('reply');
+
+  if (token) {
+    try {
+      const user = await API.getMe();
+      currentUser = user;
+      API.logEvent('login').catch(() => {});
+    } catch (e) {
+      token = null;
+      localStorage.removeItem('forumlify-token');
     }
-
-    query += ' ORDER BY created_at DESC';
-    const r = await pool.query(query, params);
-    res.json(r.rows);
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
   }
-});
+  renderNav();
+  await loadForumName();
+  await loadCustomPagesNav();
+  renderStats();
+  renderLinks();
 
-// 修改用户角色（管理员）
-app.put('/api/users/:id/role', auth, admin, async (req, res) => {
-  const { role } = req.body;
-  const userId = req.params.id;
+  const urlParams = new URLSearchParams(window.location.search);
+  const postParam = urlParams.get('post');
+  const pageParam = urlParams.get('page');
+  const userParam = urlParams.get('user');
+  const postPageParam = urlParams.get('postpage');
+  const customParam = urlParams.get('custom');
 
-  if (!['user', 'admin'].includes(role)) {
-    return res.status(400).json({ error: '无效的角色' });
-  }
-
-  try {
-    if (userId === req.user.id) {
-      return res.status(400).json({ error: '不能修改自己的角色' });
-    }
-
-    await pool.query('UPDATE users SET role = $1 WHERE id = $2', [role, userId]);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 更新用户资料
-app.put('/api/users/:id', auth, async (req, res) => {
-  const { username, bio } = req.body;
-  const userId = req.params.id;
-
-  if (userId !== req.user.id) {
-    return res.status(403).json({ error: '无权限修改他人资料' });
+  if (postPageParam) {
+    currentPageNum = parseInt(postPageParam) || 1;
   }
 
-  try {
-    await pool.query('UPDATE users SET username = $1, bio = $2 WHERE id = $3', [username, bio || '', userId]);
-    res.json({ success: true });
-  } catch (err) {
-    if (err.code === '23505') {
-      res.status(400).json({ error: '用户名已被占用' });
+  if (customParam) {
+    showCustomPage(customParam);
+  } else if (userParam) {
+    showUserPage(userParam);
+  } else if (postParam) {
+    showPostPage(postParam);
+  } else if (pageParam && ['messages', 'settings', 'admin', 'new'].includes(pageParam)) {
+    if (pageParam === 'admin' && currentUser?.role !== 'admin') {
+      switchPage('feed');
     } else {
-      res.status(500).json({ error: '服务器错误' });
+      switchPage(pageParam);
     }
-  }
-});
-
-// 更新用户头像
-app.put('/api/users/:id/avatar', auth, async (req, res) => {
-  const { avatar_url } = req.body;
-  const userId = req.params.id;
-
-  if (userId !== req.user.id) {
-    return res.status(403).json({ error: '无权限修改他人头像' });
+  } else {
+    switchPage('feed');
   }
 
-  if (!avatar_url) {
-    return res.status(400).json({ error: '请提供头像地址' });
+  // ============================================================
+  //  绑定所有事件
+  // ============================================================
+
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleTheme(e);
+      document.getElementById('dropdownMenu').classList.remove('show');
+    });
   }
 
-  try {
-    await pool.query('UPDATE users SET avatar_url = $1 WHERE id = $2', [avatar_url, userId]);
-    res.json({ success: true, avatar_url });
-  } catch (err) {
-    res.status(500).json({ error: '更新失败，请稍后重试' });
-  }
-});
+  document.getElementById('avatarImg').addEventListener('click', function(e) {
+    e.stopPropagation();
+    document.getElementById('dropdownMenu').classList.toggle('show');
+  });
+  document.addEventListener('click', function() {
+    document.getElementById('dropdownMenu').classList.remove('show');
+  });
 
-// ============================================================
-//  帖子接口（含分页）
-// ============================================================
+  document.querySelectorAll('[data-page]').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.preventDefault();
+      const page = this.dataset.page;
+      if (page === 'admin' && currentUser?.role !== 'admin') {
+        alert('无权限访问');
+        return;
+      }
+      document.getElementById('dropdownMenu').classList.remove('show');
+      switchPage(page);
+    });
+  });
 
-// 获取帖子列表（支持分页和用户筛选）
-app.get('/api/posts', async (req, res) => {
-  const sort = req.query.sort === 'hot' ? 'updated_at' : 'created_at';
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
-  const offset = (page - 1) * limit;
+  document.querySelectorAll('.back-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      switchPage('feed');
+    });
+  });
 
-  try {
-    let query = `
-      SELECT
-        p.*,
-        u.username,
-        u.avatar_url,
-        (SELECT COUNT(*) FROM replies WHERE post_id = p.id) as reply_count
-      FROM posts p
-      JOIN users u ON p.user_id = u.id
-    `;
-    const params = [];
+  document.getElementById('forumName').addEventListener('click', function() {
+    switchPage('feed');
+  });
 
-    if (req.query.user_id) {
-      query += ' WHERE p.user_id = $1';
-      params.push(req.query.user_id);
+  document.getElementById('fab').addEventListener('click', () => {
+    if (!currentUser) { alert('请先登录'); return; }
+    switchPage('new');
+  });
+
+  document.getElementById('postSubmit').addEventListener('click', async () => {
+    if (!currentUser || !currentUser.id) {
+      alert('请先登录');
+      switchPage('feed');
+      return;
     }
-
-    let countQuery = `
-      SELECT COUNT(*) as total FROM posts p
-    `;
-    if (req.query.user_id) {
-      countQuery += ' WHERE p.user_id = $1';
+    const title = document.getElementById('postTitle').value.trim() || '无标题';
+    const content = document.getElementById('postContent').value.trim();
+    const captchaInput = document.getElementById('postCaptchaInput').value.trim();
+    const captchaAnswer = parseInt(document.getElementById('postCaptchaInput').dataset.answer);
+    if (!content) { alert('请填写内容'); return; }
+    if (parseInt(captchaInput) !== captchaAnswer) { alert('验证码错误，请重新计算'); refreshCaptcha('post'); return; }
+    const images = [];
+    document.querySelectorAll('#imagePreview img').forEach(img => {
+      images.push(img.src);
+    });
+    try {
+      await API.createPost(title, content, images);
+      API.logEvent('create_post').catch(() => {});
+      alert('发布成功！');
+      switchPage('feed');
+      renderFeed();
+      renderStats();
+    } catch (err) {
+      alert('发布失败：' + err.message);
     }
-    const countResult = await pool.query(countQuery, req.query.user_id ? [req.query.user_id] : []);
-    const total = parseInt(countResult.rows[0]?.total || 0);
+  });
 
-    query += ` ORDER BY ${sort} DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    params.push(limit, offset);
+  document.getElementById('postCaptchaQuestion').addEventListener('click', function() {
+    refreshCaptcha('post');
+  });
+  document.getElementById('regCaptchaQuestion').addEventListener('click', function() {
+    refreshCaptcha('reg');
+  });
 
-    const r = await pool.query(query, params);
-    res.json({
-      data: r.rows,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit)
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const dropZoneText = document.getElementById('dropZoneText');
+
+  if (dropZone && fileInput) {
+    dropZone.addEventListener('click', function() {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function() {
+      handleImageFiles(this.files);
+    });
+
+    dropZone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      this.style.borderColor = 'var(--primary)';
+      this.style.background = 'var(--primary-bg)';
+      if (dropZoneText) dropZoneText.textContent = '松开上传';
+    });
+
+    dropZone.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      this.style.borderColor = 'var(--border)';
+      this.style.background = 'var(--bg)';
+      if (dropZoneText) dropZoneText.textContent = '点击或拖拽上传图片';
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.style.borderColor = 'var(--border)';
+      this.style.background = 'var(--bg)';
+      if (dropZoneText) dropZoneText.textContent = '点击或拖拽上传图片';
+      handleImageFiles(e.dataTransfer.files);
+    });
+  }
+
+  document.getElementById('reportSubmit').addEventListener('click', async () => {
+    if (!reportTargetPostId) return;
+    const reason = document.getElementById('reportReason').value;
+    try {
+      await API.createReport(reportTargetPostId, reason);
+      document.getElementById('reportModal').classList.remove('active');
+      alert('举报已提交，管理员将尽快处理');
+      reportTargetPostId = null;
+    } catch (err) {
+      alert('举报失败：' + err.message);
+    }
+  });
+
+  document.querySelectorAll('.modal .close').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.getElementById(this.dataset.modal).classList.remove('active');
+    });
+  });
+  document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('active');
+    });
+  });
+
+  window.addEventListener('popstate', function(e) {
+    const state = e.state || {};
+    const page = state.page || 'feed';
+    const postId = state.postId || null;
+    const username = state.username || null;
+    const custom = state.custom || null;
+    if (postId) {
+      showPostPage(postId);
+    } else if (username) {
+      showUserPage(username);
+    } else if (custom) {
+      showCustomPage(custom);
+    } else {
+      switchPage(page);
+    }
+  });
+
+  const messageBtn = document.getElementById('messageBtn');
+  if (messageBtn) {
+    const newBtn = messageBtn.cloneNode(true);
+    messageBtn.parentNode.replaceChild(newBtn, messageBtn);
+    newBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (!currentUser) { alert('请先登录'); return; }
+      openMessageList();
+    });
+  }
+
+  const closeMessageListBtn = document.querySelector('#messageListModal .close');
+  if (closeMessageListBtn) {
+    closeMessageListBtn.addEventListener('click', closeMessageList);
+  }
+
+  const closeChatBtn = document.querySelector('#chatModal .close');
+  if (closeChatBtn) {
+    closeChatBtn.addEventListener('click', closeChat);
+  }
+
+  const chatInput = document.getElementById('chatInput');
+  if (chatInput) {
+    chatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
       }
     });
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 获取单个帖子
-app.get('/api/posts/:id', async (req, res) => {
-  try {
-    const r = await pool.query(
-      `SELECT p.*, u.username, u.avatar_url
-       FROM posts p
-       JOIN users u ON p.user_id = u.id
-       WHERE p.id = $1`,
-      [req.params.id]
-    );
-    if (r.rows.length === 0) {
-      return res.status(404).json({ error: '帖子不存在' });
-    }
-    res.json(r.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 创建帖子
-app.post('/api/posts', auth, async (req, res) => {
-  const { title, content, images } = req.body;
-
-  if (!content || content.trim().length === 0) {
-    return res.status(400).json({ error: '请填写内容' });
   }
 
-  try {
-    const r = await pool.query(
-      `INSERT INTO posts (user_id, title, content, images)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
-      [req.user.id, title || '无标题', content, images || []]
-    );
-    res.json(r.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: '发布失败，请稍后重试' });
-  }
-});
-
-// 删除帖子
-app.delete('/api/posts/:id', auth, async (req, res) => {
-  try {
-    const post = await pool.query('SELECT user_id FROM posts WHERE id = $1', [req.params.id]);
-    if (post.rows.length === 0) {
-      return res.status(404).json({ error: '帖子不存在' });
-    }
-
-    const user = await pool.query('SELECT role FROM users WHERE id = $1', [req.user.id]);
-    const isAdmin = user.rows[0]?.role === 'admin';
-    const isAuthor = post.rows[0].user_id === req.user.id;
-
-    if (!isAuthor && !isAdmin) {
-      return res.status(403).json({ error: '无权限删除此帖子' });
-    }
-
-    if (!isAuthor && isAdmin) {
-      await createNotification(
-        post.rows[0].user_id,
-        'post_deleted',
-        '你的帖子已被删除',
-        '管理员删除了你的帖子'
-      );
-    }
-
-    await pool.query('DELETE FROM posts WHERE id = $1', [req.params.id]);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: '删除失败，请稍后重试' });
-  }
-});
-
-// ============================================================
-//  回复接口
-// ============================================================
-
-// 获取帖子回复列表
-app.get('/api/posts/:id/replies', async (req, res) => {
-  try {
-    const r = await pool.query(
-      `SELECT r.*, u.username, u.avatar_url
-       FROM replies r
-       JOIN users u ON r.user_id = u.id
-       WHERE r.post_id = $1
-       ORDER BY r.created_at ASC`,
-      [req.params.id]
-    );
-    res.json(r.rows);
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 创建回复
-app.post('/api/posts/:id/replies', auth, async (req, res) => {
-  const { content } = req.body;
-
-  if (!content || content.trim().length === 0) {
-    return res.status(400).json({ error: '请填写回复内容' });
-  }
-
-  try {
-    const r = await pool.query(
-      `INSERT INTO replies (post_id, user_id, content)
-       VALUES ($1, $2, $3)
-       RETURNING *`,
-      [req.params.id, req.user.id, content]
-    );
-    await pool.query('UPDATE posts SET updated_at = NOW() WHERE id = $1', [req.params.id]);
-
-    const postAuthor = await pool.query('SELECT user_id FROM posts WHERE id = $1', [req.params.id]);
-    if (postAuthor.rows[0] && postAuthor.rows[0].user_id !== req.user.id) {
-      await createNotification(
-        postAuthor.rows[0].user_id,
-        'reply',
-        '有人回复了你的帖子',
-        (content || '').substring(0, 100),
-        '/?post=' + req.params.id
-      );
-    }
-
-    res.json(r.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: '回复失败，请稍后重试' });
-  }
-});
-
-// 删除回复
-app.delete('/api/replies/:id', auth, async (req, res) => {
-  try {
-    const reply = await pool.query('SELECT user_id FROM replies WHERE id = $1', [req.params.id]);
-    if (reply.rows.length === 0) {
-      return res.status(404).json({ error: '回复不存在' });
-    }
-
-    const user = await pool.query('SELECT role FROM users WHERE id = $1', [req.user.id]);
-    if (reply.rows[0].user_id !== req.user.id && user.rows[0]?.role !== 'admin') {
-      return res.status(403).json({ error: '无权限删除此回复' });
-    }
-
-    await pool.query('DELETE FROM replies WHERE id = $1', [req.params.id]);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: '删除失败，请稍后重试' });
-  }
-});
-
-// ============================================================
-//  举报接口
-// ============================================================
-
-// 获取举报列表（管理员）
-app.get('/api/reports', auth, admin, async (req, res) => {
-  try {
-    const r = await pool.query(`
-      SELECT
-        r.*,
-        reporter.username as reporter_name,
-        handler.username as handler_name,
-        p.title as post_title,
-        p.content as post_content
-      FROM reports r
-      JOIN users reporter ON r.reporter_id = reporter.id
-      LEFT JOIN users handler ON r.handler_id = handler.id
-      LEFT JOIN posts p ON r.post_id = p.id
-      ORDER BY r.created_at DESC
-    `);
-    res.json(r.rows);
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 提交举报
-app.post('/api/reports', auth, async (req, res) => {
-  const { post_id, reason } = req.body;
-
-  if (!post_id || !reason) {
-    return res.status(400).json({ error: '请填写完整信息' });
-  }
-
-  try {
-    const existing = await pool.query(
-      'SELECT id FROM reports WHERE post_id = $1 AND reporter_id = $2 AND status = $3',
-      [post_id, req.user.id, 'pending']
-    );
-    if (existing.rows.length > 0) {
-      return res.status(400).json({ error: '你已经举报过此帖子，请等待处理' });
-    }
-
-    await pool.query(
-      `INSERT INTO reports (post_id, reporter_id, reason)
-       VALUES ($1, $2, $3)`,
-      [post_id, req.user.id, reason]
-    );
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: '举报失败，请稍后重试' });
-  }
-});
-
-// 处理举报（管理员）
-app.put('/api/reports/:id', auth, admin, async (req, res) => {
-  const { status, note } = req.body;
-
-  if (!['pending', 'approved', 'rejected'].includes(status)) {
-    return res.status(400).json({ error: '无效的状态' });
-  }
-
-  try {
-    const report = await pool.query('SELECT reporter_id, post_id FROM reports WHERE id = $1', [req.params.id]);
-
-    await pool.query(
-      `UPDATE reports
-       SET status = $1, handled_at = NOW(), handler_id = $2, handler_note = $3
-       WHERE id = $4`,
-      [status, req.user.id, note || '', req.params.id]
-    );
-
-    if (report.rows[0]) {
-      const statusText = status === 'approved' ? '已删除' : '已驳回';
-      await createNotification(
-        report.rows[0].reporter_id,
-        'report_handled',
-        '你的举报已被处理',
-        `你举报的帖子已被管理员${statusText}`,
-        report.rows[0].post_id ? '/?post=' + report.rows[0].post_id : null
-      );
-    }
-
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: '操作失败，请稍后重试' });
-  }
-});
-
-// ============================================================
-//  友情链接
-// ============================================================
-
-// 获取友情链接
-app.get('/api/links', async (req, res) => {
-  try {
-    const r = await pool.query('SELECT * FROM friendly_links ORDER BY sort_order');
-    res.json(r.rows);
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 添加友情链接（管理员）
-app.post('/api/links', auth, admin, async (req, res) => {
-  const { title, url } = req.body;
-
-  if (!title || !url) {
-    return res.status(400).json({ error: '请填写完整信息' });
-  }
-
-  try {
-    const r = await pool.query(
-      `INSERT INTO friendly_links (title, url)
-       VALUES ($1, $2)
-       RETURNING *`,
-      [title, url]
-    );
-    res.json(r.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: '添加失败，请稍后重试' });
-  }
-});
-
-// 删除友情链接（管理员）
-app.delete('/api/links/:id', auth, admin, async (req, res) => {
-  try {
-    await pool.query('DELETE FROM friendly_links WHERE id = $1', [req.params.id]);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: '删除失败，请稍后重试' });
-  }
-});
-
-// ============================================================
-//  统计数据
-// ============================================================
-
-app.get('/api/stats', async (req, res) => {
-  try {
-    const [postsRes, usersRes] = await Promise.all([
-      pool.query('SELECT COUNT(*) FROM posts'),
-      pool.query('SELECT COUNT(*) FROM users'),
-    ]);
-    res.json({
-      posts: parseInt(postsRes.rows[0].count) || 0,
-      users: parseInt(usersRes.rows[0].count) || 0,
-      topics: parseInt(postsRes.rows[0].count) || 0,
-      online: Math.floor(Math.random() * 20) + 5,
+  document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.remove('active');
+        if (this.id === 'messageListModal') {
+          closeMessageList();
+        }
+        if (this.id === 'chatModal') {
+          closeChat();
+        }
+      }
     });
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
+  });
+}
 
-// ============================================================
-//  事件日志
-// ============================================================
-
-// 获取事件日志（管理员）
-app.get('/api/event-logs', auth, admin, async (req, res) => {
-  try {
-    const r = await pool.query(
-      `SELECT el.*, u.username
-       FROM event_logs el
-       LEFT JOIN users u ON el.user_id = u.id
-       ORDER BY el.created_at DESC
-       LIMIT 100`
-    );
-    res.json(r.rows);
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 记录事件
-app.post('/api/event-logs', auth, async (req, res) => {
-  const { action } = req.body;
-  try {
-    await pool.query(
-      `INSERT INTO event_logs (user_id, action, ip)
-       VALUES ($1, $2, $3)`,
-      [req.user.id, action, req.ip || '0.0.0.0']
-    );
-    res.json({ success: true });
-  } catch (err) {
-    res.json({ success: true });
-  }
-});
-
-// ============================================================
-//  图片上传
-// ============================================================
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = Date.now() + '-' + Math.round(Math.random() * 10000) + ext;
-    cb(null, name);
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    cb(null, allowed.includes(file.mimetype));
-  }
-});
-
-app.post('/api/upload', auth, upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: '请选择图片' });
-  }
-  res.json({ url: '/uploads/' + req.file.filename });
-});
-
-// ============================================================
-//  私信系统
-// ============================================================
-
-// 获取会话列表
-app.get('/api/conversations', auth, async (req, res) => {
-  try {
-    const r = await pool.query(`
-      SELECT
-        c.id,
-        c.user1_id,
-        c.user2_id,
-        c.last_message_at,
-        c.created_at,
-        u.id as other_user_id,
-        u.username as other_username,
-        u.avatar_url as other_avatar_url,
-        (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND sender_id != $1 AND is_read = false) as unread_count,
-        (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
-        (SELECT created_at FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_time
-      FROM conversations c
-      JOIN users u ON (u.id = c.user1_id OR u.id = c.user2_id) AND u.id != $1
-      WHERE c.user1_id = $1 OR c.user2_id = $1
-      ORDER BY c.last_message_at DESC
-    `, [req.user.id]);
-    res.json(r.rows);
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 获取或创建会话
-app.post('/api/conversations', auth, async (req, res) => {
-  const { other_user_id } = req.body;
-  if (!other_user_id) {
-    return res.status(400).json({ error: '缺少对方用户ID' });
-  }
-  if (other_user_id === req.user.id) {
-    return res.status(400).json({ error: '不能与自己私信' });
-  }
-
-  try {
-    const userCheck = await pool.query('SELECT id FROM users WHERE id = $1', [other_user_id]);
-    if (userCheck.rows.length === 0) {
-      return res.status(404).json({ error: '用户不存在' });
-    }
-
-    const existing = await pool.query(`
-      SELECT id FROM conversations
-      WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)
-    `, [req.user.id, other_user_id]);
-
-    if (existing.rows.length > 0) {
-      return res.json({ id: existing.rows[0].id });
-    }
-
-    const r = await pool.query(`
-      INSERT INTO conversations (user1_id, user2_id)
-      VALUES ($1, $2)
-      RETURNING id
-    `, [req.user.id, other_user_id]);
-
-    res.json({ id: r.rows[0].id });
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 获取会话消息
-app.get('/api/conversations/:id/messages', auth, async (req, res) => {
-  const conversationId = req.params.id;
-
-  try {
-    const check = await pool.query(`
-      SELECT id FROM conversations
-      WHERE id = $1 AND (user1_id = $2 OR user2_id = $2)
-    `, [conversationId, req.user.id]);
-
-    if (check.rows.length === 0) {
-      return res.status(403).json({ error: '无权限访问此会话' });
-    }
-
-    const r = await pool.query(`
-      SELECT
-        m.*,
-        u.username as sender_username,
-        u.avatar_url as sender_avatar_url
-      FROM messages m
-      JOIN users u ON m.sender_id = u.id
-      WHERE m.conversation_id = $1
-      ORDER BY m.created_at ASC
-    `, [conversationId]);
-
-    await pool.query(`
-      UPDATE messages SET is_read = true
-      WHERE conversation_id = $1 AND sender_id != $2 AND is_read = false
-    `, [conversationId, req.user.id]);
-
-    res.json(r.rows);
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 发送消息
-app.post('/api/conversations/:id/messages', auth, async (req, res) => {
-  const conversationId = req.params.id;
-  const { content } = req.body;
-
-  if (!content || content.trim().length === 0) {
-    return res.status(400).json({ error: '请填写消息内容' });
-  }
-
-  try {
-    const check = await pool.query(`
-      SELECT id FROM conversations
-      WHERE id = $1 AND (user1_id = $2 OR user2_id = $2)
-    `, [conversationId, req.user.id]);
-
-    if (check.rows.length === 0) {
-      return res.status(403).json({ error: '无权限访问此会话' });
-    }
-
-    const r = await pool.query(`
-      INSERT INTO messages (conversation_id, sender_id, content)
-      VALUES ($1, $2, $3)
-      RETURNING *
-    `, [conversationId, req.user.id, content]);
-
-    await pool.query(`
-      UPDATE conversations SET last_message_at = NOW()
-      WHERE id = $1
-    `, [conversationId]);
-
-    const userInfo = await pool.query(`
-      SELECT username, avatar_url FROM users WHERE id = $1
-    `, [req.user.id]);
-
-    res.json({
-      ...r.rows[0],
-      sender_username: userInfo.rows[0].username,
-      sender_avatar_url: userInfo.rows[0].avatar_url
-    });
-  } catch (err) {
-    res.status(500).json({ error: '发送失败，请稍后重试' });
-  }
-});
-
-// 标记消息已读
-app.put('/api/messages/:id/read', auth, async (req, res) => {
-  try {
-    await pool.query(`
-      UPDATE messages SET is_read = true
-      WHERE id = $1 AND sender_id != $2
-    `, [req.params.id, req.user.id]);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// ============================================================
-//  自定义页面
-// ============================================================
-
-// 获取所有自定义页面（公开，只返回启用且排序的）
-app.get('/api/custom-pages', async (req, res) => {
-  try {
-    const r = await pool.query(
-      'SELECT id, name, title FROM custom_pages WHERE enabled = true ORDER BY created_at'
-    );
-    res.json(r.rows);
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 获取单个自定义页面（公开）
-app.get('/api/custom-pages/:name', async (req, res) => {
-  try {
-    const r = await pool.query(
-      'SELECT id, name, title, content FROM custom_pages WHERE name = $1 AND enabled = true',
-      [req.params.name]
-    );
-    if (r.rows.length === 0) {
-      return res.status(404).json({ error: '页面不存在' });
-    }
-    res.json(r.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 获取所有自定义页面（管理员，含禁用）
-app.get('/api/admin/custom-pages', auth, admin, async (req, res) => {
-  try {
-    const r = await pool.query(
-      'SELECT id, name, title, content, enabled, created_at, updated_at FROM custom_pages ORDER BY created_at'
-    );
-    res.json(r.rows);
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 创建自定义页面（管理员）
-app.post('/api/admin/custom-pages', auth, admin, async (req, res) => {
-  const { name, title, content } = req.body;
-  if (!name || !title || !content) {
-    return res.status(400).json({ error: '请填写完整信息' });
-  }
-  if (!/^[a-zA-Z0-9\-_]+$/.test(name)) {
-    return res.status(400).json({ error: '页面名称只允许字母、数字、短横线和下划线' });
-  }
-  try {
-    const r = await pool.query(
-      `INSERT INTO custom_pages (name, title, content)
-       VALUES ($1, $2, $3)
-       RETURNING *`,
-      [name, title, content]
-    );
-    res.json(r.rows[0]);
-  } catch (err) {
-    if (err.code === '23505') {
-      res.status(400).json({ error: '页面名称已存在' });
-    } else {
-      res.status(500).json({ error: '创建失败，请稍后重试' });
-    }
-  }
-});
-
-// 更新自定义页面（管理员）
-app.put('/api/admin/custom-pages/:id', auth, admin, async (req, res) => {
-  const { title, content, enabled } = req.body;
-  const id = req.params.id;
-  try {
-    const r = await pool.query(
-      `UPDATE custom_pages
-       SET title = $1, content = $2, enabled = $3, updated_at = NOW()
-       WHERE id = $4
-       RETURNING *`,
-      [title, content, enabled, id]
-    );
-    if (r.rows.length === 0) {
-      return res.status(404).json({ error: '页面不存在' });
-    }
-    res.json(r.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: '更新失败，请稍后重试' });
-  }
-});
-
-// 删除自定义页面（管理员）
-app.delete('/api/admin/custom-pages/:id', auth, admin, async (req, res) => {
-  try {
-    await pool.query('DELETE FROM custom_pages WHERE id = $1', [req.params.id]);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: '删除失败，请稍后重试' });
-  }
-});
-
-// ============================================================
-//  通知系统
-// ============================================================
-
-// 获取我的通知列表
-app.get('/api/notifications', auth, async (req, res) => {
-  try {
-    const r = await pool.query(
-      'SELECT id, type, title, content, link, is_read, created_at FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50',
-      [req.user.id]
-    );
-    res.json(r.rows);
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 标记通知已读
-app.put('/api/notifications/:id/read', auth, async (req, res) => {
-  try {
-    await pool.query(
-      'UPDATE notifications SET is_read = true WHERE id = $1 AND user_id = $2',
-      [req.params.id, req.user.id]
-    );
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 标记所有通知已读
-app.put('/api/notifications/read-all', auth, async (req, res) => {
-  try {
-    await pool.query(
-      'UPDATE notifications SET is_read = true WHERE user_id = $1',
-      [req.user.id]
-    );
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// ============================================================
-//  托管前端文件
-// ============================================================
-
-app.use(express.static('.'));
-
-app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, 'index.html'));
-  }
-});
-
-// ============================================================
-//  启动服务器
-// ============================================================
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log('========================================');
-  console.log('  🌊 Forumlify 已启动');
-  console.log('  📡 http://localhost:' + PORT);
-  console.log('  📡 API: http://localhost:' + PORT + '/api');
-  console.log('========================================');
-});
+document.addEventListener('DOMContentLoaded', init);
