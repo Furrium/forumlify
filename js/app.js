@@ -14,7 +14,6 @@ function renderNav() {
     document.getElementById('avatarImg').src = currentUser.avatar_url ||
       'https://ui-avatars.com/api/?name=U&background=6366f1&color=fff';
     document.getElementById('adminEntry').style.display = currentUser.role === 'admin' ? 'block' : 'none';
-    // 更新未读消息数
     updateUnreadBadge();
   } else {
     authBtns.style.display = 'flex';
@@ -42,7 +41,6 @@ async function loadForumName() {
 function switchPage(page, param) {
   const url = new URL(window.location);
 
-  // 用户主页跳转
   if (page === 'user' && param) {
     url.searchParams.set('user', param);
     url.searchParams.delete('page');
@@ -52,7 +50,6 @@ function switchPage(page, param) {
     return;
   }
 
-  // 帖子详情跳转
   if (page === 'post' && param) {
     url.searchParams.set('post', param);
     url.searchParams.delete('page');
@@ -62,7 +59,6 @@ function switchPage(page, param) {
     return;
   }
 
-  // 其他页面（feed, settings, admin, new, messages）
   if (page === 'feed') {
     url.searchParams.delete('page');
     url.searchParams.delete('post');
@@ -132,7 +128,6 @@ let currentChatUsername = null;
 let currentConversationId = null;
 let messagePollInterval = null;
 
-// 更新未读消息数
 async function updateUnreadBadge() {
   const badge = document.getElementById('messageBadge');
   if (!badge || !currentUser) return;
@@ -145,18 +140,14 @@ async function updateUnreadBadge() {
     } else {
       badge.style.display = 'none';
     }
-  } catch (e) {
-    // 静默失败
-  }
+  } catch (e) {}
 }
 
-// 打开私信列表
 function openMessageList() {
   document.getElementById('messageListModal').classList.add('active');
   renderMessageList();
 }
 
-// 关闭私信列表
 function closeMessageList() {
   document.getElementById('messageListModal').classList.remove('active');
   if (messagePollInterval) {
@@ -165,7 +156,6 @@ function closeMessageList() {
   }
 }
 
-// 渲染私信列表
 async function renderMessageList() {
   const container = document.getElementById('messageListContent');
   container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
@@ -205,7 +195,6 @@ async function renderMessageList() {
   }
 }
 
-// 打开聊天窗口
 function openChat(conversationId, otherUserId, otherUsername) {
   currentConversationId = conversationId;
   currentChatUserId = otherUserId;
@@ -224,7 +213,6 @@ function openChat(conversationId, otherUserId, otherUsername) {
   }, 3000);
 }
 
-// 关闭聊天窗口
 function closeChat() {
   document.getElementById('chatModal').classList.remove('active');
   if (messagePollInterval) {
@@ -234,11 +222,9 @@ function closeChat() {
   currentConversationId = null;
   currentChatUserId = null;
   currentChatUsername = null;
-  // 刷新未读小红点
   updateUnreadBadge();
 }
 
-// 渲染消息
 async function renderMessages(conversationId, silent = false) {
   const container = document.getElementById('chatMessages');
   if (!silent) {
@@ -278,7 +264,6 @@ async function renderMessages(conversationId, silent = false) {
   }
 }
 
-// 发送消息
 async function sendMessage() {
   const input = document.getElementById('chatInput');
   const content = input.value.trim();
@@ -288,9 +273,7 @@ async function sendMessage() {
     await API.sendMessage(currentConversationId, content);
     input.value = '';
     renderMessages(currentConversationId);
-    // 刷新未读小红点
     updateUnreadBadge();
-    // 更新私信列表（如果有）
     if (document.getElementById('messageListModal').classList.contains('active')) {
       renderMessageList();
     }
@@ -299,7 +282,6 @@ async function sendMessage() {
   }
 }
 
-// 打开私信（从用户主页调用）
 async function openPrivateChat(otherUserId, otherUsername) {
   try {
     const result = await API.getOrCreateConversation(otherUserId);
@@ -323,7 +305,6 @@ async function openPrivateChat(otherUserId, otherUsername) {
   }
 }
 
-// 绑定私信按钮事件
 document.addEventListener('DOMContentLoaded', function() {
   const messageBtn = document.getElementById('messageBtn');
   if (messageBtn) {
@@ -334,19 +315,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // 私信列表关闭按钮
   const closeMessageListBtn = document.querySelector('#messageListModal .close');
   if (closeMessageListBtn) {
     closeMessageListBtn.addEventListener('click', closeMessageList);
   }
 
-  // 聊天关闭按钮
   const closeChatBtn = document.querySelector('#chatModal .close');
   if (closeChatBtn) {
     closeChatBtn.addEventListener('click', closeChat);
   }
 
-  // 聊天输入框 Enter 发送
   const chatInput = document.getElementById('chatInput');
   if (chatInput) {
     chatInput.addEventListener('keydown', function(e) {
@@ -357,7 +335,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // 点击模态框背景关闭
   document.querySelectorAll('.modal').forEach(m => {
     m.addEventListener('click', function(e) {
       if (e.target === this) {
@@ -404,6 +381,12 @@ async function init() {
   const postParam = urlParams.get('post');
   const pageParam = urlParams.get('page');
   const userParam = urlParams.get('user');
+  const postPageParam = urlParams.get('postpage');
+
+  // 读取分页参数
+  if (postPageParam) {
+    currentPage = parseInt(postPageParam) || 1;
+  }
 
   if (userParam) {
     showUserPage(userParam);
@@ -423,7 +406,6 @@ async function init() {
   //  绑定所有事件
   // ============================================================
 
-  // 1. 主题切换
   const themeToggle = document.getElementById('themeToggle');
   if (themeToggle) {
     themeToggle.addEventListener('click', function(e) {
@@ -434,7 +416,6 @@ async function init() {
     });
   }
 
-  // 2. 头像下拉菜单
   document.getElementById('avatarImg').addEventListener('click', function(e) {
     e.stopPropagation();
     document.getElementById('dropdownMenu').classList.toggle('show');
@@ -443,7 +424,6 @@ async function init() {
     document.getElementById('dropdownMenu').classList.remove('show');
   });
 
-  // 3. 导航菜单页面切换
   document.querySelectorAll('[data-page]').forEach(el => {
     el.addEventListener('click', function(e) {
       e.preventDefault();
@@ -457,14 +437,12 @@ async function init() {
     });
   });
 
-  // 4. 返回按钮
   document.querySelectorAll('.back-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       switchPage('feed');
     });
   });
 
-  // 5. 设置保存
   document.getElementById('settingsSave').addEventListener('click', async () => {
     if (!currentUser) { alert('请先登录'); return; }
     const username = document.getElementById('settingsUsername').value.trim();
@@ -488,18 +466,15 @@ async function init() {
     }
   });
 
-  // 6. 点击论坛名回首页
   document.getElementById('forumName').addEventListener('click', function() {
     switchPage('feed');
   });
 
-  // 7. 发帖按钮
   document.getElementById('fab').addEventListener('click', () => {
     if (!currentUser) { alert('请先登录'); return; }
     switchPage('new');
   });
 
-  // 8. 发帖提交
   document.getElementById('postSubmit').addEventListener('click', async () => {
     if (!currentUser || !currentUser.id) {
       alert('请先登录');
@@ -528,12 +503,10 @@ async function init() {
     }
   });
 
-  // 9. 验证码刷新
   document.getElementById('postCaptchaQuestion').addEventListener('click', function() {
     refreshCaptcha('post');
   });
 
-  // 10. 图片上传预览
   document.getElementById('imageUpload').addEventListener('change', function() {
     const preview = document.getElementById('imagePreview');
     preview.innerHTML = '';
@@ -549,7 +522,6 @@ async function init() {
     }
   });
 
-  // 11. 举报提交
   document.getElementById('reportSubmit').addEventListener('click', async () => {
     if (!reportTargetPostId) return;
     const reason = document.getElementById('reportReason').value;
@@ -563,7 +535,6 @@ async function init() {
     }
   });
 
-  // 12. 模态框关闭
   document.querySelectorAll('.modal .close').forEach(btn => {
     btn.addEventListener('click', function() {
       document.getElementById(this.dataset.modal).classList.remove('active');
@@ -575,7 +546,6 @@ async function init() {
     });
   });
 
-  // 13. 浏览器前进后退
   window.addEventListener('popstate', function(e) {
     const state = e.state || {};
     const page = state.page || 'feed';
@@ -590,12 +560,8 @@ async function init() {
     }
   });
 
-  // 14. 私信按钮（已在上面的 DOMContentLoaded 中绑定）
-  // 但如果用户登录后动态加载，需要重新绑定
-  // 这里再确保一次
   const messageBtn = document.getElementById('messageBtn');
   if (messageBtn) {
-    // 移除旧监听器（如果有）
     const newBtn = messageBtn.cloneNode(true);
     messageBtn.parentNode.replaceChild(newBtn, messageBtn);
     newBtn.addEventListener('click', function(e) {
