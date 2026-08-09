@@ -54,19 +54,34 @@ async function renderPostDetail(postId) {
       imagesHtml += '</div>';
     }
 
+    // Markdown 渲染（安全处理）
+    let renderedContent = post.content || '';
+    try {
+      if (typeof marked !== 'undefined' && marked.parse) {
+        renderedContent = marked.parse(renderedContent);
+      } else {
+        renderedContent = renderedContent.replace(/\n/g, '<br>');
+      }
+    } catch (e) {
+      renderedContent = renderedContent.replace(/\n/g, '<br>');
+    }
+
     let html = `
       <div class="post-detail-card">
         <div class="post-header">
           <img src="${avatar}" class="post-avatar" />
           <span class="post-username" style="cursor:pointer;color:var(--primary);" onclick="switchPage('user','${username}')">${username}</span>
           <span class="post-time">${time}</span>
-          ${currentUser && currentUser.id === post.user_id ? `<button class="btn-sm btn-danger" id="detailDeleteBtn" data-postid="${post.id}">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            删除
-          </button>` : ''}
+          ${post.edited_at ? `<span style="font-size:12px;color:var(--text-light);margin-left:8px;">（已编辑 ${new Date(post.edited_at).toLocaleString('zh-CN')}）</span>` : ''}
+          <div style="display:flex;gap:4px;margin-left:auto;">
+            ${currentUser && currentUser.id === post.user_id ? `<button class="btn-sm btn-secondary" id="editPostBtn" data-postid="${post.id}" style="padding:4px 10px;">✏️ 编辑</button>` : ''}
+            ${currentUser && currentUser.id === post.user_id ? `<button class="btn-sm btn-danger" id="detailDeleteBtn" data-postid="${post.id}" style="padding:4px 10px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              删除
+            </button>` : ''}
+          </div>
         </div>
-        <div class="post-title" style="font-size:20px;font-weight:700;margin:8px 0 12px;">${post.title || '无标题'}</div>
-        <div class="post-content" style="font-size:16px;line-height:1.8;">${(post.content || '').replace(/\n/g, '<br>')}</div>
+        <div class="post-content" style="font-size:16px;line-height:1.8;">${renderedContent}</div>
         ${imagesHtml}
       </div>
       <div style="margin-top:20px;font-size:14px;color:#64748b;">
@@ -109,6 +124,17 @@ async function renderPostDetail(postId) {
     document.getElementById('replyContent').value = '';
     document.getElementById('replyCaptchaInput').value = '';
     refreshCaptcha('reply');
+
+    // 编辑按钮
+    const editBtn = document.getElementById('editPostBtn');
+    if (editBtn) {
+      editBtn.addEventListener('click', function() {
+        const postId = this.dataset.postid;
+        const currentTitle = post.title || '';
+        const currentContent = post.content || '';
+        openEditModal(postId, currentTitle, currentContent);
+      });
+    }
 
     const deleteBtn = document.getElementById('detailDeleteBtn');
     if (deleteBtn) {
