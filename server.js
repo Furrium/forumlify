@@ -269,12 +269,15 @@ app.put('/api/users/:id', auth, async (req, res) => {
 });
 
 // ============================================================
-//  帖子接口
+//  帖子接口（含分页）
 // ============================================================
 
-// 获取帖子列表（支持按用户筛选）
+// 获取帖子列表（支持分页和用户筛选）
 app.get('/api/posts', async (req, res) => {
   const sort = req.query.sort === 'hot' ? 'updated_at' : 'created_at';
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 20;
+  const offset = (page - 1) * limit;
 
   try {
     let query = `
@@ -293,9 +296,29 @@ app.get('/api/posts', async (req, res) => {
       params.push(req.query.user_id);
     }
 
-    query += ` ORDER BY ${sort} DESC`;
+    // 获取总数
+    let countQuery = `
+      SELECT COUNT(*) as total FROM posts p
+    `;
+    if (req.query.user_id) {
+      countQuery += ' WHERE p.user_id = $1';
+    }
+    const countResult = await pool.query(countQuery, req.query.user_id ? [req.query.user_id] : []);
+    const total = parseInt(countResult.rows[0]?.total || 0);
+
+    query += ` ORDER BY ${sort} DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+
     const r = await pool.query(query, params);
-    res.json(r.rows);
+    res.json({
+      data: r.rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: '服务器错误' });
   }
@@ -671,13 +694,11 @@ app.post('/api/conversations', auth, async (req, res) => {
   }
 
   try {
-    // 检查用户是否存在
     const userCheck = await pool.query('SELECT id FROM users WHERE id = $1', [other_user_id]);
     if (userCheck.rows.length === 0) {
       return res.status(404).json({ error: '用户不存在' });
     }
 
-    // 查找已有会话
     const existing = await pool.query(`
       SELECT id FROM conversations
       WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)
@@ -687,7 +708,6 @@ app.post('/api/conversations', auth, async (req, res) => {
       return res.json({ id: existing.rows[0].id });
     }
 
-    // 创建新会话
     const r = await pool.query(`
       INSERT INTO conversations (user1_id, user2_id)
       VALUES ($1, $2)
@@ -705,7 +725,6 @@ app.get('/api/conversations/:id/messages', auth, async (req, res) => {
   const conversationId = req.params.id;
 
   try {
-    // 检查用户是否属于该会话
     const check = await pool.query(`
       SELECT id FROM conversations
       WHERE id = $1 AND (user1_id = $2 OR user2_id = $2)
@@ -715,7 +734,6 @@ app.get('/api/conversations/:id/messages', auth, async (req, res) => {
       return res.status(403).json({ error: '无权限访问此会话' });
     }
 
-    // 获取消息
     const r = await pool.query(`
       SELECT
         m.*,
@@ -727,7 +745,6 @@ app.get('/api/conversations/:id/messages', auth, async (req, res) => {
       ORDER BY m.created_at ASC
     `, [conversationId]);
 
-    // 标记所有消息为已读
     await pool.query(`
       UPDATE messages SET is_read = true
       WHERE conversation_id = $1 AND sender_id != $2 AND is_read = false
@@ -749,7 +766,6 @@ app.post('/api/conversations/:id/messages', auth, async (req, res) => {
   }
 
   try {
-    // 检查用户是否属于该会话
     const check = await pool.query(`
       SELECT id FROM conversations
       WHERE id = $1 AND (user1_id = $2 OR user2_id = $2)
@@ -759,20 +775,17 @@ app.post('/api/conversations/:id/messages', auth, async (req, res) => {
       return res.status(403).json({ error: '无权限访问此会话' });
     }
 
-    // 插入消息
     const r = await pool.query(`
       INSERT INTO messages (conversation_id, sender_id, content)
       VALUES ($1, $2, $3)
       RETURNING *
     `, [conversationId, req.user.id, content]);
 
-    // 更新会话最后消息时间
     await pool.query(`
       UPDATE conversations SET last_message_at = NOW()
       WHERE id = $1
     `, [conversationId]);
 
-    // 获取发送者信息
     const userInfo = await pool.query(`
       SELECT username, avatar_url FROM users WHERE id = $1
     `, [req.user.id]);
