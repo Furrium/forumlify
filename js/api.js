@@ -19,7 +19,9 @@ function apiFetch(path, options = {}) {
 }
 
 const API = {
-  // 认证
+  // ============================================================
+  //  认证
+  // ============================================================
   async login(email, password) {
     const data = await apiFetch('/auth/login', {
       method: 'POST',
@@ -54,7 +56,9 @@ const API = {
     return data;
   },
 
-  // 帖子
+  // ============================================================
+  //  帖子
+  // ============================================================
   async getPosts(sort) {
     const data = await apiFetch('/posts?sort=' + (sort || 'latest'));
     if (data.error) throw new Error(data.error);
@@ -82,7 +86,9 @@ const API = {
     return data;
   },
 
-  // 回复
+  // ============================================================
+  //  回复
+  // ============================================================
   async getReplies(postId) {
     const data = await apiFetch('/posts/' + postId + '/replies');
     if (data.error) throw new Error(data.error);
@@ -104,7 +110,9 @@ const API = {
     return data;
   },
 
-  // 用户管理
+  // ============================================================
+  //  用户管理
+  // ============================================================
   async getUsers() {
     const data = await apiFetch('/users');
     if (data.error) throw new Error(data.error);
@@ -120,7 +128,9 @@ const API = {
     return data;
   },
 
-  // 举报
+  // ============================================================
+  //  举报
+  // ============================================================
   async getReports() {
     const data = await apiFetch('/reports');
     if (data.error) throw new Error(data.error);
@@ -145,14 +155,18 @@ const API = {
     return data;
   },
 
-  // 统计
+  // ============================================================
+  //  统计
+  // ============================================================
   async getStats() {
     const data = await apiFetch('/stats');
     if (data.error) throw new Error(data.error);
     return data;
   },
 
-  // 友情链接
+  // ============================================================
+  //  友情链接
+  // ============================================================
   async getLinks() {
     const data = await apiFetch('/links');
     if (data.error) throw new Error(data.error);
@@ -174,7 +188,9 @@ const API = {
     return data;
   },
 
-  // 事件日志
+  // ============================================================
+  //  事件日志
+  // ============================================================
   async getEventLogs() {
     const data = await apiFetch('/event-logs');
     if (data.error) throw new Error(data.error);
@@ -190,7 +206,9 @@ const API = {
     } catch (e) { /* 静默失败 */ }
   },
 
-  // 论坛设置
+  // ============================================================
+  //  论坛设置
+  // ============================================================
   async getSettings() {
     const data = await apiFetch('/settings');
     if (data.error) throw new Error(data.error);
@@ -201,6 +219,47 @@ const API = {
     const data = await apiFetch('/settings', {
       method: 'PUT',
       body: JSON.stringify({ forum_name })
+    });
+    if (data.error) throw new Error(data.error);
+    return data;
+  },
+
+  // ============================================================
+  //  私信
+  // ============================================================
+  async getConversations() {
+    const data = await apiFetch('/conversations');
+    if (data.error) throw new Error(data.error);
+    return data || [];
+  },
+
+  async getOrCreateConversation(other_user_id) {
+    const data = await apiFetch('/conversations', {
+      method: 'POST',
+      body: JSON.stringify({ other_user_id })
+    });
+    if (data.error) throw new Error(data.error);
+    return data;
+  },
+
+  async getMessages(conversationId) {
+    const data = await apiFetch('/conversations/' + conversationId + '/messages');
+    if (data.error) throw new Error(data.error);
+    return data || [];
+  },
+
+  async sendMessage(conversationId, content) {
+    const data = await apiFetch('/conversations/' + conversationId + '/messages', {
+      method: 'POST',
+      body: JSON.stringify({ content })
+    });
+    if (data.error) throw new Error(data.error);
+    return data;
+  },
+
+  async markMessageRead(messageId) {
+    const data = await apiFetch('/messages/' + messageId + '/read', {
+      method: 'PUT'
     });
     if (data.error) throw new Error(data.error);
     return data;
