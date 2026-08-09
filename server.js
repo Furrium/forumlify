@@ -64,6 +64,40 @@ const admin = async (req, res, next) => {
 };
 
 // ============================================================
+//  论坛设置接口（新增）
+// ============================================================
+
+// 获取论坛设置（公开）
+app.get('/api/settings', async (req, res) => {
+  try {
+    const r = await pool.query('SELECT key, value FROM settings');
+    const settings = {};
+    r.rows.forEach(row => { settings[row.key] = row.value; });
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// 更新论坛设置（管理员）
+app.put('/api/settings', auth, admin, async (req, res) => {
+  const { forum_name } = req.body;
+  if (!forum_name || forum_name.trim().length === 0) {
+    return res.status(400).json({ error: '论坛名称不能为空' });
+  }
+  try {
+    await pool.query(
+      `INSERT INTO settings (key, value) VALUES ($1, $2)
+       ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()`,
+      ['forum_name', forum_name.trim()]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: '更新失败，请稍后重试' });
+  }
+});
+
+// ============================================================
 //  认证接口
 // ============================================================
 
@@ -79,7 +113,6 @@ app.post('/api/auth/register', async (req, res) => {
   }
 
   try {
-    // 检查是不是第一个用户
     const countResult = await pool.query('SELECT COUNT(*) FROM users');
     const isFirstUser = parseInt(countResult.rows[0].count) === 0;
 
@@ -191,7 +224,6 @@ app.put('/api/users/:id/role', auth, admin, async (req, res) => {
   }
 
   try {
-    // 不能修改自己的角色
     if (userId === req.user.id) {
       return res.status(400).json({ error: '不能修改自己的角色' });
     }
@@ -292,13 +324,11 @@ app.post('/api/posts', auth, async (req, res) => {
 // 删除帖子
 app.delete('/api/posts/:id', auth, async (req, res) => {
   try {
-    // 检查帖子是否存在及权限
     const post = await pool.query('SELECT user_id FROM posts WHERE id = $1', [req.params.id]);
     if (post.rows.length === 0) {
       return res.status(404).json({ error: '帖子不存在' });
     }
 
-    // 检查当前用户权限（本人或管理员）
     const user = await pool.query('SELECT role FROM users WHERE id = $1', [req.user.id]);
     if (post.rows[0].user_id !== req.user.id && user.rows[0]?.role !== 'admin') {
       return res.status(403).json({ error: '无权限删除此帖子' });
@@ -347,7 +377,6 @@ app.post('/api/posts/:id/replies', auth, async (req, res) => {
        RETURNING *`,
       [req.params.id, req.user.id, content]
     );
-    // 更新帖子 updated_at
     await pool.query('UPDATE posts SET updated_at = NOW() WHERE id = $1', [req.params.id]);
     res.json(r.rows[0]);
   } catch (err) {
@@ -410,7 +439,6 @@ app.post('/api/reports', auth, async (req, res) => {
   }
 
   try {
-    // 检查是否已举报过
     const existing = await pool.query(
       'SELECT id FROM reports WHERE post_id = $1 AND reporter_id = $2 AND status = $3',
       [post_id, req.user.id, 'pending']
@@ -548,7 +576,6 @@ app.post('/api/event-logs', auth, async (req, res) => {
     );
     res.json({ success: true });
   } catch (err) {
-    // 日志记录失败不影响主流程
     res.json({ success: true });
   }
 });
@@ -568,7 +595,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     cb(null, allowed.includes(file.mimetype));
@@ -583,13 +610,11 @@ app.post('/api/upload', auth, upload.single('file'), (req, res) => {
 });
 
 // ============================================================
-//  托管前端文件（支持所有路由回到 index.html）
+//  托管前端文件
 // ============================================================
 
-// 托管静态文件
 app.use(express.static('.'));
 
-// 所有非 API 请求返回 index.html（支持前端路由）
 app.get('*', (req, res) => {
   if (!req.path.startsWith('/api')) {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -600,7 +625,7 @@ app.get('*', (req, res) => {
 //  启动服务器
 // ============================================================
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log('========================================');
   console.log('  🌊 Forumlify 已启动');
   console.log('  📡 http://localhost:' + PORT);
