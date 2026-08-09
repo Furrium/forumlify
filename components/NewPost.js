@@ -1,7 +1,7 @@
 'use client';
 
 // 发布新帖页
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { API, generateCaptcha, uploadImage } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
@@ -23,13 +23,17 @@ export default function NewPost() {
     try {
       const newPreviews = [];
       for (const file of files) {
+        if (!file.type.startsWith('image/')) continue;
+        if (file.size > 5 * 1024 * 1024) {
+          alert('图片 ' + file.name + ' 超过 5MB，请压缩后上传');
+          continue;
+        }
         const dataUrl = await new Promise((resolve) => {
           const reader = new FileReader();
           reader.onload = (e) => resolve(e.target.result);
           reader.readAsDataURL(file);
         });
         newPreviews.push(dataUrl);
-        // 直接上传拿 URL
         const url = await uploadImage(file);
         setImages((prev) => [...prev, url]);
       }
@@ -39,6 +43,16 @@ export default function NewPost() {
     } finally {
       setUploading(false);
     }
+  };
+
+  // 拖拽上传
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef(null);
+  const dropZoneStyle = {
+    border: '2px dashed ' + (dragOver ? 'var(--primary)' : 'var(--border)'),
+    borderRadius: 8, padding: 24, textAlign: 'center', cursor: 'pointer',
+    transition: 'all 0.3s', margin: '8px 0 12px',
+    background: dragOver ? 'var(--primary-bg)' : 'var(--bg)',
   };
 
   const handleSubmit = async () => {
@@ -87,16 +101,29 @@ export default function NewPost() {
         />
         <div id="imagePreview" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '8px 0' }}>
           {previews.map((src, i) => (
-            <img key={i} src={src} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4, border: '1px solid #e2e8f0' }} />
+            <img key={i} src={src} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)' }} />
           ))}
+        </div>
+        <div
+          id="dropZone"
+          style={dropZoneStyle}
+          onClick={() => fileInputRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+          onDrop={(e) => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files) handleFiles(Array.from(e.dataTransfer.files)); }}
+        >
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+            {uploading ? '上传中...' : (dragOver ? '松开上传' : '📷 点击或拖拽上传图片')}
+          </div>
         </div>
         <input
           type="file"
+          id="fileInput"
           accept="image/*"
           multiple
-          disabled={uploading}
+          ref={fileInputRef}
+          style={{ display: 'none' }}
           onChange={(e) => { if (e.target.files) handleFiles(Array.from(e.target.files)); }}
-          style={{ margin: '8px 0 12px' }}
         />
         <div className="captcha-row" style={{ margin: '12px 0' }}>
           <span onClick={() => setCaptcha(generateCaptcha())} style={{ cursor: 'pointer' }}>

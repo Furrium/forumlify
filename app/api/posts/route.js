@@ -1,4 +1,4 @@
-// GET /api/posts, POST /api/posts — 支持 ?sort= & ?user_id= 筛选
+// GET /api/posts, POST /api/posts — 支持 ?sort= & ?user_id= & 分页
 import pool from '@/lib/db';
 import { getUser } from '@/lib/auth';
 
@@ -6,9 +6,22 @@ export async function GET(req) {
   const url = new URL(req.url);
   const sort = url.searchParams.get('sort') === 'hot' ? 'updated_at' : 'created_at';
   const userId = url.searchParams.get('user_id');
+  const page = parseInt(url.searchParams.get('page')) || 1;
+  const limit = parseInt(url.searchParams.get('limit')) || 20;
+  const offset = (page - 1) * limit;
 
   try {
-    let query = `
+    const params = [];
+    let where = '';
+    if (userId) {
+      where = ' WHERE p.user_id = $1';
+      params.push(userId);
+    }
+
+    const countResult = await pool.query(`SELECT COUNT(*) as total FROM posts p${where}`, params);
+    const total = parseInt(countResult.rows[0]?.total || 0);
+
+    const r = await pool.query(`
       SELECT
         p.*,
         u.username,
@@ -16,15 +29,15 @@ export async function GET(req) {
         (SELECT COUNT(*) FROM replies WHERE post_id = p.id) as reply_count
       FROM posts p
       JOIN users u ON p.user_id = u.id
-    `;
-    const params = [];
-    if (userId) {
-      query += ' WHERE p.user_id = $1';
-      params.push(userId);
-    }
-    query += ` ORDER BY ${sort} DESC`;
-    const r = await pool.query(query, params);
-    return Response.json(r.rows);
+      ${where}
+      ORDER BY ${sort} DESC
+      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+    `, [...params, limit, offset]);
+
+    return Response.json({
+      data: r.rows,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
   } catch {
     return Response.json({ error: '服务器错误' }, { status: 500 });
   }

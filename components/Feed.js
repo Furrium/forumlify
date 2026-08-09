@@ -15,26 +15,34 @@ export default function Feed({ onOpenModal, onReport }) {
   const { currentUser, sort, setSort, openPost, openUser, navigate, refreshKey } = useApp();
   const [posts, setPosts] = useState(null);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const PAGE_SIZE = 20;
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (targetPage) => {
     setPosts(null);
     setError(null);
     try {
-      const data = await API.getPosts(sort);
-      setPosts(data || []);
+      const result = await API.getPosts(sort, null, targetPage, PAGE_SIZE);
+      setPosts(result.data || []);
+      setTotalPages(result.pagination?.totalPages || 1);
+      setPage(result.pagination?.page || 1);
     } catch (err) {
       setError(err.message);
       setPosts([]);
     }
   }, [sort, refreshKey]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(page); }, [load]);
+
+  // 排序切换时回第一页
+  useEffect(() => { setPage(1); }, [sort]);
 
   const handleDelete = async (postId) => {
     if (!confirm('确定要删除这条帖子吗？')) return;
     try {
       await API.deletePost(postId);
-      load();
+      load(page);
     } catch (err) {
       alert('删除失败：' + err.message);
     }
@@ -113,6 +121,43 @@ export default function Feed({ onOpenModal, onReport }) {
           })
         )}
       </div>
+      {totalPages > 1 && posts && posts.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, padding: '16px 0', marginTop: 8, borderTop: '1px solid var(--border)', flexWrap: 'wrap' }}>
+          <button
+            className="page-btn"
+            disabled={page <= 1}
+            onClick={() => load(page - 1)}
+            style={{ padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 4, background: 'var(--surface)', color: 'var(--text)', cursor: page <= 1 ? 'not-allowed' : 'pointer', fontSize: 13, opacity: page <= 1 ? 0.4 : 1 }}
+          >
+            &laquo;
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((i) => (
+            <button
+              key={i}
+              className="page-btn"
+              disabled={i === page}
+              onClick={() => load(i)}
+              style={{
+                padding: '6px 10px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 13, minWidth: 32, textAlign: 'center',
+                background: i === page ? 'var(--primary)' : 'var(--surface)',
+                color: i === page ? '#fff' : 'var(--text)',
+                cursor: i === page ? 'default' : 'pointer',
+                borderColor: i === page ? 'var(--primary)' : 'var(--border)',
+              }}
+            >
+              {i}
+            </button>
+          ))}
+          <button
+            className="page-btn"
+            disabled={page >= totalPages}
+            onClick={() => load(page + 1)}
+            style={{ padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 4, background: 'var(--surface)', color: 'var(--text)', cursor: page >= totalPages ? 'not-allowed' : 'pointer', fontSize: 13, opacity: page >= totalPages ? 0.4 : 1 }}
+          >
+            &raquo;
+          </button>
+        </div>
+      )}
     </main>
   );
 }

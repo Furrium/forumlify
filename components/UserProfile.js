@@ -29,8 +29,8 @@ export default function UserProfile({ username }) {
         return;
       }
       setUser(u);
-      const userPosts = await API.getPosts('latest', u.id);
-      setPosts(userPosts || []);
+      const result = await API.getPosts('latest', u.id);
+      setPosts(result.data || []);
     } catch (err) {
       setError(err.message || '加载失败');
     }
