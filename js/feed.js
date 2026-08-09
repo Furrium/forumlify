@@ -3,27 +3,26 @@
 // ============================================================
 
 let currentSort = 'latest';
-
 let totalPages = 1;
 const PAGE_SIZE = 20;
 
 function renderFeed() {
   const container = document.getElementById('postList');
   container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
-  API.getPosts(currentSort, currentPage, PAGE_SIZE).then(result => {
+  API.getPosts(currentSort, currentPageNum, PAGE_SIZE).then(result => {
     const posts = result.data || [];
     const pagination = result.pagination || { total: 0, totalPages: 1, page: 1 };
     totalPages = pagination.totalPages || 1;
-    currentPage = pagination.page || 1;
+    currentPageNum = pagination.page || 1;
 
-    if (posts.length === 0 && currentPage === 1) {
+    if (posts.length === 0 && currentPageNum === 1) {
       container.innerHTML =
         '<div style="text-align:center;color:#94a3b8;padding:60px 0;">✨ 还没有帖子，快来发布第一条吧！</div>';
       return;
     }
 
-    if (posts.length === 0 && currentPage > 1) {
-      currentPage = 1;
+    if (posts.length === 0 && currentPageNum > 1) {
+      currentPageNum = 1;
       renderFeed();
       return;
     }
@@ -73,32 +72,26 @@ function renderFeed() {
     });
     container.innerHTML = html;
 
-    // ============================================================
-    //  完整分页控件
-    // ============================================================
+    // 分页控件
     if (totalPages > 1) {
       let paginationHtml = `
         <div style="display:flex;justify-content:center;align-items:center;gap:6px;padding:16px 0;margin-top:8px;border-top:1px solid var(--border);flex-wrap:wrap;">
-          <button class="page-btn" data-page="${currentPage - 1}" ${currentPage <= 1 ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}
+          <button class="page-btn" data-page="${currentPageNum - 1}" ${currentPageNum <= 1 ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}
                   style="padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">
             &laquo;
           </button>
       `;
 
-      // 显示页码按钮
-      let startPage = Math.max(1, currentPage - 4);
-      let endPage = Math.min(totalPages, currentPage + 4);
+      let startPage = Math.max(1, currentPageNum - 4);
+      let endPage = Math.min(totalPages, currentPageNum + 4);
 
-      // 如果当前页靠近开头，显示更多后面的页
-      if (currentPage <= 4) {
+      if (currentPageNum <= 4) {
         endPage = Math.min(totalPages, 9);
       }
-      // 如果当前页靠近结尾，显示更多前面的页
-      if (currentPage > totalPages - 4) {
+      if (currentPageNum > totalPages - 4) {
         startPage = Math.max(1, totalPages - 8);
       }
 
-      // 第一页
       if (startPage > 1) {
         paginationHtml += `<button class="page-btn" data-page="1" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">1</button>`;
         if (startPage > 2) {
@@ -107,7 +100,7 @@ function renderFeed() {
       }
 
       for (let i = startPage; i <= endPage; i++) {
-        const isActive = i === currentPage;
+        const isActive = i === currentPageNum;
         paginationHtml += `
           <button class="page-btn" data-page="${i}" ${isActive ? 'disabled style="background:var(--primary);color:#fff;cursor:default;border-color:var(--primary);"' : ''}
                   style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:${isActive ? 'var(--primary)' : 'var(--surface)'};color:${isActive ? '#fff' : 'var(--text)'};cursor:${isActive ? 'default' : 'pointer'};font-size:13px;min-width:32px;text-align:center;">
@@ -124,7 +117,7 @@ function renderFeed() {
       }
 
       paginationHtml += `
-          <button class="page-btn" data-page="${currentPage + 1}" ${currentPage >= totalPages ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}
+          <button class="page-btn" data-page="${currentPageNum + 1}" ${currentPageNum >= totalPages ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}
                   style="padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">
             &raquo;
           </button>
@@ -135,12 +128,11 @@ function renderFeed() {
       `;
       container.innerHTML += paginationHtml;
 
-      // 绑定页码点击事件
       container.querySelectorAll('.page-btn:not([disabled])').forEach(btn => {
         btn.addEventListener('click', function() {
           const page = parseInt(this.dataset.page);
           if (page >= 1 && page <= totalPages) {
-            currentPage = page;
+            currentPageNum = page;
             const url = new URL(window.location);
             url.searchParams.set('postpage', page);
             window.history.pushState({}, '', url);
@@ -150,7 +142,6 @@ function renderFeed() {
       });
     }
 
-    // 事件绑定
     container.querySelectorAll('.post-card').forEach(card => {
       card.addEventListener('click', function(e) {
         if (e.target.closest('button')) return;
@@ -214,12 +205,10 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     this.classList.add('active');
     currentSort = this.dataset.sort;
-    currentPage = 1;
+    currentPageNum = 1;
     const url = new URL(window.location);
     url.searchParams.delete('postpage');
     window.history.pushState({}, '', url);
-    if (currentPage === 'feed') {
-      renderFeed();
-    }
+    renderFeed();
   });
 });
