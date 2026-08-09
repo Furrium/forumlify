@@ -1107,3 +1107,38 @@ svg {
 @media (max-width: 480px) {
   .forum-name {
     font-size: 
+
+     /* ===== 独立页面内容居中 ===== */
+.page-slide .page-header,
+.page-slide > div,
+#postDetailContent,
+#replyArea {
+  max-width: 700px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* 帖子详情页内容居中 */
+#pagePost .post-detail-card {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* 设置页面居中 */
+#pageSettings > div {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* 发布新帖居中 */
+#pageNew > div {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* 管理后台居中 */
+#pageAdmin .admin-tabs,
+#adminContent {
+  max-width: 900px;
+  margin: 0 auto;
+}
