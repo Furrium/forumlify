@@ -239,7 +239,10 @@
       <h2 style="margin-bottom:16px;">登录</h2>
       <input type="email" id="loginEmail" placeholder="邮箱" />
       <input type="password" id="loginPassword" placeholder="密码" />
-      <button id="loginSubmit" class="btn-primary" style="width:100%;">登录</button>
+      <div style="text-align:center;margin-top:8px;">
+        <a href="#" id="forgotPasswordLink" style="color:var(--primary);font-size:13px;text-decoration:none;">忘记密码？</a>
+      </div>
+      <button id="loginSubmit" class="btn-primary" style="width:100%;margin-top:8px;">登录</button>
     </div>
   </div>
 
@@ -280,6 +283,22 @@
         <option value="other">其他</option>
       </select>
       <button id="reportSubmit" class="btn-primary" style="width:100%;">提交举报</button>
+    </div>
+  </div>
+
+  <!-- 忘记密码 -->
+  <div id="forgotPasswordModal" class="modal">
+    <div class="modal-content">
+      <span class="close" data-modal="forgotPasswordModal">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </span>
+      <h2 style="margin-bottom:16px;">🔑 重置密码</h2>
+      <p style="font-size:14px;color:var(--text-secondary);margin-bottom:16px;">输入你的邮箱和一个未使用的恢复码</p>
+      <input type="email" id="resetEmail" placeholder="邮箱" />
+      <input type="text" id="resetRecoveryCode" placeholder="恢复码（格式：ABCD-1234-EFGH-5678）" style="font-family:monospace;letter-spacing:0.5px;" />
+      <input type="password" id="resetNewPassword" placeholder="新密码（至少6位）" />
+      <button id="resetPasswordSubmit" class="btn-primary" style="width:100%;">重置密码</button>
+      <div id="resetStatus" style="font-size:14px;margin-top:8px;text-align:center;"></div>
     </div>
   </div>
 
