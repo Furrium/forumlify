@@ -48,7 +48,7 @@ document.getElementById('registerSubmit').addEventListener('click', async () => 
   if (password.length < 6) { alert('密码至少6位'); return; }
   if (parseInt(captchaInput) !== captchaAnswer) { alert('验证码错误，请重新计算'); refreshCaptcha('reg'); return; }
   try {
-    await API.register(email, password, username);
+    const result = await API.register(email, password, username);
     document.getElementById('registerModal').classList.remove('active');
     document.getElementById('regUsername').value = '';
     document.getElementById('regEmail').value = '';
@@ -56,9 +56,20 @@ document.getElementById('registerSubmit').addEventListener('click', async () => 
     document.getElementById('regCaptchaInput').value = '';
     alert('注册成功！请登录');
 
-    const result = await API.login(email, password);
-    if (result.user) {
-      currentUser = result.user;
+    // 生成恢复码
+    try {
+      const recoveryData = await API.generateRecoveryCodes();
+      if (recoveryData.codes) {
+        showRecoveryCodesModal(recoveryData.codes);
+      }
+    } catch (e) {
+      console.warn('恢复码生成失败:', e);
+    }
+
+    const loginResult = await API.login(email, password);
+    if (loginResult.user) {
+      const profile = await AUTH.getUserProfile(loginResult.user.id);
+      currentUser = { ...loginResult.user, ...profile };
       API.logEvent('register').catch(() => {});
       renderNav();
       if (currentPage === 'admin' && currentUser.role !== 'admin') {
