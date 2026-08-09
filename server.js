@@ -304,6 +304,81 @@ app.put('/api/users/:id/avatar', auth, async (req, res) => {
 });
 
 // ============================================================
+//  修改密码和邮箱
+// ============================================================
+
+// 修改密码
+app.put('/api/users/:id/password', auth, async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const userId = req.params.id;
+
+  if (userId !== req.user.id) {
+    return res.status(403).json({ error: '无权限' });
+  }
+  if (!oldPassword || !newPassword) {
+    return res.status(400).json({ error: '请填写完整信息' });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: '新密码至少6位' });
+  }
+
+  try {
+    const user = await pool.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
+    if (user.rows.length === 0) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+
+    const valid = await bcrypt.compare(oldPassword, user.rows[0].password_hash);
+    if (!valid) {
+      return res.status(400).json({ error: '当前密码错误' });
+    }
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, userId]);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: '修改失败，请稍后重试' });
+  }
+});
+
+// 修改邮箱
+app.put('/api/users/:id/email', auth, async (req, res) => {
+  const { password, newEmail } = req.body;
+  const userId = req.params.id;
+
+  if (userId !== req.user.id) {
+    return res.status(403).json({ error: '无权限' });
+  }
+  if (!password || !newEmail) {
+    return res.status(400).json({ error: '请填写完整信息' });
+  }
+
+  try {
+    const user = await pool.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
+    if (user.rows.length === 0) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+
+    const valid = await bcrypt.compare(password, user.rows[0].password_hash);
+    if (!valid) {
+      return res.status(400).json({ error: '密码错误' });
+    }
+
+    const existing = await pool.query('SELECT id FROM users WHERE email = $1 AND id != $2', [newEmail, userId]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: '邮箱已被占用' });
+    }
+
+    await pool.query('UPDATE users SET email = $1 WHERE id = $2', [newEmail, userId]);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: '修改失败，请稍后重试' });
+  }
+});
+
+// ============================================================
 //  帖子接口（含分页）
 // ============================================================
 
