@@ -20,6 +20,16 @@
           <button id="registerBtn" class="btn-primary">注册</button>
         </div>
         <div id="userDropdown" style="display:none">
+          <button id="messageBtn" class="theme-toggle" title="私信" style="position:relative;padding:6px 8px;background:none;border:none;cursor:pointer;color:var(--text-secondary);border-radius:4px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span id="messageBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;border-radius:50%;padding:2px 6px;font-size:10px;font-weight:600;min-width:18px;text-align:center;line-height:1.4;"></span>
+          </button>
+          <a href="#" id="themeToggle" style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:4px;color:var(--text-secondary);text-decoration:none;">
+            <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            <span id="themeLabel" style="font-size:13px;">暗色模式</span>
+          </a>
           <img id="avatarImg" class="avatar" src="" alt="avatar" />
           <div class="dropdown-menu" id="dropdownMenu">
             <a href="#" data-page="messages">
@@ -33,13 +43,6 @@
             <a href="#" data-page="admin" id="adminEntry" style="display:none">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
               管理后台
-            </a>
-            <hr />
-            <a href="#" id="themeToggle" style="display:flex;align-items:center;gap:8px;">
-              <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-              </svg>
-              <span id="themeLabel">暗色模式</span>
             </a>
             <hr />
             <a href="#" id="logoutBtn">
@@ -211,6 +214,7 @@
   </div>
 
   <!-- ===== 模态框 ===== -->
+  <!-- 登录 -->
   <div id="loginModal" class="modal">
     <div class="modal-content">
       <span class="close" data-modal="loginModal">
@@ -223,6 +227,7 @@
     </div>
   </div>
 
+  <!-- 注册 -->
   <div id="registerModal" class="modal">
     <div class="modal-content">
       <span class="close" data-modal="registerModal">
@@ -240,6 +245,7 @@
     </div>
   </div>
 
+  <!-- 举报 -->
   <div id="reportModal" class="modal">
     <div class="modal-content">
       <span class="close" data-modal="reportModal">
@@ -258,6 +264,39 @@
         <option value="other">其他</option>
       </select>
       <button id="reportSubmit" class="btn-primary" style="width:100%;">提交举报</button>
+    </div>
+  </div>
+
+  <!-- ===== 私信列表模态框 ===== -->
+  <div id="messageListModal" class="modal">
+    <div class="modal-content" style="max-width:480px;max-height:80vh;padding:0;overflow:hidden;display:flex;flex-direction:column;border-radius:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0;">
+        <h2 style="font-size:18px;margin:0;">✉️ 私信</h2>
+        <span class="close" data-modal="messageListModal" style="font-size:24px;cursor:pointer;color:var(--text-light);line-height:1;">&times;</span>
+      </div>
+      <div id="messageListContent" style="flex:1;overflow-y:auto;padding:0;">
+        <div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 聊天模态框 ===== -->
+  <div id="chatModal" class="modal">
+    <div class="modal-content" style="max-width:480px;max-height:80vh;padding:0;overflow:hidden;display:flex;flex-direction:column;border-radius:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button onclick="closeChat()" style="background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:18px;">←</button>
+          <span id="chatTitle" style="font-weight:600;font-size:16px;">用户</span>
+        </div>
+        <span class="close" data-modal="chatModal" style="font-size:24px;cursor:pointer;color:var(--text-light);line-height:1;">&times;</span>
+      </div>
+      <div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px;min-height:300px;max-height:400px;">
+        <div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>
+      </div>
+      <div style="display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;">
+        <input type="text" id="chatInput" placeholder="输入消息..." style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg);color:var(--text);outline:none;" />
+        <button onclick="sendMessage()" class="btn-primary" style="padding:8px 16px;">发送</button>
+      </div>
     </div>
   </div>
 
