@@ -3,9 +3,10 @@
 // 导航栏：论坛名、登录/注册按钮、用户下拉菜单、主题切换
 import { useState } from 'react';
 import { useApp } from './AppProvider';
+import { Icon } from './Icons';
 
 export default function Navbar({ onOpenModal }) {
-  const { currentUser, forumName, theme, toggleTheme, navigate, logout, setCurrentUser } = useApp();
+  const { currentUser, forumName, theme, toggleTheme, navigate, logout } = useApp();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const avatarSrc = currentUser?.avatar_url ||
@@ -45,10 +46,16 @@ export default function Navbar({ onOpenModal }) {
               />
               {menuOpen && (
                 <div className="dropdown-menu show" onClick={(e) => e.stopPropagation()}>
-                  <a href="#" onClick={(e) => { e.preventDefault(); goPage('messages'); }}>消息</a>
-                  <a href="#" onClick={(e) => { e.preventDefault(); goPage('settings'); }}>设置</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); goPage('messages'); }}>
+                    <Icon name="message" /> 消息
+                  </a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); goPage('settings'); }}>
+                    <Icon name="settings" /> 设置
+                  </a>
                   {currentUser.role === 'admin' && (
-                    <a href="#" onClick={(e) => { e.preventDefault(); goPage('admin'); }}>管理后台</a>
+                    <a href="#" onClick={(e) => { e.preventDefault(); goPage('admin'); }}>
+                      <Icon name="shieldAlert" /> 管理后台
+                    </a>
                   )}
                   <hr />
                   <a
@@ -59,7 +66,7 @@ export default function Navbar({ onOpenModal }) {
                       setMenuOpen(false);
                     }}
                   >
-                    {theme === 'dark' ? '☀️ 亮色模式' : '🌙 暗色模式'}
+                    <Icon name={theme === 'dark' ? 'sun' : 'moon'} /> {theme === 'dark' ? '亮色模式' : '暗色模式'}
                   </a>
                   <hr />
                   <a
@@ -72,7 +79,7 @@ export default function Navbar({ onOpenModal }) {
                       }
                     }}
                   >
-                    退出
+                    <Icon name="logout" /> 退出
                   </a>
                 </div>
               )}

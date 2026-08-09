@@ -3,6 +3,7 @@
 // 管理后台 - 举报处理
 import { useEffect, useState } from 'react';
 import { API } from '@/lib/api';
+import { Icon } from '../Icons';
 
 const STATUS = { pending: '⏳ 待处理', approved: '✅ 已删除', rejected: '❌ 已驳回' };
 
@@ -53,8 +54,12 @@ export default function AdminReports() {
       )}
       {r.status === 'pending' && (
         <div className="report-actions">
-          <button className="btn-sm btn-danger" onClick={() => handleAction(r, 'approve')}>删除帖子</button>
-          <button className="btn-sm btn-secondary" onClick={() => handleAction(r, 'reject')}>驳回举报</button>
+          <button className="btn-sm btn-danger" onClick={() => handleAction(r, 'approve')}>
+            <Icon name="trash" size={12} /> 删除帖子
+          </button>
+          <button className="btn-sm btn-secondary" onClick={() => handleAction(r, 'reject')}>
+            <Icon name="close" size={12} /> 驳回举报
+          </button>
         </div>
       )}
     </div>

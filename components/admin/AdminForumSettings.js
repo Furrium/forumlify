@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { API } from '@/lib/api';
 import { useApp } from '../AppProvider';
+import { Icon } from '../Icons';
 
 export default function AdminForumSettings() {
   const { updateForumName } = useApp();
@@ -29,7 +30,7 @@ export default function AdminForumSettings() {
 
   return (
     <>
-      <h3 style={{ marginBottom: 16 }}>⚙️ 论坛设置</h3>
+      <h3 style={{ marginBottom: 16 }}><Icon name="settings" size={16} /> 论坛设置</h3>
       <div style={{ maxWidth: 400 }}>
         <label style={{ fontWeight: 600, fontSize: 14, display: 'block', marginBottom: 6 }}>论坛名称</label>
         <input

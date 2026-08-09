@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { API, generateCaptcha, uploadImage } from '@/lib/api';
 import { useApp } from './AppProvider';
+import { Icon } from './Icons';
 
 export default function NewPost() {
   const { currentUser, navigate, refresh } = useApp();
@@ -67,7 +68,7 @@ export default function NewPost() {
   return (
     <div className="page-slide active">
       <div className="page-header" style={{ maxWidth: 600, margin: '0 auto', width: '100%' }}>
-        <h2>发布新帖</h2>
+        <h2><Icon name="plus" size={20} /> 发布新帖</h2>
       </div>
       <div style={{ maxWidth: 600, margin: '0 auto', width: '100%' }}>
         <input

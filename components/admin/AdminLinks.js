@@ -3,6 +3,7 @@
 // 管理后台 - 友情链接管理
 import { useEffect, useState } from 'react';
 import { API } from '@/lib/api';
+import { Icon } from '../Icons';
 
 export default function AdminLinks() {
   const [links, setLinks] = useState([]);
@@ -56,7 +57,9 @@ export default function AdminLinks() {
           links.map((l) => (
             <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
               <span><a href={l.url} target="_blank" rel="noreferrer" style={{ color: '#6366f1', textDecoration: 'none' }}>{l.title}</a></span>
-              <button className="btn-sm btn-danger" onClick={() => handleDelete(l.id)}>删除</button>
+              <button className="btn-sm btn-danger" onClick={() => handleDelete(l.id)}>
+                <Icon name="trash" size={12} /> 删除
+              </button>
             </div>
           ))
         )}

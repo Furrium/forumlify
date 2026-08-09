@@ -4,6 +4,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { API, generateCaptcha } from '@/lib/api';
 import { useApp } from './AppProvider';
+import { Icon } from './Icons';
 
 function avatar(username) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || '匿名用户') +
@@ -61,7 +62,9 @@ export default function ReplyList({ postId, onRefresh }) {
 
   return (
     <>
-      <div style={{ marginTop: 20, fontSize: 14, color: '#64748b' }}>💬 {replies.length} 条回复</div>
+      <div style={{ marginTop: 20, fontSize: 14, color: '#64748b' }}>
+        <Icon name="message" size={14} /> {replies.length} 条回复
+      </div>
       <div style={{ marginTop: 12 }}>
         {replies.length === 0 ? (
           <div style={{ color: '#94a3b8', padding: '20px 0', textAlign: 'center' }}>还没有回复，快来抢沙发吧 🛋️</div>
@@ -75,7 +78,9 @@ export default function ReplyList({ postId, onRefresh }) {
                   <span className="reply-username">{r.username || '匿名用户'}</span>
                   <span className="reply-time">{rTime}</span>
                   {currentUser && currentUser.id === r.user_id && (
-                    <button className="btn-sm btn-danger reply-delete-btn" onClick={() => handleDelete(r.id)}>删除</button>
+                    <button className="btn-sm btn-danger reply-delete-btn" onClick={() => handleDelete(r.id)}>
+                      <Icon name="trash" size={12} /> 删除
+                    </button>
                   )}
                 </div>
                 <div className="reply-content">
@@ -88,7 +93,7 @@ export default function ReplyList({ postId, onRefresh }) {
       </div>
 
       <div id="replyArea" style={{ marginTop: 24, borderTop: '1px solid #e2e8f0', paddingTop: 20 }}>
-        <h3 style={{ fontSize: 16, marginBottom: 12 }}>发表回复</h3>
+        <h3 style={{ fontSize: 16, marginBottom: 12 }}><Icon name="message" size={16} /> 发表回复</h3>
         <textarea
           rows={3}
           placeholder="写下你的回复..."

@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { API } from '@/lib/api';
 import { useApp } from './AppProvider';
+import { Icon } from './Icons';
 
 export default function SettingsPage() {
   const { currentUser, setCurrentUser } = useApp();
@@ -26,7 +27,7 @@ export default function SettingsPage() {
   return (
     <div className="page-slide active">
       <div className="page-header" style={{ maxWidth: 400, margin: '0 auto', width: '100%' }}>
-        <h2>设置</h2>
+        <h2><Icon name="settings" size={20} /> 设置</h2>
       </div>
       <div style={{ maxWidth: 400, margin: '0 auto', width: '100%' }}>
         <label style={{ fontWeight: 600, fontSize: 14 }}>用户名</label>

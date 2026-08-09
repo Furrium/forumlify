@@ -38,7 +38,7 @@ function HomeInner() {
         {view === 'messages' && (
           <div className="page-slide active">
             <div className="page-header" style={{ maxWidth: 700, margin: '0 auto', width: '100%' }}>
-              <h2>消息</h2>
+              <h2><Icon name="message" size={20} /> 消息</h2>
             </div>
             <p style={{ color: '#94a3b8', padding: '20px 0', maxWidth: 700, margin: '0 auto', width: '100%' }}>暂无消息</p>
           </div>

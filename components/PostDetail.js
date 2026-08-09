@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { API } from '@/lib/api';
 import { useApp } from './AppProvider';
 import ReplyList from './ReplyList';
+import { Icon } from './Icons';
 
 function avatar(username) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || '匿名用户') +
@@ -65,7 +66,9 @@ export default function PostDetail({ postId }) {
             <span className="post-username">{post.username || '匿名用户'}</span>
             <span className="post-time">{time}</span>
             {canDelete && (
-              <button className="btn-sm btn-danger" onClick={handleDelete}>删除</button>
+              <button className="btn-sm btn-danger" onClick={handleDelete}>
+                <Icon name="trash" size={14} /> 删除
+              </button>
             )}
           </div>
           <div className="post-title" style={{ fontSize: 20, fontWeight: 700, margin: '8px 0 12px' }}>

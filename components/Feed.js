@@ -4,6 +4,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { API } from '@/lib/api';
 import { useApp } from './AppProvider';
+import { Icon } from './Icons';
 
 function avatar(username) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || '匿名用户') +
@@ -12,7 +13,7 @@ function avatar(username) {
 
 export default function Feed({ onOpenModal, onReport }) {
   const { currentUser, sort, setSort, openPost, navigate, refreshKey } = useApp();
-  const [posts, setPosts] = useState(null); // null = loading
+  const [posts, setPosts] = useState(null);
   const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
@@ -53,7 +54,7 @@ export default function Feed({ onOpenModal, onReport }) {
             navigate('new');
           }}
         >
-          发布新帖
+          <Icon name="plus" /> 发布新帖
         </button>
       </div>
       <div id="postList">
@@ -82,17 +83,23 @@ export default function Feed({ onOpenModal, onReport }) {
                   </div>
                 )}
                 <div className="post-actions">
-                  <span>💬 {p.reply_count || 0}</span>
+                  <span>
+                    <Icon name="message" size={14} /> {p.reply_count || 0}
+                  </span>
                   <button className="action-report" onClick={(e) => {
                     e.stopPropagation();
                     if (!currentUser) { alert('请先登录'); return; }
                     onReport(p.id);
-                  }}>举报</button>
+                  }}>
+                    <Icon name="flag" size={14} /> 举报
+                  </button>
                   {currentUser && currentUser.id === p.user_id && (
                     <button className="action-delete" onClick={(e) => {
                       e.stopPropagation();
                       handleDelete(p.id);
-                    }}>删除</button>
+                    }}>
+                      <Icon name="trash" size={14} /> 删除
+                    </button>
                   )}
                 </div>
               </div>

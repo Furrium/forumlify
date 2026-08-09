@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { API, generateCaptcha } from '@/lib/api';
 import { useApp } from './AppProvider';
+import { Icon } from './Icons';
 
 export default function Modals({ modal, onClose, reportPostId }) {
   const { login, register, currentUser, refresh } = useApp();
@@ -87,7 +88,7 @@ export default function Modals({ modal, onClose, reportPostId }) {
       {modal === 'login' && (
         <div className="modal active" onClick={close}>
           <div className="modal-content">
-            <span className="close" onClick={onClose}>✕</span>
+            <span className="close" onClick={onClose}><Icon name="close" size={20} /></span>
             <h2 style={{ marginBottom: 16 }}>登录</h2>
             <input type="email" placeholder="邮箱" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
             <input type="password" placeholder="密码" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)}
@@ -100,7 +101,7 @@ export default function Modals({ modal, onClose, reportPostId }) {
       {modal === 'register' && (
         <div className="modal active" onClick={close}>
           <div className="modal-content">
-            <span className="close" onClick={onClose}>✕</span>
+            <span className="close" onClick={onClose}><Icon name="close" size={20} /></span>
             <h2 style={{ marginBottom: 16 }}>注册</h2>
             <input type="text" placeholder="用户名" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} />
             <input type="email" placeholder="邮箱" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
@@ -119,8 +120,8 @@ export default function Modals({ modal, onClose, reportPostId }) {
       {modal === 'report' && currentUser && (
         <div className="modal active" onClick={close}>
           <div className="modal-content">
-            <span className="close" onClick={onClose}>✕</span>
-            <h2 style={{ marginBottom: 16 }}>举报帖子</h2>
+            <span className="close" onClick={onClose}><Icon name="close" size={20} /></span>
+            <h2 style={{ marginBottom: 16 }}><Icon name="shieldAlert" size={20} /> 举报帖子</h2>
             <p style={{ fontSize: 14, color: '#64748b', marginBottom: 12 }}>请选择举报原因：</p>
             <select
               style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 4, marginBottom: 16 }}
