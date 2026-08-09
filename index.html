@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forumlify</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== 导航栏 ===== -->
+  <nav id="navbar">
+    <div class="nav-left">
+      <span id="forumName" class="forum-name">Forumlify</span>
+    </div>
+    <div class="nav-right">
+      <div id="userMenu">
+        <div id="authButtons">
+          <button id="loginBtn" class="btn-ghost">登录</button>
+          <button id="registerBtn" class="btn-primary">注册</button>
+        </div>
+        <div id="userDropdown" style="display:none">
+          <img id="avatarImg" class="avatar" src="" alt="avatar" />
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="#" data-page="messages">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              消息
+            </a>
+            <a href="#" data-page="settings">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+              设置
+            </a>
+            <a href="#" data-page="admin" id="adminEntry" style="display:none">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+              管理后台
+            </a>
+            <hr />
+            <a href="#" id="themeToggle" style="display:flex;align-items:center;gap:8px;">
+              <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+              <span id="themeLabel">暗色模式</span>
+            </a>
+            <hr />
+            <a href="#" id="logoutBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              退出
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== 主内容区 ===== -->
+  <div id="app">
+    <aside id="sidebar">
+      <div class="stats-box">
+        <h4>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><line x1="18" y1="12" x2="18" y2="12"/></svg>
+          社区统计
+        </h4>
+        <div class="stat-item"><span>主题</span><span id="statTopics">0</span></div>
+        <div class="stat-item"><span>帖子</span><span id="statPosts">0</span></div>
+        <div class="stat-item"><span>用户</span><span id="statUsers">0</span></div>
+        <div class="stat-item"><span>在线</span><span id="statOnline">0</span></div>
+      </div>
+      <div class="links-box">
+        <h4>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          友情链接
+        </h4>
+        <ul id="friendlyLinks">
+          <li style="color:#94a3b8;font-size:13px;">暂无链接</li>
+        </ul>
+      </div>
+    </aside>
+
+    <main id="feed">
+      <div class="feed-header">
+        <div class="feed-header-left">
+          <button class="tab active" data-sort="latest">最新发布</button>
+          <button class="tab" data-sort="hot">最新回复</button>
+        </div>
+        <button id="fab" class="btn-primary fab-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          发布新帖
+        </button>
+      </div>
+      <div id="postList">
+        <div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ===== 独立页面 ===== -->
+  <div id="pageMessages" class="page-slide">
+    <div class="page-header">
+      <button class="back-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        返回
+      </button>
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        消息
+      </h2>
+    </div>
+    <p style="color:#94a3b8;padding:20px 0;">暂无消息</p>
+  </div>
+
+  <div id="pageSettings" class="page-slide">
+    <div class="page-header">
+      <button class="back-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        返回
+      </button>
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        设置
+      </h2>
+    </div>
+    <div style="max-width:400px;">
+      <label style="font-weight:600;font-size:14px;">用户名</label>
+      <input type="text" id="settingsUsername" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:4px;margin:6px 0 12px;" />
+      <label style="font-weight:600;font-size:14px;">个人简介</label>
+      <textarea id="settingsBio" rows="3" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:4px;margin:6px 0 12px;"></textarea>
+      <button id="settingsSave" class="btn-primary">保存设置</button>
+    </div>
+  </div>
+
+  <div id="pageAdmin" class="page-slide">
+    <div class="page-header">
+      <button class="back-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        返回
+      </button>
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+        管理后台
+      </h2>
+    </div>
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-tab="reports">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        举报
+      </button>
+      <button class="admin-tab" data-tab="users">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        用户
+      </button>
+      <button class="admin-tab" data-tab="logs">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        日志
+      </button>
+      <button class="admin-tab" data-tab="links">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        友链
+      </button>
+    </div>
+    <div id="adminContent">
+      <div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>
+    </div>
+  </div>
+
+  <div id="pageNew" class="page-slide">
+    <div class="page-header">
+      <button class="back-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        返回
+      </button>
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        发布新帖
+      </h2>
+    </div>
+    <div style="max-width:600px;">
+      <input type="text" id="postTitle" placeholder="标题" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:15px;font-weight:600;margin-bottom:12px;font-family:inherit;" />
+      <textarea id="postContent" rows="6" placeholder="说点什么..." style="width:100%;padding:12px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:15px;font-family:inherit;resize:vertical;"></textarea>
+      <div id="imagePreview" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;"></div>
+      <input type="file" id="imageUpload" accept="image/*" multiple style="margin:8px 0 12px;" />
+      <div class="captcha-row" style="margin:12px 0;">
+        <span id="postCaptchaQuestion">3 + 5 = ?</span>
+        <input type="text" id="postCaptchaInput" placeholder="答案" style="width:80px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:4px;" />
+      </div>
+      <button id="postSubmit" class="btn-primary" style="padding:10px 32px;font-size:15px;">发布帖子</button>
+    </div>
+  </div>
+
+  <!-- ===== 帖子详情页 ===== -->
+  <div id="pagePost" class="page-slide">
+    <div class="page-header">
+      <button class="back-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        返回
+      </button>
+      <h2 id="postDetailTitle">帖子详情</h2>
+    </div>
+    <div id="postDetailContent" style="max-width:700px;">
+      <div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>
+    </div>
+    <div id="replyArea" style="max-width:700px;margin-top:24px;border-top:1px solid #e2e8f0;padding-top:20px;display:none;">
+      <h3 style="font-size:16px;margin-bottom:12px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        发表回复
+      </h3>
+      <textarea id="replyContent" rows="3" placeholder="写下你的回复..." style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:4px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
+      <div class="captcha-row" style="margin:10px 0;">
+        <span id="replyCaptchaQuestion">3 + 5 = ?</span>
+        <input type="text" id="replyCaptchaInput" placeholder="答案" style="width:80px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:4px;" />
+      </div>
+      <button id="replySubmit" class="btn-primary" style="padding:8px 24px;">提交回复</button>
+    </div>
+  </div>
+
+  <!-- ===== 模态框 ===== -->
+  <div id="loginModal" class="modal">
+    <div class="modal-content">
+      <span class="close" data-modal="loginModal">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </span>
+      <h2 style="margin-bottom:16px;">登录</h2>
+      <input type="email" id="loginEmail" placeholder="邮箱" />
+      <input type="password" id="loginPassword" placeholder="密码" />
+      <button id="loginSubmit" class="btn-primary" style="width:100%;">登录</button>
+    </div>
+  </div>
+
+  <div id="registerModal" class="modal">
+    <div class="modal-content">
+      <span class="close" data-modal="registerModal">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </span>
+      <h2 style="margin-bottom:16px;">注册</h2>
+      <input type="text" id="regUsername" placeholder="用户名" />
+      <input type="email" id="regEmail" placeholder="邮箱" />
+      <input type="password" id="regPassword" placeholder="密码（至少6位）" />
+      <div class="captcha-row">
+        <span id="regCaptchaQuestion">3 + 5 = ?</span>
+        <input type="text" id="regCaptchaInput" placeholder="答案" style="width:80px;" />
+      </div>
+      <button id="registerSubmit" class="btn-primary" style="width:100%;">注册</button>
+    </div>
+  </div>
+
+  <div id="reportModal" class="modal">
+    <div class="modal-content">
+      <span class="close" data-modal="reportModal">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </span>
+      <h2 style="margin-bottom:16px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+        举报帖子
+      </h2>
+      <p style="font-size:14px;color:#64748b;margin-bottom:12px;">请选择举报原因：</p>
+      <select id="reportReason" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:4px;margin-bottom:16px;">
+        <option value="spam">垃圾广告</option>
+        <option value="abuse">人身攻击</option>
+        <option value="illegal">违法内容</option>
+        <option value="nsfw">不适当内容</option>
+        <option value="other">其他</option>
+      </select>
+      <button id="reportSubmit" class="btn-primary" style="width:100%;">提交举报</button>
+    </div>
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- ⚙️ JavaScript -->
+  <!-- ========================================================== -->
+  <script src="config.js">
+  </script>
+  <script>
+    // ============================================================
+    //  🔧 API 请求封装
+    // ============================================================
+    let token = localStorage.getItem('forumlify-token') || null;
+
+    function apiFetch(path, options = {}) {
+      const url = CONFIG.API_BASE_URL + path;
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      };
+      if (token) {
+        headers['Authorization'] = 'Bearer ' + token;
+      }
+      return fetch(url, {
+        ...options,
+        headers
+      }).then(res => res.json());
+    }
+
+    let currentUser = null;
+    let currentPage = 'feed';
+    let currentSort = 'latest';
+    let reportTargetPostId = null;
+    let currentPostId = null;
+
+    // ============================================================
+    //  🌓 主题切换
+    // ============================================================
+
+    function getTheme() {
+      return localStorage.getItem('forumlify-theme') || 'light';
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('forumlify-theme', theme);
+      updateThemeUI(theme);
+    }
+
+    function toggleTheme(e) {
+      if (e) { e.preventDefault();
+        e.stopPropagation(); }
+      const current = getTheme();
+      const next = current === 'light' ? 'dark' : 'light';
+      setTheme(next);
+    }
+
+    function updateThemeUI(theme) {
+      const icon = document.getElementById('themeIcon');
+      const label = document.getElementById('themeLabel');
+      if (!icon) return;
+      if (theme === 'dark') {
+        icon.innerHTML =
+          `<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>`;
+        if (label) label.textContent = '☀️ 亮色模式';
+      } else {
+        icon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`;
+        if (label) label.textContent = '🌙 暗色模式';
+      }
+    }
+
+    function applyTheme() {
+      const theme = getTheme();
+      document.documentElement.setAttribute('data-theme', theme);
+      updateThemeUI(theme);
+    }
+
+    // ============================================================
+    //  🧠 验证码
+    // ============================================================
+    function generateCaptcha() {
+      let a = Math.floor(Math.random() * 9) + 1;
+      let b = Math.floor(Math.random() * 9) + 1;
+      let op = ['+', '-'][Math.floor(Math.random() * 2)];
+      if (op === '-' && a < b) { let t = a;
+        a = b;
+        b = t; }
+      let answer = op === '+' ? a + b : a - b;
+      return { question: a + ' ' + op + ' ' + b + ' = ?', answer: answer };
+    }
+
+    function refreshCaptcha(type) {
+      let q = generateCaptcha();
+      if (type === 'reg') {
+        document.getElementById('regCaptchaQuestion').textContent = q.question;
+        document.getElementById('regCaptchaInput').dataset.answer = q.answer;
+      } else if (type === 'post') {
+        document.getElementById('postCaptchaQuestion').textContent = q.question;
+        document.getElementById('postCaptchaInput').dataset.answer = q.answer;
+      } else if (type === 'reply') {
+        document.getElementById('replyCaptchaQuestion').textContent = q.question;
+        document.getElementById('replyCaptchaInput').dataset.answer = q.answer;
+      }
+    }
+
+    // ============================================================
+    //  🗄️ API LAYER
+    // ============================================================
+    const API = {
+      // 认证
+      async login(email, password) {
+        const data = await apiFetch('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        });
+        if (data.error) throw new Error(data.error);
+        if (data.token) {
+          token = data.token;
+          localStorage.setItem('forumlify-token', token);
+        }
+        return data;
+      },
+
+      async register(email, password, username) {
+        const data = await apiFetch('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({ email, password, username })
+        });
+        if (data.error) throw new Error(data.error);
+        return data;
+      },
+
+      async logout() {
+        token = null;
+        localStorage.removeItem('forumlify-token');
+        currentUser = null;
+      },
+
+      async getMe() {
+        const data = await apiFetch('/auth/me');
+        if (data.error) throw new Error(data.error);
+        return data;
+      },
+
+      // 帖子
+      async getPosts(sort) {
+        const data = await apiFetch('/posts?sort=' + (sort || 'latest'));
+        if (data.error) throw new Error(data.error);
+        return data || [];
+      },
+
+      async getPost(postId) {
+        const data = await apiFetch('/posts/' + postId);
+        if (data.error) throw new Error(data.error);
+        return data;
+      },
+
+      async createPost(title, content, images) {
+        const data = await apiFetch('/posts', {
+          method: 'POST',
+          body: JSON.stringify({ title, content, images: images || [] })
+        });
+        if (data.error) throw new Error(data.error);
+        return data;
+      },
+
+      async deletePost(postId) {
+        const data = await apiFetch('/posts/' + postId, { method: 'DELETE' });
+        if (data.error) throw new Error(data.error);
+        return data;
+      },
+
+      // 回复
+      async getReplies(postId) {
+        const data = await apiFetch('/posts/' + postId + '/replies');
+        if (data.error) throw new Error(data.error);
+        return data || [];
+      },
+
+      async createReply(postId, content) {
+        const data = await apiFetch('/posts/' + postId + '/replies', {
+          method: 'POST',
+          body: JSON.stringify({ content })
+        });
+        if (data.error) throw new Error(data.error);
+        return data;
+      },
+
+      async deleteReply(replyId) {
+        const data = await apiFetch('/replies/' + replyId, { method: 'DELETE' });
+        if (data.error) throw new Error(data.error);
+        return data;
+      },
+
+      // 用户管理
+      async getUsers() {
+        const data = await apiFetch('/users');
+        if (data.error) throw new Error(data.error);
+        return data || [];
+      },
+
+      async updateUserRole(userId, role) {
+        const data = await apiFetch('/users/' + userId + '/role', {
+          method: 'PUT',
+          body: JSON.stringify({ role })
+        });
+        if (data.error) throw new Error(data.error);
+        return data;
+      },
+
+      // 举报
+      async getReports() {
+        const data = await apiFetch('/reports');
+        if (data.error) throw new Error(data.error);
+        return data || [];
+      },
+
+      async createReport(postId, reason) {
+        const data = await apiFetch('/reports', {
+          method: 'POST',
+          body: JSON.stringify({ post_id: postId, reason })
+        });
+        if (data.error) throw new Error(data.error);
+        return data;
+      },
+
+      async updateReport(reportId, status, note) {
+        const data = await apiFetch('/reports/' + reportId, {
+          method: 'PUT',
+          body: JSON.stringify({ status, note })
+        });
+        if (data.error) throw new Error(data.error);
+        return data;
+      },
+
+      // 统计
+      async getStats() {
+        const data = await apiFetch('/stats');
+        if (data.error) throw new Error(data.error);
+        return data;
+      },
+
+      // 友情链接
+      async getLinks() {
+        const data = await apiFetch('/links');
+        if (data.error) throw new Error(data.error);
+        return data || [];
+      },
+
+      async addLink(title, url) {
+        const data = await apiFetch('/links', {
+          method: 'POST',
+          body: JSON.stringify({ title, url })
+        });
+        if (data.error) throw new Error(data.error);
+        return data;
+      },
+
+      async deleteLink(id) {
+        const data = await apiFetch('/links/' + id, { method: 'DELETE' });
+        if (data.error) throw new Error(data.error);
+        return data;
+      },
+
+      // 事件日志
+      async getEventLogs() {
+        const data = await apiFetch('/event-logs');
+        if (data.error) throw new Error(data.error);
+        return data || [];
+      },
+
+      async logEvent(action) {
+        try {
+          await apiFetch('/event-logs', {
+            method: 'POST',
+            body: JSON.stringify({ action })
+          });
+        } catch (e) { /* 静默失败 */ }
+      }
+    };
+
+    // ============================================================
+    //  🎨 RENDER LAYER
+    // ============================================================
+
+    function renderNav() {
+      document.getElementById('forumName').textContent = CONFIG.FORUM_NAME || 'Forumlify';
+      const authBtns = document.getElementById('authButtons');
+      const userDropdown = document.getElementById('userDropdown');
+      if (currentUser) {
+        authBtns.style.display = 'none';
+        userDropdown.style.display = 'block';
+        document.getElementById('avatarImg').src = currentUser.avatar_url ||
+          'https://ui-avatars.com/api/?name=U&background=6366f1&color=fff';
+        document.getElementById('adminEntry').style.display = currentUser.role === 'admin' ? 'block' : 'none';
+      } else {
+        authBtns.style.display = 'flex';
+        userDropdown.style.display = 'none';
+      }
+    }
+
+    function renderFeed() {
+      const container = document.getElementById('postList');
+      container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
+      API.getPosts(currentSort).then(posts => {
+        if (!posts || posts.length === 0) {
+          container.innerHTML =
+            '<div style="text-align:center;color:#94a3b8;padding:60px 0;">✨ 还没有帖子，快来发布第一条吧！</div>';
+          return;
+        }
+        let html = '';
+        posts.forEach(p => {
+          const username = p.username || '匿名用户';
+          const avatar = p.avatar_url ||
+            'https://ui-avatars.com/api/?name=' + encodeURIComponent(username) +
+            '&background=6366f1&color=fff&size=64';
+          const time = p.created_at ? new Date(p.created_at).toLocaleString('zh-CN') : '';
+          let imagesHtml = '';
+          if (p.images && p.images.length > 0) {
+            imagesHtml = '<div class="post-images">';
+            p.images.forEach(img => {
+              imagesHtml += '<img src="' + img + '" class="post-image" />';
+            });
+            imagesHtml += '</div>';
+          }
+          const replyCount = p.reply_count || 0;
+          html += `
+            <div class="post-card" data-postid="${p.id}" style="cursor:pointer;">
+              <div class="post-header">
+                <img src="${avatar}" class="post-avatar" />
+                <span class="post-username">${username}</span>
+                <span class="post-time">${time}</span>
+              </div>
+              <div class="post-title">${p.title || '无标题'}</div>
+              <div class="post-content">${(p.content || '').replace(/\n/g, '<br>')}</div>
+              ${imagesHtml}
+              <div class="post-actions">
+                <span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  ${replyCount}
+                </span>
+                <button class="action-report" data-postid="${p.id}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                  举报
+                </button>
+                ${currentUser && currentUser.id === p.user_id ? `<button class="action-delete" data-postid="${p.id}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  删除
+                </button>` : ''}
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+
+        container.querySelectorAll('.post-card').forEach(card => {
+          card.addEventListener('click', function(e) {
+            if (e.target.closest('button')) return;
+            const postId = this.dataset.postid;
+            switchToPost(postId);
+          });
+        });
+
+        container.querySelectorAll('.action-report').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (!currentUser) { alert('请先登录'); return; }
+            reportTargetPostId = this.dataset.postid;
+            document.getElementById('reportModal').classList.add('active');
+          });
+        });
+        container.querySelectorAll('.action-delete').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (confirm('确定要删除这条帖子吗？')) {
+              API.deletePost(this.dataset.postid).then(() => {
+                renderFeed();
+                renderStats();
+              }).catch(err => alert('删除失败：' + err.message));
+            }
+          });
+        });
+      }).catch(err => {
+        container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px 0;">加载失败：' + err.message +
+          '</div>';
+      });
+    }
+
+    async function renderPostDetail(postId) {
+      const container = document.getElementById('postDetailContent');
+      const replyArea = document.getElementById('replyArea');
+      container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
+      replyArea.style.display = 'none';
+
+      try {
+        const post = await API.getPost(postId);
+        const replies = await API.getReplies(postId);
+
+        document.getElementById('postDetailTitle').textContent = post.title || '帖子详情';
+
+        const username = post.username || '匿名用户';
+        const avatar = post.avatar_url ||
+          'https://ui-avatars.com/api/?name=' + encodeURIComponent(username) +
+          '&background=6366f1&color=fff&size=64';
+        const time = post.created_at ? new Date(post.created_at).toLocaleString('zh-CN') : '';
+
+        let imagesHtml = '';
+        if (post.images && post.images.length > 0) {
+          imagesHtml = '<div class="post-images">';
+          post.images.forEach(img => {
+            imagesHtml += '<img src="' + img + '" class="post-image" />';
+          });
+          imagesHtml += '</div>';
+        }
+
+        let html = `
+          <div class="post-detail-card">
+            <div class="post-header">
+              <img src="${avatar}" class="post-avatar" />
+              <span class="post-username">${username}</span>
+              <span class="post-time">${time}</span>
+              ${currentUser && currentUser.id === post.user_id ? `<button class="btn-sm btn-danger" id="detailDeleteBtn" data-postid="${post.id}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                删除
+              </button>` : ''}
+            </div>
+            <div class="post-title" style="font-size:20px;font-weight:700;margin:8px 0 12px;">${post.title || '无标题'}</div>
+            <div class="post-content" style="font-size:16px;line-height:1.8;">${(post.content || '').replace(/\n/g, '<br>')}</div>
+            ${imagesHtml}
+          </div>
+          <div style="margin-top:20px;font-size:14px;color:#64748b;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            ${replies.length} 条回复
+          </div>
+          <div style="margin-top:12px;" id="repliesList">
+        `;
+
+        if (replies.length === 0) {
+          html += '<div style="color:#94a3b8;padding:20px 0;text-align:center;">还没有回复，快来抢沙发吧 🛋️</div>';
+        } else {
+          replies.forEach(r => {
+            const rUsername = r.username || '匿名用户';
+            const rAvatar = r.avatar_url ||
+              'https://ui-avatars.com/api/?name=' + encodeURIComponent(rUsername) +
+              '&background=6366f1&color=fff&size=64';
+            const rTime = r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '';
+            html += `
+              <div class="reply-item" data-replyid="${r.id}">
+                <div class="reply-header">
+                  <img src="${rAvatar}" class="reply-avatar" />
+                  <span class="reply-username">${rUsername}</span>
+                  <span class="reply-time">${rTime}</span>
+                  ${currentUser && currentUser.id === r.user_id ? `<button class="btn-sm btn-danger reply-delete-btn" data-replyid="${r.id}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    删除
+                  </button>` : ''}
+                </div>
+                <div class="reply-content">${(r.content || '').replace(/\n/g, '<br>')}</div>
+              </div>
+            `;
+          });
+        }
+
+        html += '</div>';
+        container.innerHTML = html;
+
+        replyArea.style.display = 'block';
+        document.getElementById('replyContent').value = '';
+        document.getElementById('replyCaptchaInput').value = '';
+        refreshCaptcha('reply');
+
+        const deleteBtn = document.getElementById('detailDeleteBtn');
+        if (deleteBtn) {
+          deleteBtn.addEventListener('click', function() {
+            if (confirm('确定要删除这条帖子吗？')) {
+              API.deletePost(postId).then(() => {
+                alert('删除成功');
+                switchPage('feed');
+                renderFeed();
+                renderStats();
+              }).catch(err => alert('删除失败：' + err.message));
+            }
+          });
+        }
+
+        document.querySelectorAll('.reply-delete-btn').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const replyId = this.dataset.replyid;
+            if (confirm('确定要删除这条回复吗？')) {
+              API.deleteReply(replyId).then(() => {
+                renderPostDetail(postId);
+              }).catch(err => alert('删除失败：' + err.message));
+            }
+          });
+        });
+
+        const replySubmit = document.getElementById('replySubmit');
+        const newReplySubmit = replySubmit.cloneNode(true);
+        replySubmit.parentNode.replaceChild(newReplySubmit, replySubmit);
+        newReplySubmit.addEventListener('click', async function() {
+          await handleReplySubmit(postId);
+        });
+
+        const replyInput = document.getElementById('replyContent');
+        replyInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            handleReplySubmit(postId);
+          }
+        });
+
+        currentPostId = postId;
+
+      } catch (err) {
+        container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px 0;">加载失败：' + err.message +
+          '</div>';
+        replyArea.style.display = 'none';
+      }
+    }
+
+    async function handleReplySubmit(postId) {
+      if (!currentUser) { alert('请先登录'); return; }
+      const content = document.getElementById('replyContent').value.trim();
+      const captchaInput = document.getElementById('replyCaptchaInput').value.trim();
+      const captchaAnswer = parseInt(document.getElementById('replyCaptchaInput').dataset.answer);
+      if (!content) { alert('请填写回复内容'); return; }
+      if (parseInt(captchaInput) !== captchaAnswer) { alert('验证码错误，请重新计算'); refreshCaptcha('reply'); return; }
+      try {
+        await API.createReply(postId, content);
+        API.logEvent('create_reply').catch(() => {});
+        renderPostDetail(postId);
+        if (currentPage === 'feed') {
+          renderFeed();
+        }
+        renderStats();
+      } catch (err) {
+        alert('回复失败：' + err.message);
+      }
+    }
+
+    function switchToPost(postId) {
+      const url = new URL(window.location);
+      url.searchParams.set('post', postId);
+      url.searchParams.delete('page');
+      window.history.pushState({ page: 'post', postId: postId }, '', url);
+      showPostPage(postId);
+    }
+
+    function showPostPage(postId) {
+      document.getElementById('app').style.display = 'none';
+      document.querySelectorAll('.page-slide').forEach(el => {
+        el.classList.remove('active', 'slide-out');
+      });
+      const el = document.getElementById('pagePost');
+      el.classList.add('active');
+      el.style.animation = 'none';
+      void el.offsetHeight;
+      el.style.animation = '';
+      currentPage = 'post';
+      renderPostDetail(postId);
+    }
+
+    function renderStats() {
+      API.getStats().then(stats => {
+        document.getElementById('statTopics').textContent = stats.topics || 0;
+        document.getElementById('statPosts').textContent = stats.posts || 0;
+        document.getElementById('statUsers').textContent = stats.users || 0;
+        document.getElementById('statOnline').textContent = stats.online || 0;
+      }).catch(() => {});
+    }
+
+    function renderLinks() {
+      API.getLinks().then(links => {
+        const ul = document.getElementById('friendlyLinks');
+        if (!links || links.length === 0) {
+          ul.innerHTML = '<li style="color:#94a3b8;font-size:13px;">暂无链接</li>';
+          return;
+        }
+        let html = '';
+        links.forEach(l => {
+          html += '<li><a href="' + l.url + '" target="_blank">' + l.title + '</a></li>';
+        });
+        ul.innerHTML = html;
+      }).catch(() => {});
+    }
+
+    function renderAdminReports() {
+      const container = document.getElementById('adminContent');
+      container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px 0;">加载中...</div>';
+      API.getReports().then(reports => {
+        if (!reports || reports.length === 0) {
+          container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">✅ 暂无举报</div>';
+          return;
+        }
+        let html = '';
+        const statusMap = { pending: '⏳ 待处理', approved: '✅ 已删除', rejected: '❌ 已驳回' };
+        reports.forEach(r => {
+          const postTitle = r.post_title || '无标题';
+          html += `
+            <div class="report-item">
+              <div><strong>${r.reporter_name || '匿名'}</strong> 举报了帖子</div>
+              <div style="font-size:13px;color:#64748b;margin:4px 0;">原因：${r.reason}</div>
+              <div style="font-size:13px;color:#64748b;margin:4px 0;">帖子：${postTitle} — ${(r.post_content || '').substring(0, 30)}${(r.post_content || '').length > 30 ? '...' : ''}</div>
+              <div style="font-size:13px;font-weight:600;">状态：${statusMap[r.status] || r.status}</div>
+              ${r.handler_name ? `<div style="font-size:12px;color:#94a3b8;">处理人：${r.handler_name}${r.handler_note ? ' (' + r.handler_note + ')' : ''}</div>` : ''}
+              ${r.status === 'pending' ? `
+                <div class="report-actions">
+                  <button class="btn-sm btn-danger" data-reportid="${r.id}" data-action="approve">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    删除帖子
+                  </button>
+                  <button class="btn-sm btn-secondary" data-reportid="${r.id}" data-action="reject">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    驳回举报
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+        container.querySelectorAll('[data-action]').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const id = this.dataset.reportid;
+            const action = this.dataset.action;
+            const status = action === 'approve' ? 'approved' : 'rejected';
+            const note = action === 'approve' ? '已删除违规帖子' : '举报不成立';
+            if (action === 'approve' && !confirm('确定要删除该帖子并标记举报为已处理吗？')) return;
+            API.updateReport(id, status, note).then(() => {
+              if (action === 'approve') {
+                const report = reports.find(r => r.id === id);
+                if (report && report.post_id) {
+                  API.deletePost(report.post_id).catch(() => {});
+                }
+              }
+              renderAdminReports();
+            }).catch(err => alert('操作失败：' + err.message));
+          });
+        });
+      }).catch(() => {
+        container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
+      });
+    }
+
+    function renderAdminUsers() {
+      const container = document.getElementById('adminContent');
+      container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px 0;">加载中...</div>';
+      API.getUsers().then(users => {
+        let html = `
+          <div style="margin-bottom:12px;font-size:13px;color:#94a3b8;">
+            共 <strong>${users.length}</strong> 位用户
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:14px;">
+              <thead>
+                <tr style="text-align:left;border-bottom:2px solid #e2e8f0;">
+                  <th style="padding:10px 12px;">用户</th>
+                  <th style="padding:10px 12px;">角色</th>
+                  <th style="padding:10px 12px;">注册时间</th>
+                  <th style="padding:10px 12px;text-align:center;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+        users.forEach(u => {
+          const isAdmin = u.role === 'admin';
+          const isCurrentUser = currentUser && currentUser.id === u.id;
+          html += `
+            <tr style="border-bottom:1px solid #f1f5f9;${isCurrentUser ? 'background:var(--primary-bg);' : ''}">
+              <td style="padding:10px 12px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <img src="${u.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.username) + '&background=6366f1&color=fff&size=64'}" 
+                       style="width:28px;height:28px;border-radius:50%;object-fit:cover;" />
+                  <span style="font-weight:500;">${u.username}</span>
+                  ${isCurrentUser ? '<span style="font-size:11px;color:#94a3b8;background:#eef2ff;padding:1px 8px;border-radius:4px;">你</span>' : ''}
+                </div>
+              </td>
+              <td style="padding:10px 12px;">
+                <span style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:500;${isAdmin ? 'background:#6366f1;color:#fff;' : 'background:#e2e8f0;color:#64748b;'}">
+                  ${isAdmin ? '管理员' : '普通用户'}
+                </span>
+              </td>
+              <td style="padding:10px 12px;color:#94a3b8;font-size:13px;">${u.created_at ? new Date(u.created_at).toLocaleDateString('zh-CN') : '—'}</td>
+              <td style="padding:10px 12px;text-align:center;">
+                ${isCurrentUser ? 
+                  '<span style="font-size:12px;color:#94a3b8;">不可操作自己</span>' :
+                  (isAdmin ? 
+                    `<button class="btn-sm btn-secondary" data-userid="${u.id}" data-role="user" style="padding:4px 12px;">设为普通用户</button>` :
+                    `<button class="btn-sm btn-primary" data-userid="${u.id}" data-role="admin" style="padding:4px 12px;background:#6366f1;color:#fff;border:none;border-radius:4px;cursor:pointer;">设为管理员</button>`
+                  )
+                }
+              </td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+
+        container.querySelectorAll('[data-role]').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const userId = this.dataset.userid;
+            const role = this.dataset.role;
+            const roleName = role === 'admin' ? '管理员' : '普通用户';
+            if (!confirm(`确定要将该用户设为「${roleName}」吗？`)) return;
+            API.updateUserRole(userId, role).then(() => {
+              renderAdminUsers();
+            }).catch(err => alert('操作失败：' + err.message));
+          });
+        });
+      }).catch(() => {
+        container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载失败</div>';
+      });
+    }
+
+    function renderAdminLogs() {
+      const container = document.getElementById('adminContent');
+      container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px 0;">加载中...</div>';
+      API.getEventLogs().then(logs => {
+        if (!logs || logs.length === 0) {
+          container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">暂无日志</div>';
+          return;
+        }
+        let html =
+          '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="text-align:left;border-bottom:1px solid #e2e8f0;"><th>时间</th><th>用户</th><th>操作</th></tr></thead><tbody>';
+        logs.forEach(l => {
+          html += `
+            <tr style="border-bottom:1px solid #f1f5f9;">
+              <td style="padding:6px 0;">${new Date(l.created_at).toLocaleString('zh-CN')}</td>
+              <td style="padding:6px 0;">${l.username || '系统'}</td>
+              <td style="padding:6px 0;">${l.action}</td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      }).catch(() => {
+        container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载失败</div>';
+      });
+    }
+
+    function renderAdminLinks() {
+      const container = document.getElementById('adminContent');
+      container.innerHTML = `
+        <div style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;">
+          <input type="text" id="newLinkTitle" placeholder="链接名称" style="flex:1;min-width:120px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:4px;" />
+          <input type="url" id="newLinkUrl" placeholder="链接地址" style="flex:2;min-width:160px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:4px;" />
+          <button id="addLinkBtn" class="btn-primary" style="padding:8px 16px;">添加</button>
+        </div>
+        <div id="linkList"></div>
+      `;
+
+      function loadLinks() {
+        API.getLinks().then(links => {
+          const ul = document.getElementById('linkList');
+          if (!links || links.length === 0) {
+            ul.innerHTML = '<div style="color:#94a3b8;font-size:13px;">暂无友情链接</div>';
+            return;
+          }
+          let html = '';
+          links.forEach(l => {
+            html += `
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+                <span><a href="${l.url}" target="_blank" style="color:#6366f1;text-decoration:none;">${l.title}</a></span>
+                <button class="btn-sm btn-danger" data-linkid="${l.id}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  删除
+                </button>
+              </div>
+            `;
+          });
+          ul.innerHTML = html;
+          ul.querySelectorAll('[data-linkid]').forEach(btn => {
+            btn.addEventListener('click', function() {
+              if (!confirm('确定删除该链接吗？')) return;
+              API.deleteLink(this.dataset.linkid).then(() => {
+                loadLinks();
+              }).catch(err => alert('删除失败：' + err.message));
+            });
+          });
+        }).catch(() => {});
+      }
+      loadLinks();
+      document.getElementById('addLinkBtn').addEventListener('click', function() {
+        const title = document.getElementById('newLinkTitle').value.trim();
+        const url = document.getElementById('newLinkUrl').value.trim();
+        if (!title || !url) { alert('请填写完整信息'); return; }
+        API.addLink(title, url).then(() => {
+          document.getElementById('newLinkTitle').value = '';
+          document.getElementById('newLinkUrl').value = '';
+          loadLinks();
+        }).catch(err => alert('添加失败：' + err.message));
+      });
+    }
+
+    // ============================================================
+    //  🔄 页面切换
+    // ============================================================
+
+    function switchPage(page) {
+      const url = new URL(window.location);
+      if (page === 'feed') {
+        url.searchParams.delete('page');
+        url.searchParams.delete('post');
+      } else {
+        url.searchParams.set('page', page);
+        url.searchParams.delete('post');
+      }
+      window.history.pushState({ page: page }, '', url);
+
+      document.getElementById('app').style.display = 'none';
+      document.querySelectorAll('.page-slide').forEach(el => {
+        el.classList.remove('active', 'slide-out');
+      });
+
+      if (page === 'feed') {
+        document.getElementById('app').style.display = 'flex';
+        currentPage = 'feed';
+        renderFeed();
+        renderStats();
+        renderLinks();
+        return;
+      }
+
+      const pageMap = {
+        messages: 'pageMessages',
+        settings: 'pageSettings',
+        admin: 'pageAdmin',
+        new: 'pageNew'
+      };
+      const el = document.getElementById(pageMap[page]);
+      if (el) {
+        el.classList.add('active');
+        el.style.animation = 'none';
+        void el.offsetHeight;
+        el.style.animation = '';
+        currentPage = page;
+
+        if (page === 'admin') {
+          document.querySelectorAll('.admin-tab').forEach((t, i) => {
+            t.classList.toggle('active', i === 0);
+          });
+          renderAdminReports();
+        }
+        if (page === 'settings' && currentUser) {
+          document.getElementById('settingsUsername').value = currentUser.username || '';
+          document.getElementById('settingsBio').value = currentUser.bio || '';
+        }
+        if (page === 'new') {
+          document.getElementById('postTitle').value = '';
+          document.getElementById('postContent').value = '';
+          document.getElementById('imagePreview').innerHTML = '';
+          document.getElementById('imageUpload').value = '';
+          document.getElementById('postCaptchaInput').value = '';
+          refreshCaptcha('post');
+        }
+      }
+    }
+
+    // ============================================================
+    //  🚀 初始化
+    // ============================================================
+    async function init() {
+      applyTheme();
+
+      document.getElementById('forumName').textContent = CONFIG.FORUM_NAME || 'Forumlify';
+
+      refreshCaptcha('reg');
+      refreshCaptcha('post');
+      refreshCaptcha('reply');
+
+      // 尝试恢复登录状态
+      if (token) {
+        try {
+          const user = await API.getMe();
+          currentUser = user;
+          API.logEvent('login').catch(() => {});
+        } catch (e) {
+          token = null;
+          localStorage.removeItem('forumlify-token');
+        }
+      }
+      renderNav();
+      renderStats();
+      renderLinks();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const postParam = urlParams.get('post');
+      const pageParam = urlParams.get('page');
+
+      if (postParam) {
+        showPostPage(postParam);
+      } else if (pageParam && ['messages', 'settings', 'admin', 'new'].includes(pageParam)) {
+        if (pageParam === 'admin' && currentUser?.role !== 'admin') {
+          switchPage('feed');
+        } else {
+          switchPage(pageParam);
+        }
+      } else {
+        switchPage('feed');
+      }
+
+      bindEvents();
+    }
+
+    // ============================================================
+    //  🎯 事件绑定
+    // ============================================================
+    function bindEvents() {
+      // 主题切换
+      const themeToggle = document.getElementById('themeToggle');
+      if (themeToggle) {
+        themeToggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleTheme(e);
+          document.getElementById('dropdownMenu').classList.remove('show');
+        });
+      }
+
+      // 登录
+      document.getElementById('loginBtn').addEventListener('click', () => {
+        document.getElementById('loginModal').classList.add('active');
+      });
+      document.getElementById('loginSubmit').addEventListener('click', async () => {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        if (!email || !password) { alert('请填写完整信息'); return; }
+        try {
+          const result = await API.login(email, password);
+          document.getElementById('loginModal').classList.remove('active');
+          document.getElementById('loginEmail').value = '';
+          document.getElementById('loginPassword').value = '';
+          if (result.user) {
+            currentUser = result.user;
+            API.logEvent('login').catch(() => {});
+            renderNav();
+            if (currentPage === 'admin' && currentUser.role !== 'admin') {
+              switchPage('feed');
+            } else if (currentPage === 'feed') {
+              renderFeed();
+              renderStats();
+            }
+          }
+        } catch (err) {
+          alert('登录失败：' + err.message);
+        }
+      });
+
+      // 注册
+      document.getElementById('registerBtn').addEventListener('click', () => {
+        refreshCaptcha('reg');
+        document.getElementById('registerModal').classList.add('active');
+      });
+      document.getElementById('registerSubmit').addEventListener('click', async () => {
+        const username = document.getElementById('regUsername').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+        const captchaInput = document.getElementById('regCaptchaInput').value.trim();
+        const captchaAnswer = parseInt(document.getElementById('regCaptchaInput').dataset.answer);
+        if (!username || !email || !password) { alert('请填写完整信息'); return; }
+        if (password.length < 6) { alert('密码至少6位'); return; }
+        if (parseInt(captchaInput) !== captchaAnswer) { alert('验证码错误，请重新计算'); refreshCaptcha('reg'); return; }
+        try {
+          await API.register(email, password, username);
+          document.getElementById('registerModal').classList.remove('active');
+          document.getElementById('regUsername').value = '';
+          document.getElementById('regEmail').value = '';
+          document.getElementById('regPassword').value = '';
+          document.getElementById('regCaptchaInput').value = '';
+          alert('注册成功！请登录');
+
+          const result = await API.login(email, password);
+          if (result.user) {
+            currentUser = result.user;
+            API.logEvent('register').catch(() => {});
+            renderNav();
+            if (currentPage === 'admin' && currentUser.role !== 'admin') {
+              switchPage('feed');
+            } else if (currentPage === 'feed') {
+              renderFeed();
+              renderStats();
+            }
+          }
+        } catch (err) {
+          alert('注册失败：' + err.message);
+        }
+      });
+      document.getElementById('regCaptchaQuestion').addEventListener('click', function() {
+        refreshCaptcha('reg');
+      });
+
+      // 退出
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (!confirm('确定要退出吗？')) return;
+        await API.logout();
+        currentUser = null;
+        renderNav();
+        document.querySelectorAll('.page-slide').forEach(el => el.classList.remove('active'));
+        switchPage('feed');
+      });
+
+      // 发帖按钮
+      document.getElementById('fab').addEventListener('click', () => {
+        if (!currentUser) { alert('请先登录'); return; }
+        switchPage('new');
+      });
+
+      // 发帖提交
+      document.getElementById('postSubmit').addEventListener('click', async () => {
+        if (!currentUser || !currentUser.id) {
+          alert('请先登录');
+          switchPage('feed');
+          return;
+        }
+        const title = document.getElementById('postTitle').value.trim() || '无标题';
+        const content = document.getElementById('postContent').value.trim();
+        const captchaInput = document.getElementById('postCaptchaInput').value.trim();
+        const captchaAnswer = parseInt(document.getElementById('postCaptchaInput').dataset.answer);
+        if (!content) { alert('请填写内容'); return; }
+        if (parseInt(captchaInput) !== captchaAnswer) { alert('验证码错误，请重新计算'); refreshCaptcha('post'); return; }
+        const images = [];
+        document.querySelectorAll('#imagePreview img').forEach(img => {
+          images.push(img.src);
+        });
+        try {
+          await API.createPost(title, content, images);
+          API.logEvent('create_post').catch(() => {});
+          alert('发布成功！');
+          switchPage('feed');
+          renderFeed();
+          renderStats();
+        } catch (err) {
+          alert('发布失败：' + err.message);
+        }
+      });
+      document.getElementById('postCaptchaQuestion').addEventListener('click', function() {
+        refreshCaptcha('post');
+      });
+
+      // 图片上传预览
+      document.getElementById('imageUpload').addEventListener('change', function() {
+        const preview = document.getElementById('imagePreview');
+        preview.innerHTML = '';
+        for (let file of this.files) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:4px;border:1px solid #e2e8f0;';
+            preview.appendChild(img);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // 举报
+      document.getElementById('reportSubmit').addEventListener('click', async () => {
+        if (!reportTargetPostId) return;
+        const reason = document.getElementById('reportReason').value;
+        try {
+          await API.createReport(reportTargetPostId, reason);
+          document.getElementById('reportModal').classList.remove('active');
+          alert('举报已提交，管理员将尽快处理');
+          reportTargetPostId = null;
+        } catch (err) {
+          alert('举报失败：' + err.message);
+        }
+      });
+
+      // 排序
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          this.classList.add('active');
+          currentSort = this.dataset.sort;
+          if (currentPage === 'feed') {
+            renderFeed();
+          }
+        });
+      });
+
+      // 模态框关闭
+      document.querySelectorAll('.modal .close').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.getElementById(this.dataset.modal).classList.remove('active');
+        });
+      });
+      document.querySelectorAll('.modal').forEach(m => {
+        m.addEventListener('click', function(e) {
+          if (e.target === this) this.classList.remove('active');
+        });
+      });
+
+      // 头像下拉
+      document.getElementById('avatarImg').addEventListener('click', function(e) {
+        e.stopPropagation();
+        document.getElementById('dropdownMenu').classList.toggle('show');
+      });
+      document.addEventListener('click', function() {
+        document.getElementById('dropdownMenu').classList.remove('show');
+      });
+
+      // 导航菜单页面切换
+      document.querySelectorAll('[data-page]').forEach(el => {
+        el.addEventListener('click', function(e) {
+          e.preventDefault();
+          const page = this.dataset.page;
+          if (page === 'admin' && currentUser?.role !== 'admin') {
+            alert('无权限访问');
+            return;
+          }
+          document.getElementById('dropdownMenu').classList.remove('show');
+          switchPage(page);
+        });
+      });
+
+      // 返回按钮
+      document.querySelectorAll('.back-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          switchPage('feed');
+        });
+      });
+
+      // 管理后台Tab切换
+      document.querySelectorAll('.admin-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+          document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+          this.classList.add('active');
+          const tabMap = {
+            reports: renderAdminReports,
+            users: renderAdminUsers,
+            logs: renderAdminLogs,
+            links: renderAdminLinks
+          };
+          if (tabMap[this.dataset.tab]) tabMap[this.dataset.tab]();
+        });
+      });
+
+      // 设置保存
+      document.getElementById('settingsSave').addEventListener('click', async () => {
+        if (!currentUser) { alert('请先登录'); return; }
+        const username = document.getElementById('settingsUsername').value.trim();
+        const bio = document.getElementById('settingsBio').value.trim();
+        if (!username) { alert('用户名不能为空'); return; }
+        try {
+          // 使用更新用户信息接口
+          const data = await apiFetch('/users/' + currentUser.id, {
+            method: 'PUT',
+            body: JSON.stringify({ username, bio })
+          });
+          if (data.error) throw new Error(data.error);
+          currentUser.username = username;
+          currentUser.bio = bio;
+          alert('保存成功！');
+          renderNav();
+          if (currentPage === 'feed') {
+            renderFeed();
+          }
+        } catch (err) {
+          alert('保存失败：' + err.message);
+        }
+      });
+
+      // 点击论坛名回首页
+      document.getElementById('forumName').addEventListener('click', function() {
+        switchPage('feed');
+      });
+
+      // 浏览器前进后退
+      window.addEventListener('popstate', function(e) {
+        const state = e.state || {};
+        const page = state.page || 'feed';
+        const postId = state.postId || null;
+        if (postId) {
+          showPostPage(postId);
+        } else {
+          switchPage(page);
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
