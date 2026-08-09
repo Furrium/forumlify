@@ -99,6 +99,7 @@
   </div>
 
   <!-- ===== 独立页面 ===== -->
+  <!-- 消息页面 -->
   <div id="pageMessages" class="page-slide">
     <div class="page-header" style="max-width:700px;margin:0 auto;width:100%;">
       <h2>
@@ -106,25 +107,25 @@
         消息
       </h2>
     </div>
-    <p style="color:#94a3b8;padding:20px 0;max-width:700px;margin:0 auto;width:100%;">暂无消息</p>
+    <div id="messagesContent" style="max-width:700px;margin:0 auto;width:100%;">
+      <div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>
+    </div>
   </div>
 
+  <!-- 设置页面 -->
   <div id="pageSettings" class="page-slide">
-    <div class="page-header" style="max-width:400px;margin:0 auto;width:100%;">
+    <div class="page-header" style="max-width:500px;margin:0 auto;width:100%;">
       <h2>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
         设置
       </h2>
     </div>
-    <div style="max-width:400px;margin:0 auto;width:100%;">
-      <label style="font-weight:600;font-size:14px;">用户名</label>
-      <input type="text" id="settingsUsername" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:4px;margin:6px 0 12px;" />
-      <label style="font-weight:600;font-size:14px;">个人简介</label>
-      <textarea id="settingsBio" rows="3" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:4px;margin:6px 0 12px;"></textarea>
-      <button id="settingsSave" class="btn-primary">保存设置</button>
+    <div id="settingsContent" style="max-width:500px;margin:0 auto;width:100%;">
+      <div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>
     </div>
   </div>
 
+  <!-- 管理后台 -->
   <div id="pageAdmin" class="page-slide">
     <div class="page-header" style="max-width:900px;margin:0 auto;width:100%;">
       <h2>
@@ -163,6 +164,7 @@
     </div>
   </div>
 
+  <!-- 发布新帖 -->
   <div id="pageNew" class="page-slide">
     <div class="page-header" style="max-width:600px;margin:0 auto;width:100%;">
       <h2>
@@ -190,7 +192,7 @@
     </div>
   </div>
 
-  <!-- ===== 帖子详情页 ===== -->
+  <!-- 帖子详情页 -->
   <div id="pagePost" class="page-slide">
     <div class="page-header" style="max-width:700px;margin:0 auto;width:100%;">
       <h2 id="postDetailTitle">帖子详情</h2>
@@ -212,7 +214,7 @@
     </div>
   </div>
 
-  <!-- ===== 用户主页 ===== -->
+  <!-- 用户主页 -->
   <div id="pageUser" class="page-slide">
     <div class="page-header" style="max-width:700px;margin:0 auto;width:100%;">
       <button class="back-btn" onclick="switchPage('feed')">
