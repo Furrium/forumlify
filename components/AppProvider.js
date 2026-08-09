@@ -14,8 +14,9 @@ export default function AppProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [forumName, setForumName] = useState('Forumlify');
   const [theme, setThemeState] = useState('light');
-  const [view, setView] = useState('feed'); // feed | post | new | admin | settings | messages
+  const [view, setView] = useState('feed'); // feed | post | new | admin | settings | messages | user
   const [currentPostId, setCurrentPostId] = useState(null);
+  const [currentUsername, setCurrentUsername] = useState(null);
   const [sort, setSort] = useState('latest');
   const [refreshKey, setRefreshKey] = useState(0);
   const loadedRef = useRef(false);
@@ -67,9 +68,13 @@ export default function AppProvider({ children }) {
     const params = new URLSearchParams(window.location.search);
     const postParam = params.get('post');
     const pageParam = params.get('page');
+    const userParam = params.get('user');
     if (postParam) {
       setView('post');
       setCurrentPostId(postParam);
+    } else if (userParam) {
+      setView('user');
+      setCurrentUsername(userParam);
     } else if (pageParam && ['messages', 'settings', 'admin', 'new'].includes(pageParam)) {
       setView(pageParam);
     }
@@ -95,9 +100,20 @@ export default function AppProvider({ children }) {
     const url = new URL(window.location);
     url.searchParams.set('post', postId);
     url.searchParams.delete('page');
+    url.searchParams.delete('user');
     window.history.pushState({ page: 'post', postId }, '', url);
     setView('post');
     setCurrentPostId(postId);
+  }, []);
+
+  const openUser = useCallback((username) => {
+    const url = new URL(window.location);
+    url.searchParams.set('user', username);
+    url.searchParams.delete('page');
+    url.searchParams.delete('post');
+    window.history.pushState({ page: 'user', username }, '', url);
+    setView('user');
+    setCurrentUsername(username);
   }, []);
 
   // 浏览器前进后退
@@ -107,9 +123,13 @@ export default function AppProvider({ children }) {
       if (state.postId) {
         setView('post');
         setCurrentPostId(state.postId);
+      } else if (state.username) {
+        setView('user');
+        setCurrentUsername(state.username);
       } else {
         setView(state.page || 'feed');
         setCurrentPostId(null);
+        setCurrentUsername(null);
       }
     };
     window.addEventListener('popstate', onPop);
@@ -152,6 +172,7 @@ export default function AppProvider({ children }) {
     theme, toggleTheme,
     view, navigate,
     currentPostId, openPost,
+    currentUsername, openUser,
     sort, setSort,
     refreshKey, refresh,
     login, register, logout,

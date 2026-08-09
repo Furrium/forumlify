@@ -10,10 +10,11 @@ import PostDetail from '@/components/PostDetail';
 import NewPost from '@/components/NewPost';
 import AdminPage from '@/components/AdminPage';
 import SettingsPage from '@/components/SettingsPage';
+import UserProfile from '@/components/UserProfile';
 import Modals from '@/components/Modals';
 
 function HomeInner() {
-  const { view, currentPostId } = useApp();
+  const { view, currentPostId, currentUsername } = useApp();
   const [modal, setModal] = useState(null); // null | login | register | report
   const [reportPostId, setReportPostId] = useState(null);
 
@@ -32,6 +33,7 @@ function HomeInner() {
       {/* 独立页面 */}
       <div style={{ display: view !== 'feed' ? 'block' : 'none' }}>
         {view === 'post' && currentPostId && <PostDetail postId={currentPostId} />}
+        {view === 'user' && currentUsername && <UserProfile username={currentUsername} />}
         {view === 'new' && <NewPost />}
         {view === 'admin' && <AdminPage />}
         {view === 'settings' && <SettingsPage />}

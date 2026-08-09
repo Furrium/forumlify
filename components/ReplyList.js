@@ -12,7 +12,7 @@ function avatar(username) {
 }
 
 export default function ReplyList({ postId, onRefresh }) {
-  const { currentUser } = useApp();
+  const { currentUser, openUser } = useApp();
   const [replies, setReplies] = useState([]);
   const [content, setContent] = useState('');
   const [captcha, setCaptcha] = useState(null);
@@ -75,7 +75,13 @@ export default function ReplyList({ postId, onRefresh }) {
               <div key={r.id} className="reply-item">
                 <div className="reply-header">
                   <img src={avatar(r.username)} className="reply-avatar" alt="" />
-                  <span className="reply-username">{r.username || '匿名用户'}</span>
+                  <span
+                    className="reply-username"
+                    style={{ cursor: 'pointer', color: 'var(--primary)' }}
+                    onClick={() => openUser(r.username)}
+                  >
+                    {r.username || '匿名用户'}
+                  </span>
                   <span className="reply-time">{rTime}</span>
                   {currentUser && currentUser.id === r.user_id && (
                     <button className="btn-sm btn-danger reply-delete-btn" onClick={() => handleDelete(r.id)}>

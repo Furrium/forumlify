@@ -13,7 +13,7 @@ function avatar(username) {
 }
 
 export default function PostDetail({ postId }) {
-  const { currentUser, navigate, refreshKey } = useApp();
+  const { currentUser, navigate, openUser, refreshKey } = useApp();
   const [post, setPost] = useState(null);
   const [error, setError] = useState(null);
 
@@ -63,7 +63,13 @@ export default function PostDetail({ postId }) {
         <div className="post-detail-card">
           <div className="post-header">
             <img src={avatar(post.username)} className="post-avatar" alt="" />
-            <span className="post-username">{post.username || '匿名用户'}</span>
+            <span
+              className="post-username"
+              style={{ cursor: 'pointer', color: 'var(--primary)' }}
+              onClick={() => openUser(post.username)}
+            >
+              {post.username || '匿名用户'}
+            </span>
             <span className="post-time">{time}</span>
             {canDelete && (
               <button className="btn-sm btn-danger" onClick={handleDelete}>

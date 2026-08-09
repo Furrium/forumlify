@@ -12,7 +12,7 @@ function avatar(username) {
 }
 
 export default function Feed({ onOpenModal, onReport }) {
-  const { currentUser, sort, setSort, openPost, navigate, refreshKey } = useApp();
+  const { currentUser, sort, setSort, openPost, openUser, navigate, refreshKey } = useApp();
   const [posts, setPosts] = useState(null);
   const [error, setError] = useState(null);
 
@@ -72,7 +72,13 @@ export default function Feed({ onOpenModal, onReport }) {
                 onClick={() => openPost(p.id)}>
                 <div className="post-header">
                   <img src={avatar(p.username)} className="post-avatar" alt="" />
-                  <span className="post-username">{p.username || '匿名用户'}</span>
+                  <span
+                    className="post-username"
+                    style={{ cursor: 'pointer', color: 'var(--primary)' }}
+                    onClick={(e) => { e.stopPropagation(); openUser(p.username); }}
+                  >
+                    {p.username || '匿名用户'}
+                  </span>
                   <span className="post-time">{time}</span>
                 </div>
                 <div className="post-title">{p.title || '无标题'}</div>
