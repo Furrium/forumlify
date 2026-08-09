@@ -73,7 +73,6 @@ CREATE TABLE IF NOT EXISTS settings (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 插入默认论坛名称
 INSERT INTO settings (key, value) VALUES ('forum_name', 'Forumlify')
 ON CONFLICT (key) DO NOTHING;
 
@@ -101,7 +100,6 @@ CREATE TABLE IF NOT EXISTS messages (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 创建索引
 CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id);
 CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_user1_id ON conversations(user1_id);
@@ -115,14 +113,29 @@ CREATE TABLE IF NOT EXISTS custom_pages (
   name VARCHAR(50) NOT NULL UNIQUE,
   title VARCHAR(100) NOT NULL,
   content TEXT NOT NULL,
-  sort_order INT DEFAULT 0,
   enabled BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS idx_custom_pages_name ON custom_pages(name);
-CREATE INDEX IF NOT EXISTS idx_custom_pages_sort_order ON custom_pages(sort_order);
+
+-- ============================================================
+--  通知系统
+-- ============================================================
+CREATE TABLE IF NOT EXISTS notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type VARCHAR(30) NOT NULL,
+  title VARCHAR(100) NOT NULL,
+  content TEXT NOT NULL,
+  link TEXT,
+  is_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
 
 -- ============================================================
 --  自动更新 updated_at 的触发器
