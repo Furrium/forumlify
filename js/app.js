@@ -4,6 +4,7 @@
 
 let currentUser = null;
 let currentPage = 'feed';
+let currentPageNum = 1;
 
 function renderNav() {
   const authBtns = document.getElementById('authButtons');
@@ -112,9 +113,12 @@ function switchPage(page, param) {
       document.getElementById('postTitle').value = '';
       document.getElementById('postContent').value = '';
       document.getElementById('imagePreview').innerHTML = '';
-      document.getElementById('imageUpload').value = '';
+      document.getElementById('fileInput').value = '';
       document.getElementById('postCaptchaInput').value = '';
       refreshCaptcha('post');
+      // 重置上传区域文字
+      const dropText = document.getElementById('dropZoneText');
+      if (dropText) dropText.textContent = '点击或拖拽上传图片';
     }
   }
 }
@@ -305,50 +309,31 @@ async function openPrivateChat(otherUserId, otherUsername) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  const messageBtn = document.getElementById('messageBtn');
-  if (messageBtn) {
-    messageBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      if (!currentUser) { alert('请先登录'); return; }
-      openMessageList();
-    });
-  }
+// ============================================================
+//  📸 图片上传（拖拽上传）
+// ============================================================
 
-  const closeMessageListBtn = document.querySelector('#messageListModal .close');
-  if (closeMessageListBtn) {
-    closeMessageListBtn.addEventListener('click', closeMessageList);
+function handleImageFiles(files) {
+  const preview = document.getElementById('imagePreview');
+  if (!preview) return;
+  for (let file of files) {
+    if (!file.type.startsWith('image/')) continue;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('图片 ' + file.name + ' 超过 5MB，请压缩后上传');
+      continue;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:4px;border:1px solid var(--border);';
+      preview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
   }
-
-  const closeChatBtn = document.querySelector('#chatModal .close');
-  if (closeChatBtn) {
-    closeChatBtn.addEventListener('click', closeChat);
-  }
-
-  const chatInput = document.getElementById('chatInput');
-  if (chatInput) {
-    chatInput.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
-  }
-
-  document.querySelectorAll('.modal').forEach(m => {
-    m.addEventListener('click', function(e) {
-      if (e.target === this) {
-        this.classList.remove('active');
-        if (this.id === 'messageListModal') {
-          closeMessageList();
-        }
-        if (this.id === 'chatModal') {
-          closeChat();
-        }
-      }
-    });
-  });
-});
+  const fileInput = document.getElementById('fileInput');
+  if (fileInput) fileInput.value = '';
+}
 
 // ============================================================
 //  🚀 初始化
@@ -383,9 +368,8 @@ async function init() {
   const userParam = urlParams.get('user');
   const postPageParam = urlParams.get('postpage');
 
-  // 读取分页参数
   if (postPageParam) {
-    currentPage = parseInt(postPageParam) || 1;
+    currentPageNum = parseInt(postPageParam) || 1;
   }
 
   if (userParam) {
@@ -406,6 +390,7 @@ async function init() {
   //  绑定所有事件
   // ============================================================
 
+  // 主题切换
   const themeToggle = document.getElementById('themeToggle');
   if (themeToggle) {
     themeToggle.addEventListener('click', function(e) {
@@ -416,6 +401,7 @@ async function init() {
     });
   }
 
+  // 头像下拉
   document.getElementById('avatarImg').addEventListener('click', function(e) {
     e.stopPropagation();
     document.getElementById('dropdownMenu').classList.toggle('show');
@@ -424,6 +410,7 @@ async function init() {
     document.getElementById('dropdownMenu').classList.remove('show');
   });
 
+  // 导航菜单
   document.querySelectorAll('[data-page]').forEach(el => {
     el.addEventListener('click', function(e) {
       e.preventDefault();
@@ -437,12 +424,14 @@ async function init() {
     });
   });
 
+  // 返回按钮
   document.querySelectorAll('.back-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       switchPage('feed');
     });
   });
 
+  // 设置保存
   document.getElementById('settingsSave').addEventListener('click', async () => {
     if (!currentUser) { alert('请先登录'); return; }
     const username = document.getElementById('settingsUsername').value.trim();
@@ -466,15 +455,18 @@ async function init() {
     }
   });
 
+  // 点击论坛名回首页
   document.getElementById('forumName').addEventListener('click', function() {
     switchPage('feed');
   });
 
+  // 发帖按钮
   document.getElementById('fab').addEventListener('click', () => {
     if (!currentUser) { alert('请先登录'); return; }
     switchPage('new');
   });
 
+  // 发帖提交
   document.getElementById('postSubmit').addEventListener('click', async () => {
     if (!currentUser || !currentUser.id) {
       alert('请先登录');
@@ -503,25 +495,52 @@ async function init() {
     }
   });
 
+  // 验证码刷新
   document.getElementById('postCaptchaQuestion').addEventListener('click', function() {
     refreshCaptcha('post');
   });
-
-  document.getElementById('imageUpload').addEventListener('change', function() {
-    const preview = document.getElementById('imagePreview');
-    preview.innerHTML = '';
-    for (let file of this.files) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = document.createElement('img');
-        img.src = e.target.result;
-        img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:4px;border:1px solid #e2e8f0;';
-        preview.appendChild(img);
-      };
-      reader.readAsDataURL(file);
-    }
+  document.getElementById('regCaptchaQuestion').addEventListener('click', function() {
+    refreshCaptcha('reg');
   });
 
+  // 图片上传 - 拖拽区域
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const dropZoneText = document.getElementById('dropZoneText');
+
+  if (dropZone && fileInput) {
+    dropZone.addEventListener('click', function() {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function() {
+      handleImageFiles(this.files);
+    });
+
+    dropZone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      this.style.borderColor = 'var(--primary)';
+      this.style.background = 'var(--primary-bg)';
+      if (dropZoneText) dropZoneText.textContent = '松开上传';
+    });
+
+    dropZone.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      this.style.borderColor = 'var(--border)';
+      this.style.background = 'var(--bg)';
+      if (dropZoneText) dropZoneText.textContent = '点击或拖拽上传图片';
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.style.borderColor = 'var(--border)';
+      this.style.background = 'var(--bg)';
+      if (dropZoneText) dropZoneText.textContent = '点击或拖拽上传图片';
+      handleImageFiles(e.dataTransfer.files);
+    });
+  }
+
+  // 举报提交
   document.getElementById('reportSubmit').addEventListener('click', async () => {
     if (!reportTargetPostId) return;
     const reason = document.getElementById('reportReason').value;
@@ -535,6 +554,7 @@ async function init() {
     }
   });
 
+  // 模态框关闭
   document.querySelectorAll('.modal .close').forEach(btn => {
     btn.addEventListener('click', function() {
       document.getElementById(this.dataset.modal).classList.remove('active');
@@ -546,6 +566,7 @@ async function init() {
     });
   });
 
+  // 浏览器前进后退
   window.addEventListener('popstate', function(e) {
     const state = e.state || {};
     const page = state.page || 'feed';
@@ -560,6 +581,7 @@ async function init() {
     }
   });
 
+  // 私信按钮
   const messageBtn = document.getElementById('messageBtn');
   if (messageBtn) {
     const newBtn = messageBtn.cloneNode(true);
@@ -570,6 +592,44 @@ async function init() {
       openMessageList();
     });
   }
+
+  // 私信列表关闭
+  const closeMessageListBtn = document.querySelector('#messageListModal .close');
+  if (closeMessageListBtn) {
+    closeMessageListBtn.addEventListener('click', closeMessageList);
+  }
+
+  // 聊天关闭
+  const closeChatBtn = document.querySelector('#chatModal .close');
+  if (closeChatBtn) {
+    closeChatBtn.addEventListener('click', closeChat);
+  }
+
+  // 聊天输入框 Enter 发送
+  const chatInput = document.getElementById('chatInput');
+  if (chatInput) {
+    chatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  }
+
+  // 点击模态框背景关闭
+  document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.remove('active');
+        if (this.id === 'messageListModal') {
+          closeMessageList();
+        }
+        if (this.id === 'chatModal') {
+          closeChat();
+        }
+      }
+    });
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init);
