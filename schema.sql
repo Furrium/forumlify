@@ -152,3 +152,6 @@ DROP TRIGGER IF EXISTS update_posts_updated_at ON posts;
 CREATE TRIGGER update_posts_updated_at
   BEFORE UPDATE ON posts
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ;
+
