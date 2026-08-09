@@ -43,15 +43,20 @@ function renderFeed() {
         imagesHtml += '</div>';
       }
       const replyCount = p.reply_count || 0;
+
+      // Markdown 渲染
+      const renderedContent = marked ? marked.parse(p.content || '') : (p.content || '').replace(/\n/g, '<br>');
+
       html += `
         <div class="post-card" data-postid="${p.id}" style="cursor:pointer;">
           <div class="post-header">
             <img src="${avatar}" class="post-avatar" />
             <span class="post-username" style="cursor:pointer;color:var(--primary);" onclick="event.stopPropagation();switchPage('user','${username}')">${username}</span>
             <span class="post-time">${time}</span>
+            ${p.edited_at ? '<span style="font-size:11px;color:var(--text-light);margin-left:6px;">（已编辑）</span>' : ''}
           </div>
           <div class="post-title">${p.title || '无标题'}</div>
-          <div class="post-content">${(p.content || '').replace(/\n/g, '<br>')}</div>
+          <div class="post-content">${renderedContent}</div>
           ${imagesHtml}
           <div class="post-actions">
             <span>
