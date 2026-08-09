@@ -329,5 +329,31 @@ const API = {
     });
     if (data.error) throw new Error(data.error);
     return data;
+  },
+
+  // ============================================================
+  //  恢复码
+  // ============================================================
+  async generateRecoveryCodes() {
+    const data = await apiFetch('/auth/recovery-codes/generate', {
+      method: 'POST'
+    });
+    if (data.error) throw new Error(data.error);
+    return data;
+  },
+
+  async getRecoveryCodesCount() {
+    const data = await apiFetch('/auth/recovery-codes/count');
+    if (data.error) throw new Error(data.error);
+    return data;
+  },
+
+  async resetPassword(email, recoveryCode, newPassword) {
+    const data = await apiFetch('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, recoveryCode, newPassword })
+    });
+    if (data.error) throw new Error(data.error);
+    return data;
   }
 };
