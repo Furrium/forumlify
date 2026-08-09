@@ -283,7 +283,6 @@ function loadCustomPageList() {
             <th style="padding:8px 12px;">名称</th>
             <th style="padding:8px 12px;">标题</th>
             <th style="padding:8px 12px;">URL</th>
-            <th style="padding:8px 12px;">排序</th>
             <th style="padding:8px 12px;">状态</th>
             <th style="padding:8px 12px;text-align:center;">操作</th>
           </tr>
@@ -296,7 +295,6 @@ function loadCustomPageList() {
           <td style="padding:8px 12px;"><code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px;">${p.name}</code></td>
           <td style="padding:8px 12px;">${p.title}</td>
           <td style="padding:8px 12px;"><code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px;">?custom=${p.name}</code></td>
-          <td style="padding:8px 12px;">${p.sort_order}</td>
           <td style="padding:8px 12px;"><span style="color:${p.enabled ? '#22c55e' : '#ef4444'};">${p.enabled ? '✅ 启用' : '❌ 禁用'}</span></td>
           <td style="padding:8px 12px;text-align:center;display:flex;gap:6px;justify-content:center;">
             <button class="btn-sm btn-secondary" data-id="${p.id}" data-action="edit">✏️</button>
@@ -353,11 +351,6 @@ function openCustomPageEditor(page) {
                placeholder="关于我们" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
       </div>
       <div style="margin-bottom:12px;">
-        <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">排序（数字越小越靠左）</label>
-        <input type="number" id="editorSortOrder" value="${isEdit ? page.sort_order : 0}"
-               style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
-      </div>
-      <div style="margin-bottom:12px;">
         <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">状态</label>
         <select id="editorEnabled" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);">
           <option value="true" ${isEdit && page.enabled ? 'selected' : ''}>启用</option>
@@ -386,7 +379,6 @@ function openCustomPageEditor(page) {
     const name = document.getElementById('editorPageName').value.trim();
     const title = document.getElementById('editorPageTitle').value.trim();
     const content = document.getElementById('editorContent').value.trim();
-    const sort_order = parseInt(document.getElementById('editorSortOrder').value) || 0;
     const enabled = document.getElementById('editorEnabled').value === 'true';
 
     if (!name) { alert('请输入页面名称'); return; }
@@ -399,9 +391,9 @@ function openCustomPageEditor(page) {
 
     try {
       if (isEdit) {
-        await API.updateCustomPage(page.id, title, content, sort_order, enabled);
+        await API.updateCustomPage(page.id, title, content, enabled);
       } else {
-        await API.createCustomPage(name, title, content, sort_order);
+        await API.createCustomPage(name, title, content);
       }
       modal.remove();
       loadCustomPageList();
