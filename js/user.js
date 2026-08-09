@@ -1,5 +1,3 @@
-cd /root/forumlify
-cat > js/user.js << 'EOF'
 // ============================================================
 //  👤 用户主页
 // ============================================================
@@ -9,7 +7,6 @@ async function renderUserProfile(username) {
   container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
 
   try {
-    // 1. 获取用户信息
     const users = await apiFetch('/users?username=' + encodeURIComponent(username));
     const user = users && users.length > 0 ? users[0] : null;
 
@@ -20,7 +17,6 @@ async function renderUserProfile(username) {
 
     document.getElementById('userPageTitle').textContent = '👤 ' + user.username;
 
-    // 2. 获取该用户的帖子（适配分页格式）
     const result = await apiFetch('/posts?user_id=' + user.id + '&page=1&limit=100');
     const posts = result.data || [];
 
@@ -63,7 +59,6 @@ async function renderUserProfile(username) {
 
     container.innerHTML = html;
 
-    // 绑定私信按钮
     const dmBtn = document.getElementById('dmBtn');
     if (dmBtn) {
       dmBtn.addEventListener('click', function() {
@@ -89,6 +84,3 @@ function showUserPage(username) {
   currentPage = 'user';
   renderUserProfile(username);
 }
-EOF
-
-docker-compose restart app
