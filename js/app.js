@@ -651,6 +651,54 @@ async function renderSettingsPage() {
 }
 
 // ============================================================
+//  ✏️ 编辑帖子模态框
+// ============================================================
+
+function openEditModal(postId, currentTitle, currentContent) {
+  const modal = document.createElement('div');
+  modal.className = 'modal active';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:600px;">
+      <span class="close" style="position:absolute;top:12px;right:16px;font-size:24px;cursor:pointer;color:var(--text-light);">&times;</span>
+      <h2 style="margin-bottom:16px;">✏️ 编辑帖子</h2>
+      <input type="text" id="editPostTitle" value="${currentTitle || ''}" placeholder="标题" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:6px;font-size:15px;font-weight:600;margin-bottom:12px;font-family:inherit;background:var(--bg);color:var(--text);" />
+      <textarea id="editPostContent" rows="6" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:6px;font-size:15px;font-family:inherit;resize:vertical;background:var(--bg);color:var(--text);">${currentContent || ''}</textarea>
+      <button id="editPostSaveBtn" class="btn-primary" style="padding:10px 24px;margin-top:12px;width:100%;">保存修改</button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  modal.querySelector('.close').addEventListener('click', function() {
+    modal.remove();
+  });
+  modal.addEventListener('click', function(e) {
+    if (e.target === this) modal.remove();
+  });
+
+  modal.querySelector('#editPostSaveBtn').addEventListener('click', async function() {
+    const title = document.getElementById('editPostTitle').value.trim() || '无标题';
+    const content = document.getElementById('editPostContent').value.trim();
+    if (!content) { alert('请填写内容'); return; }
+
+    try {
+      await API.updatePost(postId, title, content);
+      modal.remove();
+      // 刷新当前视图
+      if (currentPage === 'post') {
+        renderPostDetail(currentPostId);
+      } else {
+        renderFeed();
+      }
+      alert('编辑成功！');
+    } catch (err) {
+      alert('编辑失败：' + err.message);
+    }
+  });
+}
+
+// ============================================================
 //  🚀 初始化
 // ============================================================
 async function init() {
