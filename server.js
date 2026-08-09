@@ -814,6 +814,107 @@ app.put('/api/messages/:id/read', auth, async (req, res) => {
 });
 
 // ============================================================
+//  自定义页面
+// ============================================================
+
+// 获取所有自定义页面（公开，只返回启用且排序的）
+app.get('/api/custom-pages', async (req, res) => {
+  try {
+    const r = await pool.query(
+      'SELECT id, name, title, sort_order FROM custom_pages WHERE enabled = true ORDER BY sort_order'
+    );
+    res.json(r.rows);
+  } catch (err) {
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// 获取单个自定义页面（公开）
+app.get('/api/custom-pages/:name', async (req, res) => {
+  try {
+    const r = await pool.query(
+      'SELECT id, name, title, content FROM custom_pages WHERE name = $1 AND enabled = true',
+      [req.params.name]
+    );
+    if (r.rows.length === 0) {
+      return res.status(404).json({ error: '页面不存在' });
+    }
+    res.json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// 获取所有自定义页面（管理员，含禁用）
+app.get('/api/admin/custom-pages', auth, admin, async (req, res) => {
+  try {
+    const r = await pool.query(
+      'SELECT id, name, title, content, sort_order, enabled, created_at, updated_at FROM custom_pages ORDER BY sort_order'
+    );
+    res.json(r.rows);
+  } catch (err) {
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// 创建自定义页面（管理员）
+app.post('/api/admin/custom-pages', auth, admin, async (req, res) => {
+  const { name, title, content, sort_order } = req.body;
+  if (!name || !title || !content) {
+    return res.status(400).json({ error: '请填写完整信息' });
+  }
+  if (!/^[a-zA-Z0-9\-_]+$/.test(name)) {
+    return res.status(400).json({ error: '页面名称只允许字母、数字、短横线和下划线' });
+  }
+  try {
+    const r = await pool.query(
+      `INSERT INTO custom_pages (name, title, content, sort_order)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [name, title, content, sort_order || 0]
+    );
+    res.json(r.rows[0]);
+  } catch (err) {
+    if (err.code === '23505') {
+      res.status(400).json({ error: '页面名称已存在' });
+    } else {
+      res.status(500).json({ error: '创建失败，请稍后重试' });
+    }
+  }
+});
+
+// 更新自定义页面（管理员）
+app.put('/api/admin/custom-pages/:id', auth, admin, async (req, res) => {
+  const { title, content, sort_order, enabled } = req.body;
+  const id = req.params.id;
+  try {
+    const r = await pool.query(
+      `UPDATE custom_pages
+       SET title = $1, content = $2, sort_order = $3, enabled = $4, updated_at = NOW()
+       WHERE id = $5
+       RETURNING *`,
+      [title, content, sort_order || 0, enabled, id]
+    );
+    if (r.rows.length === 0) {
+      return res.status(404).json({ error: '页面不存在' });
+    }
+    res.json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: '更新失败，请稍后重试' });
+  }
+});
+
+// 删除自定义页面（管理员）
+app.delete('/api/admin/custom-pages/:id', auth, admin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM custom_pages WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: '删除失败，请稍后重试' });
+  }
+});
+
+// ============================================================
 //  托管前端文件
 // ============================================================
 
