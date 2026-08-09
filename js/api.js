@@ -268,7 +268,6 @@ const API = {
   // ============================================================
   //  自定义页面
   // ============================================================
-
   async getCustomPages() {
     const data = await apiFetch('/custom-pages');
     if (data.error) throw new Error(data.error);
@@ -307,6 +306,18 @@ const API = {
 
   async deleteCustomPage(id) {
     const data = await apiFetch('/admin/custom-pages/' + id, { method: 'DELETE' });
+    if (data.error) throw new Error(data.error);
+    return data;
+  },
+
+  // ============================================================
+  //  头像
+  // ============================================================
+  async updateAvatar(userId, avatar_url) {
+    const data = await apiFetch('/users/' + userId + '/avatar', {
+      method: 'PUT',
+      body: JSON.stringify({ avatar_url })
+    });
     if (data.error) throw new Error(data.error);
     return data;
   }
