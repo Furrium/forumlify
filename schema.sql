@@ -1,3 +1,7 @@
+-- ============================================================
+--  Forumlify 数据库表结构
+-- ============================================================
+
 -- 用户表
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -61,7 +65,7 @@ CREATE TABLE IF NOT EXISTS event_logs (
 );
 
 -- ============================================================
---  论坛设置表（新增）
+--  论坛设置表
 -- ============================================================
 CREATE TABLE IF NOT EXISTS settings (
   key VARCHAR(50) PRIMARY KEY,
@@ -74,23 +78,34 @@ INSERT INTO settings (key, value) VALUES ('forum_name', 'Forumlify')
 ON CONFLICT (key) DO NOTHING;
 
 -- ============================================================
---  自动更新 updated_at 的触发器
+--  私信系统
 -- ============================================================
-CREATE OR REPLACE FUNCTION update_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = now();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS update_posts_updated_at ON posts;
+-- 私信会话表
+CREATE TABLE IF NOT EXISTS conversations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user1_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user2_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  last_message_at TIMESTAMPTZ DEFAULT now(),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(user1_id, user2_id)
+);
 
-cd /root/forumlify
-nano schema.sql
-CREATE TRIGGER update_posts_updated_at
-  BEFORE UPDATE ON posts
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+-- 私信消息表
+CREATE TABLE IF NOT EXISTS messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  is_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 创建索引
+CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_user1_id ON conversations(user1_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_user2_id ON conversations(user2_id);
 
 -- ============================================================
 --  自定义页面表
@@ -108,3 +123,19 @@ CREATE TABLE IF NOT EXISTS custom_pages (
 
 CREATE INDEX IF NOT EXISTS idx_custom_pages_name ON custom_pages(name);
 CREATE INDEX IF NOT EXISTS idx_custom_pages_sort_order ON custom_pages(sort_order);
+
+-- ============================================================
+--  自动更新 updated_at 的触发器
+-- ============================================================
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_posts_updated_at ON posts;
+CREATE TRIGGER update_posts_updated_at
+  BEFORE UPDATE ON posts
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
