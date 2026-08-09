@@ -3,16 +3,31 @@
 // ============================================================
 
 let currentSort = 'latest';
+let currentPage = 1;
+let totalPages = 1;
+const PAGE_SIZE = 20;
 
 function renderFeed() {
   const container = document.getElementById('postList');
   container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
-  API.getPosts(currentSort).then(posts => {
-    if (!posts || posts.length === 0) {
+  API.getPosts(currentSort, currentPage, PAGE_SIZE).then(result => {
+    const posts = result.data || [];
+    const pagination = result.pagination || { total: 0, totalPages: 1, page: 1 };
+    totalPages = pagination.totalPages || 1;
+    currentPage = pagination.page || 1;
+
+    if (posts.length === 0 && currentPage === 1) {
       container.innerHTML =
         '<div style="text-align:center;color:#94a3b8;padding:60px 0;">✨ 还没有帖子，快来发布第一条吧！</div>';
       return;
     }
+
+    if (posts.length === 0 && currentPage > 1) {
+      currentPage = 1;
+      renderFeed();
+      return;
+    }
+
     let html = '';
     posts.forEach(p => {
       const username = p.username || '匿名用户';
@@ -58,6 +73,40 @@ function renderFeed() {
     });
     container.innerHTML = html;
 
+    // 分页控件
+    if (totalPages > 1) {
+      let paginationHtml = `
+        <div style="display:flex;justify-content:center;align-items:center;gap:8px;padding:16px 0;margin-top:8px;border-top:1px solid var(--border);flex-wrap:wrap;">
+          <button class="page-btn" data-page="${currentPage - 1}" ${currentPage <= 1 ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}
+                  style="padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">
+            ← 上一页
+          </button>
+          <span style="font-size:14px;color:var(--text-secondary);">
+            第 ${currentPage} / ${totalPages} 页（共 ${pagination.total} 帖）
+          </span>
+          <button class="page-btn" data-page="${currentPage + 1}" ${currentPage >= totalPages ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}
+                  style="padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">
+            下一页 →
+          </button>
+        </div>
+      `;
+      container.innerHTML += paginationHtml;
+
+      container.querySelectorAll('.page-btn:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const page = parseInt(this.dataset.page);
+          if (page >= 1 && page <= totalPages) {
+            currentPage = page;
+            const url = new URL(window.location);
+            url.searchParams.set('postpage', page);
+            window.history.pushState({}, '', url);
+            renderFeed();
+          }
+        });
+      });
+    }
+
+    // 事件绑定
     container.querySelectorAll('.post-card').forEach(card => {
       card.addEventListener('click', function(e) {
         if (e.target.closest('button')) return;
@@ -121,6 +170,10 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     this.classList.add('active');
     currentSort = this.dataset.sort;
+    currentPage = 1;
+    const url = new URL(window.location);
+    url.searchParams.delete('postpage');
+    window.history.pushState({}, '', url);
     if (currentPage === 'feed') {
       renderFeed();
     }
