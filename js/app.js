@@ -123,9 +123,11 @@ function switchPage(page, param) {
       });
       renderAdminReports();
     }
-    if (page === 'settings' && currentUser) {
-      document.getElementById('settingsUsername').value = currentUser.username || '';
-      document.getElementById('settingsBio').value = currentUser.bio || '';
+    if (page === 'settings') {
+      renderSettingsPage();
+    }
+    if (page === 'messages') {
+      renderMessagesPage();
     }
     if (page === 'new') {
       document.getElementById('postTitle').value = '';
@@ -456,6 +458,132 @@ function showCustomPage(pageName) {
 }
 
 // ============================================================
+//  📩 消息页面
+// ============================================================
+
+async function renderMessagesPage() {
+  const container = document.getElementById('messagesContent');
+  if (!container) return;
+  container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
+
+  try {
+    const notifications = await apiFetch('/notifications');
+    if (notifications.error) throw new Error(notifications.error);
+
+    if (notifications.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center;color:#94a3b8;padding:60px 0;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 16px;display:block;color:#94a3b8;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <p style="font-size:16px;">暂无消息</p>
+          <p style="font-size:13px;">当有人回复你的帖子或管理员处理你/对你的举报时，会在这里通知</p>
+        </div>
+      `;
+      return;
+    }
+
+    // 标记所有已读
+    await apiFetch('/notifications/read-all', { method: 'PUT' });
+
+    let html = '';
+    const typeMap = {
+      reply: '💬',
+      post_deleted: '🗑️',
+      report_handled: '🛡️',
+      system: '📢'
+    };
+    notifications.forEach(n => {
+      const icon = typeMap[n.type] || '📌';
+      const time = n.created_at ? new Date(n.created_at).toLocaleString('zh-CN') : '';
+      html += `
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border-light);background:var(--surface);border-radius:6px;margin-bottom:6px;">
+          <span style="font-size:20px;">${icon}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:14px;">${n.title}</div>
+            <div style="color:var(--text-secondary);font-size:13px;margin-top:2px;">${n.content}</div>
+            ${n.link ? `<a href="${n.link}" style="color:var(--primary);font-size:13px;text-decoration:none;margin-top:4px;display:inline-block;">查看详情 →</a>` : ''}
+            <div style="font-size:12px;color:var(--text-light);margin-top:4px;">${time}</div>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
+  }
+}
+
+// ============================================================
+//  ⚙️ 设置页面
+// ============================================================
+
+async function renderSettingsPage() {
+  const container = document.getElementById('settingsContent');
+  if (!container) return;
+
+  if (!currentUser) {
+    container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">请先登录</div>';
+    return;
+  }
+
+  const user = currentUser;
+
+  try {
+    const userPosts = await apiFetch('/posts?user_id=' + user.id);
+    const postCount = userPosts.data ? userPosts.data.length : 0;
+
+    container.innerHTML = `
+      <div style="max-width:500px;margin:0 auto;padding:20px 0;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <img src="${user.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.username) + '&background=6366f1&color=fff&size=128'}" 
+               style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);" />
+          <h2 style="margin:12px 0 4px;">${user.username}</h2>
+          <p style="color:var(--text-secondary);font-size:14px;">${user.bio || '这个人很懒，什么都没写'}</p>
+          <div style="display:flex;justify-content:center;gap:16px;margin-top:8px;font-size:13px;color:var(--text-secondary);flex-wrap:wrap;">
+            <span>📅 加入 ${user.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '未知'}</span>
+            <span>📝 ${postCount} 帖</span>
+            ${user.role === 'admin' ? '<span style="color:var(--primary);font-weight:600;">🛡️ 管理员</span>' : ''}
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
+          <div style="margin-bottom:16px;">
+            <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">用户名</label>
+            <input type="text" id="settingsUsername" value="${user.username}" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">个人简介</label>
+            <textarea id="settingsBio" rows="3" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);resize:vertical;">${user.bio || ''}</textarea>
+          </div>
+          <button id="settingsSaveBtn" class="btn-primary" style="width:100%;padding:10px;">保存设置</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('settingsSaveBtn').addEventListener('click', async function() {
+      const username = document.getElementById('settingsUsername').value.trim();
+      const bio = document.getElementById('settingsBio').value.trim();
+      if (!username) { alert('用户名不能为空'); return; }
+      try {
+        const data = await apiFetch('/users/' + user.id, {
+          method: 'PUT',
+          body: JSON.stringify({ username, bio })
+        });
+        if (data.error) throw new Error(data.error);
+        currentUser.username = username;
+        currentUser.bio = bio;
+        alert('保存成功！');
+        renderNav();
+        renderSettingsPage();
+      } catch (err) {
+        alert('保存失败：' + err.message);
+      }
+    });
+  } catch (err) {
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
+  }
+}
+
+// ============================================================
 //  🚀 初始化
 // ============================================================
 async function init() {
@@ -549,29 +677,6 @@ async function init() {
     btn.addEventListener('click', function() {
       switchPage('feed');
     });
-  });
-
-  document.getElementById('settingsSave').addEventListener('click', async () => {
-    if (!currentUser) { alert('请先登录'); return; }
-    const username = document.getElementById('settingsUsername').value.trim();
-    const bio = document.getElementById('settingsBio').value.trim();
-    if (!username) { alert('用户名不能为空'); return; }
-    try {
-      const data = await apiFetch('/users/' + currentUser.id, {
-        method: 'PUT',
-        body: JSON.stringify({ username, bio })
-      });
-      if (data.error) throw new Error(data.error);
-      currentUser.username = username;
-      currentUser.bio = bio;
-      alert('保存成功！');
-      renderNav();
-      if (currentPage === 'feed') {
-        renderFeed();
-      }
-    } catch (err) {
-      alert('保存失败：' + err.message);
-    }
   });
 
   document.getElementById('forumName').addEventListener('click', function() {
