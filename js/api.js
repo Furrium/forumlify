@@ -287,19 +287,19 @@ const API = {
     return data || [];
   },
 
-  async createCustomPage(name, title, content, sort_order) {
+  async createCustomPage(name, title, content) {
     const data = await apiFetch('/admin/custom-pages', {
       method: 'POST',
-      body: JSON.stringify({ name, title, content, sort_order })
+      body: JSON.stringify({ name, title, content })
     });
     if (data.error) throw new Error(data.error);
     return data;
   },
 
-  async updateCustomPage(id, title, content, sort_order, enabled) {
+  async updateCustomPage(id, title, content, enabled) {
     const data = await apiFetch('/admin/custom-pages/' + id, {
       method: 'PUT',
-      body: JSON.stringify({ title, content, sort_order, enabled })
+      body: JSON.stringify({ title, content, enabled })
     });
     if (data.error) throw new Error(data.error);
     return data;
