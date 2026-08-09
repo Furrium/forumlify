@@ -39,6 +39,8 @@ async function loadForumName() {
 
 function switchPage(page, param) {
   const url = new URL(window.location);
+
+  // 用户主页跳转
   if (page === 'user' && param) {
     url.searchParams.set('user', param);
     url.searchParams.delete('page');
@@ -47,6 +49,18 @@ function switchPage(page, param) {
     showUserPage(param);
     return;
   }
+
+  // 帖子详情跳转
+  if (page === 'post' && param) {
+    url.searchParams.set('post', param);
+    url.searchParams.delete('page');
+    url.searchParams.delete('user');
+    window.history.pushState({ page: 'post', postId: param }, '', url);
+    showPostPage(param);
+    return;
+  }
+
+  // 其他页面（feed, settings, admin, new, messages）
   if (page === 'feed') {
     url.searchParams.delete('page');
     url.searchParams.delete('post');
@@ -153,7 +167,22 @@ async function init() {
     switchPage('feed');
   }
 
-  // 绑定事件（在 app.js 中绑）
+  // ============================================================
+  //  绑定所有事件
+  // ============================================================
+
+  // 1. 主题切换
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleTheme(e);
+      document.getElementById('dropdownMenu').classList.remove('show');
+    });
+  }
+
+  // 2. 头像下拉菜单
   document.getElementById('avatarImg').addEventListener('click', function(e) {
     e.stopPropagation();
     document.getElementById('dropdownMenu').classList.toggle('show');
@@ -162,6 +191,7 @@ async function init() {
     document.getElementById('dropdownMenu').classList.remove('show');
   });
 
+  // 3. 导航菜单页面切换
   document.querySelectorAll('[data-page]').forEach(el => {
     el.addEventListener('click', function(e) {
       e.preventDefault();
@@ -175,12 +205,14 @@ async function init() {
     });
   });
 
+  // 4. 返回按钮
   document.querySelectorAll('.back-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       switchPage('feed');
     });
   });
 
+  // 5. 设置保存
   document.getElementById('settingsSave').addEventListener('click', async () => {
     if (!currentUser) { alert('请先登录'); return; }
     const username = document.getElementById('settingsUsername').value.trim();
@@ -204,16 +236,18 @@ async function init() {
     }
   });
 
+  // 6. 点击论坛名回首页
   document.getElementById('forumName').addEventListener('click', function() {
     switchPage('feed');
   });
 
-  // 发帖按钮
+  // 7. 发帖按钮
   document.getElementById('fab').addEventListener('click', () => {
     if (!currentUser) { alert('请先登录'); return; }
     switchPage('new');
   });
 
+  // 8. 发帖提交
   document.getElementById('postSubmit').addEventListener('click', async () => {
     if (!currentUser || !currentUser.id) {
       alert('请先登录');
@@ -242,10 +276,12 @@ async function init() {
     }
   });
 
+  // 9. 验证码刷新
   document.getElementById('postCaptchaQuestion').addEventListener('click', function() {
     refreshCaptcha('post');
   });
 
+  // 10. 图片上传预览
   document.getElementById('imageUpload').addEventListener('change', function() {
     const preview = document.getElementById('imagePreview');
     preview.innerHTML = '';
@@ -261,6 +297,7 @@ async function init() {
     }
   });
 
+  // 11. 举报提交
   document.getElementById('reportSubmit').addEventListener('click', async () => {
     if (!reportTargetPostId) return;
     const reason = document.getElementById('reportReason').value;
@@ -274,6 +311,7 @@ async function init() {
     }
   });
 
+  // 12. 模态框关闭
   document.querySelectorAll('.modal .close').forEach(btn => {
     btn.addEventListener('click', function() {
       document.getElementById(this.dataset.modal).classList.remove('active');
@@ -285,6 +323,7 @@ async function init() {
     });
   });
 
+  // 13. 浏览器前进后退
   window.addEventListener('popstate', function(e) {
     const state = e.state || {};
     const page = state.page || 'feed';
