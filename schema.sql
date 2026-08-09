@@ -91,3 +91,20 @@ nano schema.sql
 CREATE TRIGGER update_posts_updated_at
   BEFORE UPDATE ON posts
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================================
+--  自定义页面表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS custom_pages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(50) NOT NULL UNIQUE,
+  title VARCHAR(100) NOT NULL,
+  content TEXT NOT NULL,
+  sort_order INT DEFAULT 0,
+  enabled BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_custom_pages_name ON custom_pages(name);
+CREATE INDEX IF NOT EXISTS idx_custom_pages_sort_order ON custom_pages(sort_order);
