@@ -15,7 +15,7 @@ const fs = require('fs');
 const app = express();
 
 // 服务端配置（config.js，浏览器端加载同名文件但不影响服务端）
-const CONFIG = require('./config');
+
 
 // 监听端口：环境变量 PORT 优先，其次 config.js 的 SERVER_PORT，最后默认 3000
 const PORT = process.env.PORT || CONFIG.SERVER_PORT || 3000;
