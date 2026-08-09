@@ -7,7 +7,7 @@ async function renderUserProfile(username) {
   container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
 
   try {
-    // 1. 获取用户信息（通过 username 参数）
+    // 1. 获取用户信息
     const users = await apiFetch('/users?username=' + encodeURIComponent(username));
     const user = users && users.length > 0 ? users[0] : null;
 
@@ -18,7 +18,7 @@ async function renderUserProfile(username) {
 
     document.getElementById('userPageTitle').textContent = '👤 ' + user.username;
 
-    // 2. 获取该用户的帖子（通过 user_id 筛选）
+    // 2. 获取该用户的帖子
     const posts = await apiFetch('/posts?user_id=' + user.id);
 
     const avatar = user.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.username) + '&background=6366f1&color=fff&size=128';
@@ -33,6 +33,12 @@ async function renderUserProfile(username) {
           <span>📝 发了 ${posts.length} 个帖子</span>
           ${user.role === 'admin' ? '<span style="color:var(--primary);font-weight:600;">🛡️ 管理员</span>' : ''}
         </div>
+        ${currentUser && currentUser.id !== user.id ? `
+          <button id="dmBtn" class="btn-primary" style="margin-top:16px;padding:8px 24px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:6px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            发私信
+          </button>
+        ` : ''}
       </div>
       <h3 style="margin:24px 0 16px;font-size:18px;">📝 发布的帖子</h3>
     `;
@@ -53,6 +59,14 @@ async function renderUserProfile(username) {
     }
 
     container.innerHTML = html;
+
+    // 绑定私信按钮
+    const dmBtn = document.getElementById('dmBtn');
+    if (dmBtn) {
+      dmBtn.addEventListener('click', function() {
+        openPrivateChat(user.id, user.username);
+      });
+    }
 
   } catch (err) {
     container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px 0;">加载失败：' + err.message + '</div>';
