@@ -14,6 +14,8 @@ function renderNav() {
     document.getElementById('avatarImg').src = currentUser.avatar_url ||
       'https://ui-avatars.com/api/?name=U&background=6366f1&color=fff';
     document.getElementById('adminEntry').style.display = currentUser.role === 'admin' ? 'block' : 'none';
+    // 更新未读消息数
+    updateUnreadBadge();
   } else {
     authBtns.style.display = 'flex';
     userDropdown.style.display = 'none';
@@ -120,6 +122,256 @@ function switchPage(page, param) {
     }
   }
 }
+
+// ============================================================
+//  ✉️ 私信系统
+// ============================================================
+
+let currentChatUserId = null;
+let currentChatUsername = null;
+let currentConversationId = null;
+let messagePollInterval = null;
+
+// 更新未读消息数
+async function updateUnreadBadge() {
+  const badge = document.getElementById('messageBadge');
+  if (!badge || !currentUser) return;
+  try {
+    const conversations = await API.getConversations();
+    const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+    if (totalUnread > 0) {
+      badge.style.display = 'inline-block';
+      badge.textContent = totalUnread > 99 ? '99+' : totalUnread;
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch (e) {
+    // 静默失败
+  }
+}
+
+// 打开私信列表
+function openMessageList() {
+  document.getElementById('messageListModal').classList.add('active');
+  renderMessageList();
+}
+
+// 关闭私信列表
+function closeMessageList() {
+  document.getElementById('messageListModal').classList.remove('active');
+  if (messagePollInterval) {
+    clearInterval(messagePollInterval);
+    messagePollInterval = null;
+  }
+}
+
+// 渲染私信列表
+async function renderMessageList() {
+  const container = document.getElementById('messageListContent');
+  container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
+
+  try {
+    const conversations = await API.getConversations();
+    if (conversations.length === 0) {
+      container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">暂无私信</div>';
+      return;
+    }
+    let html = '';
+    conversations.forEach(c => {
+      const unread = c.unread_count || 0;
+      const lastMsg = c.last_message || '暂无消息';
+      const time = c.last_message_time ? new Date(c.last_message_time).toLocaleString('zh-CN') : '';
+      html += `
+        <div class="message-list-item" style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s;" 
+             onclick="openChat('${c.id}', '${c.other_user_id}', '${c.other_username}')">
+          <img src="${c.other_avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.other_username) + '&background=6366f1&color=fff&size=64'}" 
+               style="width:40px;height:40px;border-radius:50%;object-fit:cover;" />
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-weight:600;">${c.other_username}</span>
+              <span style="font-size:12px;color:var(--text-light);">${time}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:13px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${lastMsg}</span>
+              ${unread > 0 ? `<span style="background:#ef4444;color:#fff;border-radius:50%;padding:2px 8px;font-size:11px;font-weight:600;">${unread}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
+  }
+}
+
+// 打开聊天窗口
+function openChat(conversationId, otherUserId, otherUsername) {
+  currentConversationId = conversationId;
+  currentChatUserId = otherUserId;
+  currentChatUsername = otherUsername;
+
+  document.getElementById('chatModal').classList.add('active');
+  document.getElementById('chatTitle').textContent = otherUsername;
+
+  renderMessages(conversationId);
+
+  if (messagePollInterval) clearInterval(messagePollInterval);
+  messagePollInterval = setInterval(() => {
+    if (currentConversationId) {
+      renderMessages(currentConversationId, true);
+    }
+  }, 3000);
+}
+
+// 关闭聊天窗口
+function closeChat() {
+  document.getElementById('chatModal').classList.remove('active');
+  if (messagePollInterval) {
+    clearInterval(messagePollInterval);
+    messagePollInterval = null;
+  }
+  currentConversationId = null;
+  currentChatUserId = null;
+  currentChatUsername = null;
+  // 刷新未读小红点
+  updateUnreadBadge();
+}
+
+// 渲染消息
+async function renderMessages(conversationId, silent = false) {
+  const container = document.getElementById('chatMessages');
+  if (!silent) {
+    container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
+  }
+
+  try {
+    const messages = await API.getMessages(conversationId);
+    if (messages.length === 0) {
+      container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">还没有消息，打个招呼吧 👋</div>';
+      return;
+    }
+    let html = '';
+    messages.forEach(m => {
+      const isMine = m.sender_id === currentUser.id;
+      const time = m.created_at ? new Date(m.created_at).toLocaleString('zh-CN') : '';
+      html += `
+        <div style="display:flex;${isMine ? 'justify-content:flex-end;' : 'justify-content:flex-start;'} margin-bottom:12px;">
+          ${!isMine ? `<img src="${m.sender_avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(m.sender_username) + '&background=6366f1&color=fff&size=64'}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:8px;flex-shrink:0;" />` : ''}
+          <div style="max-width:70%;">
+            <div style="background:${isMine ? 'var(--primary)' : 'var(--surface)'};color:${isMine ? '#fff' : 'var(--text)'};padding:10px 14px;border-radius:12px;border:${isMine ? 'none' : '1px solid var(--border)'};word-break:break-word;">
+              ${m.content}
+            </div>
+            <div style="font-size:11px;color:var(--text-light);margin-top:4px;${isMine ? 'text-align:right;' : ''}">
+              ${time} ${isMine ? (m.is_read ? '✓✓' : '✓') : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+    container.scrollTop = container.scrollHeight;
+  } catch (err) {
+    if (!silent) {
+      container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
+    }
+  }
+}
+
+// 发送消息
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const content = input.value.trim();
+  if (!content || !currentConversationId) return;
+
+  try {
+    await API.sendMessage(currentConversationId, content);
+    input.value = '';
+    renderMessages(currentConversationId);
+    // 刷新未读小红点
+    updateUnreadBadge();
+    // 更新私信列表（如果有）
+    if (document.getElementById('messageListModal').classList.contains('active')) {
+      renderMessageList();
+    }
+  } catch (err) {
+    alert('发送失败：' + err.message);
+  }
+}
+
+// 打开私信（从用户主页调用）
+async function openPrivateChat(otherUserId, otherUsername) {
+  try {
+    const result = await API.getOrCreateConversation(otherUserId);
+    currentConversationId = result.id;
+    currentChatUserId = otherUserId;
+    currentChatUsername = otherUsername;
+
+    document.getElementById('chatModal').classList.add('active');
+    document.getElementById('chatTitle').textContent = otherUsername;
+
+    renderMessages(currentConversationId);
+
+    if (messagePollInterval) clearInterval(messagePollInterval);
+    messagePollInterval = setInterval(() => {
+      if (currentConversationId) {
+        renderMessages(currentConversationId, true);
+      }
+    }, 3000);
+  } catch (err) {
+    alert('打开私信失败：' + err.message);
+  }
+}
+
+// 绑定私信按钮事件
+document.addEventListener('DOMContentLoaded', function() {
+  const messageBtn = document.getElementById('messageBtn');
+  if (messageBtn) {
+    messageBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (!currentUser) { alert('请先登录'); return; }
+      openMessageList();
+    });
+  }
+
+  // 私信列表关闭按钮
+  const closeMessageListBtn = document.querySelector('#messageListModal .close');
+  if (closeMessageListBtn) {
+    closeMessageListBtn.addEventListener('click', closeMessageList);
+  }
+
+  // 聊天关闭按钮
+  const closeChatBtn = document.querySelector('#chatModal .close');
+  if (closeChatBtn) {
+    closeChatBtn.addEventListener('click', closeChat);
+  }
+
+  // 聊天输入框 Enter 发送
+  const chatInput = document.getElementById('chatInput');
+  if (chatInput) {
+    chatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  }
+
+  // 点击模态框背景关闭
+  document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.remove('active');
+        if (this.id === 'messageListModal') {
+          closeMessageList();
+        }
+        if (this.id === 'chatModal') {
+          closeChat();
+        }
+      }
+    });
+  });
+});
 
 // ============================================================
 //  🚀 初始化
@@ -259,84 +511,4 @@ async function init() {
     const captchaInput = document.getElementById('postCaptchaInput').value.trim();
     const captchaAnswer = parseInt(document.getElementById('postCaptchaInput').dataset.answer);
     if (!content) { alert('请填写内容'); return; }
-    if (parseInt(captchaInput) !== captchaAnswer) { alert('验证码错误，请重新计算'); refreshCaptcha('post'); return; }
-    const images = [];
-    document.querySelectorAll('#imagePreview img').forEach(img => {
-      images.push(img.src);
-    });
-    try {
-      await API.createPost(title, content, images);
-      API.logEvent('create_post').catch(() => {});
-      alert('发布成功！');
-      switchPage('feed');
-      renderFeed();
-      renderStats();
-    } catch (err) {
-      alert('发布失败：' + err.message);
-    }
-  });
-
-  // 9. 验证码刷新
-  document.getElementById('postCaptchaQuestion').addEventListener('click', function() {
-    refreshCaptcha('post');
-  });
-
-  // 10. 图片上传预览
-  document.getElementById('imageUpload').addEventListener('change', function() {
-    const preview = document.getElementById('imagePreview');
-    preview.innerHTML = '';
-    for (let file of this.files) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = document.createElement('img');
-        img.src = e.target.result;
-        img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:4px;border:1px solid #e2e8f0;';
-        preview.appendChild(img);
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-
-  // 11. 举报提交
-  document.getElementById('reportSubmit').addEventListener('click', async () => {
-    if (!reportTargetPostId) return;
-    const reason = document.getElementById('reportReason').value;
-    try {
-      await API.createReport(reportTargetPostId, reason);
-      document.getElementById('reportModal').classList.remove('active');
-      alert('举报已提交，管理员将尽快处理');
-      reportTargetPostId = null;
-    } catch (err) {
-      alert('举报失败：' + err.message);
-    }
-  });
-
-  // 12. 模态框关闭
-  document.querySelectorAll('.modal .close').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.getElementById(this.dataset.modal).classList.remove('active');
-    });
-  });
-  document.querySelectorAll('.modal').forEach(m => {
-    m.addEventListener('click', function(e) {
-      if (e.target === this) this.classList.remove('active');
-    });
-  });
-
-  // 13. 浏览器前进后退
-  window.addEventListener('popstate', function(e) {
-    const state = e.state || {};
-    const page = state.page || 'feed';
-    const postId = state.postId || null;
-    const username = state.username || null;
-    if (postId) {
-      showPostPage(postId);
-    } else if (username) {
-      showUserPage(username);
-    } else {
-      switchPage(page);
-    }
-  });
-}
-
-document.addEventListener('DOMContentLoaded', init);
+    if (parseInt(captchaInput) !== captchaAnswer) { alert('
