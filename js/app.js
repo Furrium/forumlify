@@ -512,7 +512,7 @@ async function renderMessagesPage() {
 }
 
 // ============================================================
-//  ⚙️ 设置页面（含头像上传和恢复码管理）
+//  ⚙️ 设置页面（含头像上传、恢复码、修改密码和邮箱）
 // ============================================================
 
 async function renderSettingsPage() {
@@ -530,7 +530,6 @@ async function renderSettingsPage() {
     const userPosts = await apiFetch('/posts?user_id=' + user.id);
     const postCount = userPosts.data ? userPosts.data.length : 0;
 
-    // 获取恢复码数量
     let recoveryCount = 0;
     try {
       const countData = await API.getRecoveryCodesCount();
@@ -539,6 +538,7 @@ async function renderSettingsPage() {
 
     container.innerHTML = `
       <div style="max-width:500px;margin:0 auto;padding:20px 0;">
+        <!-- 头像 -->
         <div style="text-align:center;margin-bottom:24px;">
           <div style="position:relative;display:inline-block;">
             <img id="avatarPreview" src="${user.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.username) + '&background=6366f1&color=fff&size=128'}" 
@@ -558,6 +558,7 @@ async function renderSettingsPage() {
           <div id="avatarUploadStatus" style="font-size:13px;margin-top:8px;"></div>
         </div>
 
+        <!-- 基本资料 -->
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
           <div style="margin-bottom:16px;">
             <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">用户名</label>
@@ -568,6 +569,37 @@ async function renderSettingsPage() {
             <textarea id="settingsBio" rows="3" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);resize:vertical;">${user.bio || ''}</textarea>
           </div>
           <button id="settingsSaveBtn" class="btn-primary" style="width:100%;padding:10px;">保存设置</button>
+        </div>
+
+        <!-- 账户安全 - 修改密码和邮箱 -->
+        <div style="margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
+          <h3 style="font-size:16px;margin-bottom:12px;">🔒 账户安全</h3>
+
+          <!-- 修改密码 -->
+          <div style="margin-bottom:12px;">
+            <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">当前密码</label>
+            <input type="password" id="changeOldPassword" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
+          </div>
+          <div style="margin-bottom:12px;">
+            <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">新密码</label>
+            <input type="password" id="changeNewPassword" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
+          </div>
+          <button id="changePasswordBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">修改密码</button>
+          <div id="passwordChangeStatus" style="font-size:13px;margin-top:6px;color:var(--text-light);"></div>
+
+          <div style="border-top:1px solid var(--border);margin:16px 0;"></div>
+
+          <!-- 修改邮箱 -->
+          <div style="margin-bottom:12px;">
+            <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">当前密码（验证身份）</label>
+            <input type="password" id="changeEmailPassword" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
+          </div>
+          <div style="margin-bottom:12px;">
+            <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">新邮箱</label>
+            <input type="email" id="changeNewEmail" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
+          </div>
+          <button id="changeEmailBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">修改邮箱</button>
+          <div id="emailChangeStatus" style="font-size:13px;margin-top:6px;color:var(--text-light);"></div>
         </div>
 
         <!-- 恢复码管理 -->
@@ -583,7 +615,7 @@ async function renderSettingsPage() {
       </div>
     `;
 
-    // 头像上传
+    // ===== 头像上传 =====
     const avatarBtn = document.getElementById('avatarUploadBtn');
     const avatarInput = document.getElementById('avatarFileInput');
     const avatarPreview = document.getElementById('avatarPreview');
@@ -643,7 +675,7 @@ async function renderSettingsPage() {
       });
     }
 
-    // 保存设置
+    // ===== 保存设置 =====
     document.getElementById('settingsSaveBtn').addEventListener('click', async function() {
       const username = document.getElementById('settingsUsername').value.trim();
       const bio = document.getElementById('settingsBio').value.trim();
@@ -664,19 +696,72 @@ async function renderSettingsPage() {
       }
     });
 
-    // 恢复码管理
+    // ===== 修改密码 =====
+    document.getElementById('changePasswordBtn').addEventListener('click', async function() {
+      const oldPassword = document.getElementById('changeOldPassword').value;
+      const newPassword = document.getElementById('changeNewPassword').value;
+      const statusEl = document.getElementById('passwordChangeStatus');
+
+      if (!oldPassword || !newPassword) {
+        statusEl.textContent = '请填写完整信息';
+        statusEl.style.color = '#ef4444';
+        return;
+      }
+      if (newPassword.length < 6) {
+        statusEl.textContent = '新密码至少6位';
+        statusEl.style.color = '#ef4444';
+        return;
+      }
+
+      try {
+        await API.changePassword(oldPassword, newPassword);
+        document.getElementById('changeOldPassword').value = '';
+        document.getElementById('changeNewPassword').value = '';
+        statusEl.textContent = '✅ 密码修改成功！';
+        statusEl.style.color = '#22c55e';
+      } catch (err) {
+        statusEl.textContent = '❌ ' + err.message;
+        statusEl.style.color = '#ef4444';
+      }
+    });
+
+    // ===== 修改邮箱 =====
+    document.getElementById('changeEmailBtn').addEventListener('click', async function() {
+      const password = document.getElementById('changeEmailPassword').value;
+      const newEmail = document.getElementById('changeNewEmail').value;
+      const statusEl = document.getElementById('emailChangeStatus');
+
+      if (!password || !newEmail) {
+        statusEl.textContent = '请填写完整信息';
+        statusEl.style.color = '#ef4444';
+        return;
+      }
+
+      try {
+        await API.changeEmail(password, newEmail);
+        document.getElementById('changeEmailPassword').value = '';
+        document.getElementById('changeNewEmail').value = '';
+        currentUser.email = newEmail;
+        statusEl.textContent = '✅ 邮箱修改成功！';
+        statusEl.style.color = '#22c55e';
+      } catch (err) {
+        statusEl.textContent = '❌ ' + err.message;
+        statusEl.style.color = '#ef4444';
+      }
+    });
+
+    // ===== 恢复码管理 =====
     const viewBtn = document.getElementById('viewRecoveryCodesBtn');
     const regenBtn = document.getElementById('regenerateRecoveryCodesBtn');
-    const statusText = document.getElementById('recoveryCodesStatus');
+    const recoveryStatus = document.getElementById('recoveryCodesStatus');
 
     if (viewBtn) {
       viewBtn.addEventListener('click', async function() {
         try {
           const data = await API.generateRecoveryCodes();
           showRecoveryCodesModal(data.codes);
-          // 更新状态
           const countData = await API.getRecoveryCodesCount();
-          if (statusText) statusText.textContent = '剩余 ' + (countData.count || 0) + ' 个可用恢复码';
+          if (recoveryStatus) recoveryStatus.textContent = '剩余 ' + (countData.count || 0) + ' 个可用恢复码';
         } catch (err) {
           alert('获取恢复码失败：' + err.message);
         }
@@ -690,7 +775,7 @@ async function renderSettingsPage() {
           const data = await API.generateRecoveryCodes();
           showRecoveryCodesModal(data.codes);
           const countData = await API.getRecoveryCodesCount();
-          if (statusText) statusText.textContent = '剩余 ' + (countData.count || 0) + ' 个可用恢复码';
+          if (recoveryStatus) recoveryStatus.textContent = '剩余 ' + (countData.count || 0) + ' 个可用恢复码';
         } catch (err) {
           alert('重新生成失败：' + err.message);
         }
@@ -916,107 +1001,7 @@ async function init() {
     switchPage('feed');
   });
 
-  document.getElementById('fab').addEventListener('click', () => {
-    if (!currentUser) { alert('请先登录'); return; }
-    switchPage('new');
-  });
-
-  document.getElementById('postSubmit').addEventListener('click', async () => {
-    if (!currentUser || !currentUser.id) {
-      alert('请先登录');
-      switchPage('feed');
-      return;
-    }
-    const title = document.getElementById('postTitle').value.trim() || '无标题';
-    const content = document.getElementById('postContent').value.trim();
-    const captchaInput = document.getElementById('postCaptchaInput').value.trim();
-    const captchaAnswer = parseInt(document.getElementById('postCaptchaInput').dataset.answer);
-    if (!content) { alert('请填写内容'); return; }
-    if (parseInt(captchaInput) !== captchaAnswer) { alert('验证码错误，请重新计算'); refreshCaptcha('post'); return; }
-    const images = [];
-    document.querySelectorAll('#imagePreview img').forEach(img => {
-      images.push(img.src);
-    });
-    try {
-      await API.createPost(title, content, images);
-      API.logEvent('create_post').catch(() => {});
-      alert('发布成功！');
-      switchPage('feed');
-      renderFeed();
-      renderStats();
-    } catch (err) {
-      alert('发布失败：' + err.message);
-    }
-  });
-
-  document.getElementById('postCaptchaQuestion').addEventListener('click', function() {
-    refreshCaptcha('post');
-  });
-  document.getElementById('regCaptchaQuestion').addEventListener('click', function() {
-    refreshCaptcha('reg');
-  });
-
-  const dropZone = document.getElementById('dropZone');
-  const fileInput = document.getElementById('fileInput');
-  const dropZoneText = document.getElementById('dropZoneText');
-
-  if (dropZone && fileInput) {
-    dropZone.addEventListener('click', function() {
-      fileInput.click();
-    });
-
-    fileInput.addEventListener('change', function() {
-      handleImageFiles(this.files);
-    });
-
-    dropZone.addEventListener('dragover', function(e) {
-      e.preventDefault();
-      this.style.borderColor = 'var(--primary)';
-      this.style.background = 'var(--primary-bg)';
-      if (dropZoneText) dropZoneText.textContent = '松开上传';
-    });
-
-    dropZone.addEventListener('dragleave', function(e) {
-      e.preventDefault();
-      this.style.borderColor = 'var(--border)';
-      this.style.background = 'var(--bg)';
-      if (dropZoneText) dropZoneText.textContent = '点击或拖拽上传图片';
-    });
-
-    dropZone.addEventListener('drop', function(e) {
-      e.preventDefault();
-      this.style.borderColor = 'var(--border)';
-      this.style.background = 'var(--bg)';
-      if (dropZoneText) dropZoneText.textContent = '点击或拖拽上传图片';
-      handleImageFiles(e.dataTransfer.files);
-    });
-  }
-
-  document.getElementById('reportSubmit').addEventListener('click', async () => {
-    if (!reportTargetPostId) return;
-    const reason = document.getElementById('reportReason').value;
-    try {
-      await API.createReport(reportTargetPostId, reason);
-      document.getElementById('reportModal').classList.remove('active');
-      alert('举报已提交，管理员将尽快处理');
-      reportTargetPostId = null;
-    } catch (err) {
-      alert('举报失败：' + err.message);
-    }
-  });
-
-  document.querySelectorAll('.modal .close').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.getElementById(this.dataset.modal).classList.remove('active');
-    });
-  });
-  document.querySelectorAll('.modal').forEach(m => {
-    m.addEventListener('click', function(e) {
-      if (e.target === this) this.classList.remove('active');
-    });
-  });
-
-  // 忘记密码事件
+  // ===== 忘记密码 =====
   const forgotLink = document.getElementById('forgotPasswordLink');
   if (forgotLink) {
     forgotLink.addEventListener('click', function(e) {
@@ -1059,6 +1044,111 @@ async function init() {
     }
   });
 
+  // ===== 发帖 =====
+  document.getElementById('fab').addEventListener('click', () => {
+    if (!currentUser) { alert('请先登录'); return; }
+    switchPage('new');
+  });
+
+  document.getElementById('postSubmit').addEventListener('click', async () => {
+    if (!currentUser || !currentUser.id) {
+      alert('请先登录');
+      switchPage('feed');
+      return;
+    }
+    const title = document.getElementById('postTitle').value.trim() || '无标题';
+    const content = document.getElementById('postContent').value.trim();
+    const captchaInput = document.getElementById('postCaptchaInput').value.trim();
+    const captchaAnswer = parseInt(document.getElementById('postCaptchaInput').dataset.answer);
+    if (!content) { alert('请填写内容'); return; }
+    if (parseInt(captchaInput) !== captchaAnswer) { alert('验证码错误，请重新计算'); refreshCaptcha('post'); return; }
+    const images = [];
+    document.querySelectorAll('#imagePreview img').forEach(img => {
+      images.push(img.src);
+    });
+    try {
+      await API.createPost(title, content, images);
+      API.logEvent('create_post').catch(() => {});
+      alert('发布成功！');
+      switchPage('feed');
+      renderFeed();
+      renderStats();
+    } catch (err) {
+      alert('发布失败：' + err.message);
+    }
+  });
+
+  document.getElementById('postCaptchaQuestion').addEventListener('click', function() {
+    refreshCaptcha('post');
+  });
+  document.getElementById('regCaptchaQuestion').addEventListener('click', function() {
+    refreshCaptcha('reg');
+  });
+
+  // ===== 拖拽上传 =====
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const dropZoneText = document.getElementById('dropZoneText');
+
+  if (dropZone && fileInput) {
+    dropZone.addEventListener('click', function() {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function() {
+      handleImageFiles(this.files);
+    });
+
+    dropZone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      this.style.borderColor = 'var(--primary)';
+      this.style.background = 'var(--primary-bg)';
+      if (dropZoneText) dropZoneText.textContent = '松开上传';
+    });
+
+    dropZone.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      this.style.borderColor = 'var(--border)';
+      this.style.background = 'var(--bg)';
+      if (dropZoneText) dropZoneText.textContent = '点击或拖拽上传图片';
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.style.borderColor = 'var(--border)';
+      this.style.background = 'var(--bg)';
+      if (dropZoneText) dropZoneText.textContent = '点击或拖拽上传图片';
+      handleImageFiles(e.dataTransfer.files);
+    });
+  }
+
+  // ===== 举报 =====
+  document.getElementById('reportSubmit').addEventListener('click', async () => {
+    if (!reportTargetPostId) return;
+    const reason = document.getElementById('reportReason').value;
+    try {
+      await API.createReport(reportTargetPostId, reason);
+      document.getElementById('reportModal').classList.remove('active');
+      alert('举报已提交，管理员将尽快处理');
+      reportTargetPostId = null;
+    } catch (err) {
+      alert('举报失败：' + err.message);
+    }
+  });
+
+  // ===== 模态框关闭 =====
+  document.querySelectorAll('.modal .close').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.getElementById(this.dataset.modal).classList.remove('active');
+    });
+  });
+  document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('active');
+    });
+  });
+
+  // ===== 前进后退 =====
   window.addEventListener('popstate', function(e) {
     const state = e.state || {};
     const page = state.page || 'feed';
@@ -1076,6 +1166,7 @@ async function init() {
     }
   });
 
+  // ===== 私信按钮 =====
   const messageBtn = document.getElementById('messageBtn');
   if (messageBtn) {
     const newBtn = messageBtn.cloneNode(true);
