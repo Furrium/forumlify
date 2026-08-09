@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
- <title id="pageTitle">Forumlify</title>
+  <title id="pageTitle">Forumlify</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -96,10 +96,6 @@
   <!-- ===== 独立页面 ===== -->
   <div id="pageMessages" class="page-slide">
     <div class="page-header">
-      <button class="back-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        返回
-      </button>
       <h2>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         消息
@@ -110,10 +106,6 @@
 
   <div id="pageSettings" class="page-slide">
     <div class="page-header">
-      <button class="back-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        返回
-      </button>
       <h2>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
         设置
@@ -130,10 +122,6 @@
 
   <div id="pageAdmin" class="page-slide">
     <div class="page-header">
-      <button class="back-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        返回
-      </button>
       <h2>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
         管理后台
@@ -168,10 +156,6 @@
 
   <div id="pageNew" class="page-slide">
     <div class="page-header">
-      <button class="back-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        返回
-      </button>
       <h2>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
         发布新帖
@@ -193,10 +177,6 @@
   <!-- ===== 帖子详情页 ===== -->
   <div id="pagePost" class="page-slide">
     <div class="page-header">
-      <button class="back-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        返回
-      </button>
       <h2 id="postDetailTitle">帖子详情</h2>
     </div>
     <div id="postDetailContent" style="max-width:700px;">
@@ -564,14 +544,21 @@
       }
     }
 
-    // 新增：加载论坛名称
+    // 加载论坛名称（同时更新页面标题）
     async function loadForumName() {
       try {
         const data = await apiFetch('/settings');
         const name = data.forum_name || CONFIG.FORUM_NAME || 'Forumlify';
         document.getElementById('forumName').textContent = name;
+        document.title = name;
+        const titleEl = document.getElementById('pageTitle');
+        if (titleEl) titleEl.textContent = name;
       } catch (e) {
-        document.getElementById('forumName').textContent = CONFIG.FORUM_NAME || 'Forumlify';
+        const name = CONFIG.FORUM_NAME || 'Forumlify';
+        document.getElementById('forumName').textContent = name;
+        document.title = name;
+        const titleEl = document.getElementById('pageTitle');
+        if (titleEl) titleEl.textContent = name;
       }
     }
 
@@ -1070,7 +1057,7 @@
     }
 
     // ============================================================
-    //  论坛设置渲染（新增）
+    //  论坛设置渲染
     // ============================================================
     function renderAdminSettings() {
       const container = document.getElementById('adminContent');
@@ -1102,6 +1089,10 @@
           document.getElementById('settingsResult').style.color = '#22c55e';
           // 更新导航栏
           document.getElementById('forumName').textContent = name;
+          // 更新浏览器标签页标题
+          document.title = name;
+          const titleEl = document.getElementById('pageTitle');
+          if (titleEl) titleEl.textContent = name;
         } catch (err) {
           document.getElementById('settingsResult').textContent = '❌ 保存失败';
           document.getElementById('settingsResult').style.color = '#ef4444';
@@ -1430,13 +1421,6 @@
           }
           document.getElementById('dropdownMenu').classList.remove('show');
           switchPage(page);
-        });
-      });
-
-      // 返回按钮
-      document.querySelectorAll('.back-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          switchPage('feed');
         });
       });
 
