@@ -95,23 +95,23 @@
 
   <!-- ===== 独立页面 ===== -->
   <div id="pageMessages" class="page-slide">
-    <div class="page-header">
+    <div class="page-header" style="max-width:700px;margin:0 auto;width:100%;">
       <h2>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         消息
       </h2>
     </div>
-    <p style="color:#94a3b8;padding:20px 0;">暂无消息</p>
+    <p style="color:#94a3b8;padding:20px 0;max-width:700px;margin:0 auto;width:100%;">暂无消息</p>
   </div>
 
   <div id="pageSettings" class="page-slide">
-    <div class="page-header">
+    <div class="page-header" style="max-width:400px;margin:0 auto;width:100%;">
       <h2>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
         设置
       </h2>
     </div>
-    <div style="max-width:400px;">
+    <div style="max-width:400px;margin:0 auto;width:100%;">
       <label style="font-weight:600;font-size:14px;">用户名</label>
       <input type="text" id="settingsUsername" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:4px;margin:6px 0 12px;" />
       <label style="font-weight:600;font-size:14px;">个人简介</label>
@@ -121,13 +121,13 @@
   </div>
 
   <div id="pageAdmin" class="page-slide">
-    <div class="page-header">
+    <div class="page-header" style="max-width:900px;margin:0 auto;width:100%;">
       <h2>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
         管理后台
       </h2>
     </div>
-    <div class="admin-tabs">
+    <div class="admin-tabs" style="max-width:900px;margin:0 auto;width:100%;">
       <button class="admin-tab active" data-tab="reports">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         举报
@@ -149,19 +149,19 @@
         论坛设置
       </button>
     </div>
-    <div id="adminContent">
+    <div id="adminContent" style="max-width:900px;margin:0 auto;width:100%;">
       <div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>
     </div>
   </div>
 
   <div id="pageNew" class="page-slide">
-    <div class="page-header">
+    <div class="page-header" style="max-width:600px;margin:0 auto;width:100%;">
       <h2>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
         发布新帖
       </h2>
     </div>
-    <div style="max-width:600px;">
+    <div style="max-width:600px;margin:0 auto;width:100%;">
       <input type="text" id="postTitle" placeholder="标题" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:15px;font-weight:600;margin-bottom:12px;font-family:inherit;" />
       <textarea id="postContent" rows="6" placeholder="说点什么..." style="width:100%;padding:12px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:15px;font-family:inherit;resize:vertical;"></textarea>
       <div id="imagePreview" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;"></div>
@@ -176,13 +176,13 @@
 
   <!-- ===== 帖子详情页 ===== -->
   <div id="pagePost" class="page-slide">
-    <div class="page-header">
+    <div class="page-header" style="max-width:700px;margin:0 auto;width:100%;">
       <h2 id="postDetailTitle">帖子详情</h2>
     </div>
-    <div id="postDetailContent" style="max-width:700px;">
+    <div id="postDetailContent" style="max-width:700px;margin:0 auto;width:100%;">
       <div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>
     </div>
-    <div id="replyArea" style="max-width:700px;margin-top:24px;border-top:1px solid #e2e8f0;padding-top:20px;display:none;">
+    <div id="replyArea" style="max-width:700px;margin:0 auto;width:100%;margin-top:24px;border-top:1px solid #e2e8f0;padding-top:20px;display:none;">
       <h3 style="font-size:16px;margin-bottom:12px;">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         发表回复
@@ -1063,7 +1063,7 @@
       const container = document.getElementById('adminContent');
       container.innerHTML = `
         <h3 style="margin-bottom:16px;">⚙️ 论坛设置</h3>
-        <div style="max-width:400px;">
+        <div style="max-width:400px;margin:0 auto;width:100%;">
           <label style="font-weight:600;font-size:14px;display:block;margin-bottom:6px;">论坛名称</label>
           <input type="text" id="settingsForumName" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:15px;margin-bottom:12px;font-family:inherit;background:var(--bg);color:var(--text);" />
           <button id="settingsForumSave" class="btn-primary" style="padding:10px 24px;">保存</button>
