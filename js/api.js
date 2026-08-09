@@ -355,5 +355,26 @@ const API = {
     });
     if (data.error) throw new Error(data.error);
     return data;
+  },
+
+  // ============================================================
+  //  修改密码和邮箱
+  // ============================================================
+  async changePassword(oldPassword, newPassword) {
+    const data = await apiFetch('/users/' + currentUser.id + '/password', {
+      method: 'PUT',
+      body: JSON.stringify({ oldPassword, newPassword })
+    });
+    if (data.error) throw new Error(data.error);
+    return data;
+  },
+
+  async changeEmail(password, newEmail) {
+    const data = await apiFetch('/users/' + currentUser.id + '/email', {
+      method: 'PUT',
+      body: JSON.stringify({ password, newEmail })
+    });
+    if (data.error) throw new Error(data.error);
+    return data;
   }
 };
