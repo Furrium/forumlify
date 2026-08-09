@@ -6,11 +6,8 @@
 const CONFIG = {
   // ===== 必填 =====
   
-  // 后端 API 地址
-  // - Docker 部署：http://backend:3000/api
-  // - 本地开发：http://localhost:3000/api
-  // - 生产环境：https://你的域名/api
-  API_BASE_URL: 'http://localhost:3000/api',
+
+  API_BASE_URL: '/api',
 
   // ===== 可选 =====
 
