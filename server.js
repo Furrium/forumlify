@@ -69,6 +69,20 @@ const admin = async (req, res, next) => {
 };
 
 // ============================================================
+//  创建通知（内部函数）
+// ============================================================
+async function createNotification(userId, type, title, content, link = null) {
+  try {
+    await pool.query(
+      'INSERT INTO notifications (user_id, type, title, content, link) VALUES ($1, $2, $3, $4, $5)',
+      [userId, type, title, content, link]
+    );
+  } catch (err) {
+    // 静默失败，不影响主流程
+  }
+}
+
+// ============================================================
 //  论坛设置接口
 // ============================================================
 
@@ -296,7 +310,6 @@ app.get('/api/posts', async (req, res) => {
       params.push(req.query.user_id);
     }
 
-    // 获取总数
     let countQuery = `
       SELECT COUNT(*) as total FROM posts p
     `;
@@ -367,14 +380,28 @@ app.post('/api/posts', auth, async (req, res) => {
 // 删除帖子
 app.delete('/api/posts/:id', auth, async (req, res) => {
   try {
+    // 获取帖子作者
     const post = await pool.query('SELECT user_id FROM posts WHERE id = $1', [req.params.id]);
     if (post.rows.length === 0) {
       return res.status(404).json({ error: '帖子不存在' });
     }
 
     const user = await pool.query('SELECT role FROM users WHERE id = $1', [req.user.id]);
-    if (post.rows[0].user_id !== req.user.id && user.rows[0]?.role !== 'admin') {
+    const isAdmin = user.rows[0]?.role === 'admin';
+    const isAuthor = post.rows[0].user_id === req.user.id;
+
+    if (!isAuthor && !isAdmin) {
       return res.status(403).json({ error: '无权限删除此帖子' });
+    }
+
+    // 如果不是作者（是管理员），通知作者
+    if (!isAuthor && isAdmin) {
+      await createNotification(
+        post.rows[0].user_id,
+        'post_deleted',
+        '你的帖子已被删除',
+        '管理员删除了你的帖子'
+      );
     }
 
     await pool.query('DELETE FROM posts WHERE id = $1', [req.params.id]);
@@ -421,6 +448,19 @@ app.post('/api/posts/:id/replies', auth, async (req, res) => {
       [req.params.id, req.user.id, content]
     );
     await pool.query('UPDATE posts SET updated_at = NOW() WHERE id = $1', [req.params.id]);
+
+    // 通知帖子作者
+    const postAuthor = await pool.query('SELECT user_id FROM posts WHERE id = $1', [req.params.id]);
+    if (postAuthor.rows[0] && postAuthor.rows[0].user_id !== req.user.id) {
+      await createNotification(
+        postAuthor.rows[0].user_id,
+        'reply',
+        '有人回复了你的帖子',
+        (content || '').substring(0, 100),
+        '/?post=' + req.params.id
+      );
+    }
+
     res.json(r.rows[0]);
   } catch (err) {
     res.status(500).json({ error: '回复失败，请稍后重试' });
@@ -510,12 +550,28 @@ app.put('/api/reports/:id', auth, admin, async (req, res) => {
   }
 
   try {
+    // 获取举报信息
+    const report = await pool.query('SELECT reporter_id, post_id FROM reports WHERE id = $1', [req.params.id]);
+
     await pool.query(
       `UPDATE reports
        SET status = $1, handled_at = NOW(), handler_id = $2, handler_note = $3
        WHERE id = $4`,
       [status, req.user.id, note || '', req.params.id]
     );
+
+    // 通知举报人
+    if (report.rows[0]) {
+      const statusText = status === 'approved' ? '已删除' : '已驳回';
+      await createNotification(
+        report.rows[0].reporter_id,
+        'report_handled',
+        '你的举报已被处理',
+        `你举报的帖子已被管理员${statusText}`,
+        report.rows[0].post_id ? '/?post=' + report.rows[0].post_id : null
+      );
+    }
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: '操作失败，请稍后重试' });
@@ -821,7 +877,7 @@ app.put('/api/messages/:id/read', auth, async (req, res) => {
 app.get('/api/custom-pages', async (req, res) => {
   try {
     const r = await pool.query(
-      'SELECT id, name, title, sort_order FROM custom_pages WHERE enabled = true ORDER BY sort_order'
+      'SELECT id, name, title FROM custom_pages WHERE enabled = true ORDER BY created_at'
     );
     res.json(r.rows);
   } catch (err) {
@@ -849,7 +905,7 @@ app.get('/api/custom-pages/:name', async (req, res) => {
 app.get('/api/admin/custom-pages', auth, admin, async (req, res) => {
   try {
     const r = await pool.query(
-      'SELECT id, name, title, content, sort_order, enabled, created_at, updated_at FROM custom_pages ORDER BY sort_order'
+      'SELECT id, name, title, content, enabled, created_at, updated_at FROM custom_pages ORDER BY created_at'
     );
     res.json(r.rows);
   } catch (err) {
@@ -859,7 +915,7 @@ app.get('/api/admin/custom-pages', auth, admin, async (req, res) => {
 
 // 创建自定义页面（管理员）
 app.post('/api/admin/custom-pages', auth, admin, async (req, res) => {
-  const { name, title, content, sort_order } = req.body;
+  const { name, title, content } = req.body;
   if (!name || !title || !content) {
     return res.status(400).json({ error: '请填写完整信息' });
   }
@@ -868,10 +924,10 @@ app.post('/api/admin/custom-pages', auth, admin, async (req, res) => {
   }
   try {
     const r = await pool.query(
-      `INSERT INTO custom_pages (name, title, content, sort_order)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO custom_pages (name, title, content)
+       VALUES ($1, $2, $3)
        RETURNING *`,
-      [name, title, content, sort_order || 0]
+      [name, title, content]
     );
     res.json(r.rows[0]);
   } catch (err) {
@@ -885,15 +941,15 @@ app.post('/api/admin/custom-pages', auth, admin, async (req, res) => {
 
 // 更新自定义页面（管理员）
 app.put('/api/admin/custom-pages/:id', auth, admin, async (req, res) => {
-  const { title, content, sort_order, enabled } = req.body;
+  const { title, content, enabled } = req.body;
   const id = req.params.id;
   try {
     const r = await pool.query(
       `UPDATE custom_pages
-       SET title = $1, content = $2, sort_order = $3, enabled = $4, updated_at = NOW()
-       WHERE id = $5
+       SET title = $1, content = $2, enabled = $3, updated_at = NOW()
+       WHERE id = $4
        RETURNING *`,
-      [title, content, sort_order || 0, enabled, id]
+      [title, content, enabled, id]
     );
     if (r.rows.length === 0) {
       return res.status(404).json({ error: '页面不存在' });
@@ -911,6 +967,49 @@ app.delete('/api/admin/custom-pages/:id', auth, admin, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: '删除失败，请稍后重试' });
+  }
+});
+
+// ============================================================
+//  通知系统
+// ============================================================
+
+// 获取我的通知列表
+app.get('/api/notifications', auth, async (req, res) => {
+  try {
+    const r = await pool.query(
+      'SELECT id, type, title, content, link, is_read, created_at FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50',
+      [req.user.id]
+    );
+    res.json(r.rows);
+  } catch (err) {
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// 标记通知已读
+app.put('/api/notifications/:id/read', auth, async (req, res) => {
+  try {
+    await pool.query(
+      'UPDATE notifications SET is_read = true WHERE id = $1 AND user_id = $2',
+      [req.params.id, req.user.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// 标记所有通知已读
+app.put('/api/notifications/read-all', auth, async (req, res) => {
+  try {
+    await pool.query(
+      'UPDATE notifications SET is_read = true WHERE user_id = $1',
+      [req.user.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: '服务器错误' });
   }
 });
 
