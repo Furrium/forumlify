@@ -1058,6 +1058,110 @@ app.put('/api/notifications/read-all', auth, async (req, res) => {
 });
 
 // ============================================================
+//  恢复码系统（密码重置）
+// ============================================================
+
+// 生成随机恢复码
+function generateRecoveryCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 20; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+    if (i === 4 || i === 9 || i === 14) code += '-';
+  }
+  return code;
+}
+
+// 生成 10 个恢复码
+app.post('/api/auth/recovery-codes/generate', auth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM recovery_codes WHERE user_id = $1', [req.user.id]);
+
+    const codes = [];
+    const codeHashes = [];
+    for (let i = 0; i < 10; i++) {
+      const code = generateRecoveryCode();
+      codes.push(code);
+      const hash = await bcrypt.hash(code, 10);
+      codeHashes.push(hash);
+    }
+
+    for (const hash of codeHashes) {
+      await pool.query(
+        'INSERT INTO recovery_codes (user_id, code_hash) VALUES ($1, $2)',
+        [req.user.id, hash]
+      );
+    }
+
+    res.json({ codes });
+  } catch (err) {
+    res.status(500).json({ error: '生成恢复码失败' });
+  }
+});
+
+// 获取当前可用的恢复码数量
+app.get('/api/auth/recovery-codes/count', auth, async (req, res) => {
+  try {
+    const r = await pool.query(
+      'SELECT COUNT(*) FROM recovery_codes WHERE user_id = $1 AND is_used = false',
+      [req.user.id]
+    );
+    res.json({ count: parseInt(r.rows[0].count) });
+  } catch (err) {
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// 重置密码（使用恢复码）
+app.post('/api/auth/reset-password', async (req, res) => {
+  const { email, recoveryCode, newPassword } = req.body;
+
+  if (!email || !recoveryCode || !newPassword) {
+    return res.status(400).json({ error: '请填写完整信息' });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: '密码至少6位' });
+  }
+
+  try {
+    const user = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (user.rows.length === 0) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+
+    const codes = await pool.query(
+      'SELECT id, code_hash FROM recovery_codes WHERE user_id = $1 AND is_used = false',
+      [user.rows[0].id]
+    );
+
+    let matched = false;
+    let matchedId = null;
+
+    for (const row of codes.rows) {
+      const valid = await bcrypt.compare(recoveryCode, row.code_hash);
+      if (valid) {
+        matched = true;
+        matchedId = row.id;
+        break;
+      }
+    }
+
+    if (!matched) {
+      return res.status(400).json({ error: '恢复码无效或已使用' });
+    }
+
+    await pool.query('UPDATE recovery_codes SET is_used = true WHERE id = $1', [matchedId]);
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, user.rows[0].id]);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: '重置失败，请稍后重试' });
+  }
+});
+
+// ============================================================
 //  托管前端文件
 // ============================================================
 
