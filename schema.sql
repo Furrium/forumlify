@@ -1,4 +1,4 @@
--- ÓÃ»§±í
+-- ç”¨æˆ·è¡¨
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email VARCHAR(255) UNIQUE NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Ìû×Ó±í
+-- å¸–å­è¡¨
 CREATE TABLE IF NOT EXISTS posts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS posts (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- »Ø¸´±í
+-- å›å¤è¡¨
 CREATE TABLE IF NOT EXISTS replies (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS replies (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- ÓÑÇéÁ´½Ó±í
+-- å‹æƒ…é“¾æ¥è¡¨
 CREATE TABLE IF NOT EXISTS friendly_links (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title VARCHAR(100) NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS friendly_links (
   sort_order INT DEFAULT 0
 );
 
--- ¾Ù±¨±í
+-- ä¸¾æŠ¥è¡¨
 CREATE TABLE IF NOT EXISTS reports (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS reports (
   handler_note TEXT
 );
 
--- ÊÂ¼şÈÕÖ¾±í
+-- äº‹ä»¶æ—¥å¿—è¡¨
 CREATE TABLE IF NOT EXISTS event_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -60,7 +60,22 @@ CREATE TABLE IF NOT EXISTS event_logs (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- ×Ô¶¯¸üĞÂ updated_at µÄ´¥·¢Æ÷
+-- ============================================================
+--  è®ºå›è®¾ç½®è¡¨ï¼ˆæ–°å¢ï¼‰
+-- ============================================================
+CREATE TABLE IF NOT EXISTS settings (
+  key VARCHAR(50) PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- æ’å…¥é»˜è®¤è®ºå›åç§°
+INSERT INTO settings (key, value) VALUES ('forum_name', 'Forumlify')
+ON CONFLICT (key) DO NOTHING;
+
+-- ============================================================
+--  è‡ªåŠ¨æ›´æ–° updated_at çš„è§¦å‘å™¨
+-- ============================================================
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
