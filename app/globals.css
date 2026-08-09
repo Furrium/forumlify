@@ -1104,11 +1104,7 @@ svg {
   }
 }
 
-@media (max-width: 480px) {
-  .forum-name {
-    font-size: 
-
-     /* ===== 独立页面内容居中 ===== */
+/* ===== 独立页面内容居中 ===== */
 .page-slide .page-header,
 .page-slide > div,
 #postDetailContent,

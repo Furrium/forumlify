@@ -1,4 +1,6 @@
 node_modules/
+.next/
+out/
 uploads/
 *.log
 .DS_Store

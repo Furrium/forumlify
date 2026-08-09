@@ -5,7 +5,7 @@
 ## ✨ 特性
 
 - 🎨 精致简约的界面设计，支持亮色/暗色模式
-- ⚡️ 轻量快速，无需复杂配置
+- ⚡️ 基于 Next.js 14 (App Router) + React 18，前后端一体化
 - 🔐 自带用户认证（JWT）
 - 📝 发帖、回复、举报、管理后台
 - 🐳 Docker 一键部署
@@ -21,12 +21,7 @@ cd forumlify
 docker-compose up -d
 ```
 
-应用默认运行在 `http://localhost:3003`。
-
----
-以下内容添加自NodeLoc @Lezi-fun的PR
-
----
+应用默认运行在 `http://localhost:3000`（监听 `0.0.0.0`，局域网可访问）。
 
 ### 从源码构建
 
@@ -34,7 +29,7 @@ docker-compose up -d
 
 #### 环境要求
 
-- Node.js 18+
+- Node.js 18.17+（Next.js 14 要求）
 - PostgreSQL 13+（`schema.sql` 使用了内置的 `gen_random_uuid()`）
 
 #### 步骤
@@ -62,7 +57,6 @@ psql -U forumlify -d forumlify -f schema.sql
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
 | `DATABASE_URL` | `postgresql://forumlify:123456@localhost:5432/forumlify` | PostgreSQL 连接串 |
-| `PORT` | `3000` | HTTP 监听端口 |
 | `JWT_SECRET` | `forumlify-secret-key-change-me-in-production` | JWT 签名密钥，**生产环境务必修改** |
 
 ```bash
@@ -71,23 +65,25 @@ export DATABASE_URL=postgresql://forumlify:123456@localhost:5432/forumlify
 export JWT_SECRET=your-own-secret-key
 ```
 
-4. **启动**
+4. **构建并启动**
 
 ```bash
+npm run build
 npm start
 ```
 
 应用运行在 `http://localhost:3000`，API 在 `http://localhost:3000/api`。
 
-#### 前端配置
+开发模式（热更新）：`npm run dev`。
 
-前端页面为 `index.html`，相关行为可在 `config.js` 中调整：
+#### 服务端配置
+
+监听端口与地址可在 `config.js` 中调整（服务端读取，浏览器端忽略）：
 
 | 配置项 | 默认值 | 说明 |
 |--------|--------|------|
-| `FORUM_NAME` | `Forumlify` | 论坛名称（左上角显示） |
-| `ENABLE_CAPTCHA` | `true` | 发帖/注册的人机验证（10 以内加减法） |
-| `SERVER_PORT` | `null` | 可选：服务端监听端口（仅服务端读取，浏览器端忽略）。优先级：环境变量 `PORT` > `SERVER_PORT` > 默认 `3000`。设为 `null` 时使用环境变量或默认值 |
+| `SERVER_PORT` | `null` | 可选：监听端口。优先级：环境变量 `PORT` > `SERVER_PORT` > 默认 `3000` |
+| `SERVER_HOST` | `null` | 可选：监听地址。优先级：环境变量 `HOST` > `SERVER_HOST` > 默认 `0.0.0.0`（所有网卡）。设为 `127.0.0.1` 仅本机访问 |
 
 #### 上传目录
 
@@ -96,3 +92,34 @@ npm start
 ```bash
 mkdir -p uploads && chmod 755 uploads
 ```
+
+## 🏗️ 项目结构
+
+```
+app/
+  page.js              # 主页（SPA 视图调度）
+  layout.js            # 全局布局
+  globals.css          # 全局样式（含亮/暗主题）
+  api/                 # Route Handlers（API 后端）
+    auth/  posts/  replies/  users/  reports/  links/
+    stats/  event-logs/  settings/  upload/  uploads/
+components/
+  AppProvider.js       # 全局状态（用户/主题/路由）
+  Navbar.js  Feed.js  PostDetail.js  ReplyList.js
+  NewPost.js  AdminPage.js  SettingsPage.js  Modals.js
+lib/
+  db.js                # PostgreSQL 连接池
+  auth.js              # JWT 认证工具
+  api.js               # 前端 API 封装
+scripts/
+  start.js             # 启动入口（读取 config.js 监听配置）
+schema.sql             # 数据库表结构
+config.js              # 服务端配置（端口/地址）
+```
+
+## 📚 技术栈
+
+- Next.js 14 (App Router) + React 18
+- Express 风格 Route Handlers (Node.js Runtime)
+- PostgreSQL + pg
+- JWT 认证 + bcrypt 密码哈希
