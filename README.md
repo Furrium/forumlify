@@ -126,10 +126,10 @@ Forumlify 的 Next.js 版本天然支持 serverless 部署。与传统部署相�
 
 ### Vercel 部署（一键）
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ffurrium%2Fforumlify&env=DATABASE_URL,JWT_SECRET,S3_ENDPOINT,S3_BUCKET,S3_REGION,S3_ACCESS_KEY_ID,S3_SECRET_ACCESS_KEY,S3_PUBLIC_URL)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Flezi-fun%2Fforumlify&env=DATABASE_URL,JWT_SECRET,S3_ENDPOINT,S3_BUCKET,S3_REGION,S3_ACCESS_KEY_ID,S3_SECRET_ACCESS_KEY,S3_PUBLIC_URL)
 
 点击上方按钮，Vercel 会自动：
-1. Fork 仓库并创建项目（部署 `next` 分支）
+1. Fork 仓库并创建项目（该仓库默认分支是 `next`，即 Next.js 版，无需手动选分支）
 2. 提示你填写环境变量（见上方表格，前两个必填，其余可跳过）
 3. 自动完成构建并部署，完成后会给你一个 `https://xxx.vercel.app` 地址
 
