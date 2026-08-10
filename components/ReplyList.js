@@ -74,7 +74,7 @@ export default function ReplyList({ postId, onRefresh }) {
             return (
               <div key={r.id} className="reply-item">
                 <div className="reply-header">
-                  <img src={avatar(r.username)} className="reply-avatar" alt="" />
+                  <img src={r.avatar_url || avatar(r.username)} className="reply-avatar" alt="" />
                   <span
                     className="reply-username"
                     style={{ cursor: 'pointer', color: 'var(--primary)' }}

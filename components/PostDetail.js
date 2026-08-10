@@ -95,7 +95,7 @@ export default function PostDetail({ postId }) {
       <div id="postDetailContent" style={{ maxWidth: 700, margin: '0 auto', width: '100%' }}>
         <div className="post-detail-card">
           <div className="post-header">
-            <img src={avatar(post.username)} className="post-avatar" alt="" />
+            <img src={post.avatar_url || avatar(post.username)} className="post-avatar" alt="" />
             <span
               className="post-username"
               style={{ cursor: 'pointer', color: 'var(--primary)' }}

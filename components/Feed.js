@@ -85,7 +85,7 @@ export default function Feed({ onOpenModal, onReport }) {
                   <div style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600, marginBottom: 4 }}>📌 置顶</div>
                 )}
                 <div className="post-header">
-                  <img src={avatar(p.username)} className="post-avatar" alt="" />
+                  <img src={p.avatar_url || avatar(p.username)} className="post-avatar" alt="" />
                   <span
                     className="post-username"
                     style={{ cursor: 'pointer', color: 'var(--primary)' }}
