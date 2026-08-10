@@ -27,6 +27,7 @@ export default function AppProvider({ children }) {
   const [sort, setSort] = useState('latest');
   const [refreshKey, setRefreshKey] = useState(0);
   const [ready, setReady] = useState(false); // 初始加载完成标记（控制加载页/淡入）
+  const [forumNameLoaded, setForumNameLoaded] = useState(false); // 已从服务器收到论坛名
   const loadedRef = useRef(false);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
@@ -76,9 +77,13 @@ export default function AppProvider({ children }) {
           setForumName(s.forum_name);
           localStorage.setItem('forumlify-forum-name', s.forum_name);
         }
-      } catch { /* 用默认名 */ }
-      // 无论成功失败，初始化完成即标记 ready（结束加载页，淡入页面）
-      setReady(true);
+        // 先标记论坛名已收到（加载页原地淡入名字），稍后切换主页
+        setForumNameLoaded(true);
+        setTimeout(() => setReady(true), 650);
+      } catch {
+        setForumNameLoaded(true);
+        setReady(true);
+      }
     }
     init();
   }, []);
@@ -226,7 +231,7 @@ export default function AppProvider({ children }) {
 
   const value = {
     currentUser, setCurrentUser,
-    forumName, updateForumName,
+    forumName, forumNameLoaded, updateForumName,
     theme, toggleTheme,
     view, navigate,
     currentPostId, openPost,

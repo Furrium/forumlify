@@ -8,7 +8,8 @@ import { Icon } from '../Icons';
 
 export default function AdminForumSettings() {
   const { updateForumName } = useApp();
-  const [name, setName] = useState('Forumlify');
+  // 初始为空：收到服务器返回的论坛名后才显示，避免默认名一闪而过
+  const [name, setName] = useState('');
   const [result, setResult] = useState(null); // {ok, msg}
 
   useEffect(() => {
