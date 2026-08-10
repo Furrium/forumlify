@@ -127,40 +127,44 @@
 
   <!-- 管理后台 -->
   <div id="pageAdmin" class="page-slide">
-    <div class="page-header" style="max-width:900px;margin:0 auto;width:100%;">
+    <div class="page-header" style="max-width:1200px;margin:0 auto;width:100%;">
+      <button class="back-btn" onclick="switchPage('feed')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        返回
+      </button>
       <h2>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
         管理后台
       </h2>
     </div>
-    <div class="admin-tabs" style="max-width:900px;margin:0 auto;width:100%;">
-      <button class="admin-tab active" data-tab="reports">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        举报
-      </button>
-      <button class="admin-tab" data-tab="users">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        用户
-      </button>
-      <button class="admin-tab" data-tab="logs">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        日志
-      </button>
-      <button class="admin-tab" data-tab="links">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        友链
-      </button>
-      <button class="admin-tab" data-tab="settings">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-        论坛设置
-      </button>
-      <button class="admin-tab" data-tab="custom">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        自定义页面
-      </button>
-    </div>
-    <div id="adminContent" style="max-width:900px;margin:0 auto;width:100%;">
-      <div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>
+
+    <!-- 侧边栏布局 -->
+    <div class="admin-layout" style="max-width:1200px;margin:0 auto;width:100%;">
+      <aside class="admin-sidebar">
+        <nav class="admin-nav">
+          <a href="#" class="admin-nav-item active" data-tab="reports">
+            <span class="nav-icon">📋</span> 举报
+          </a>
+          <a href="#" class="admin-nav-item" data-tab="users">
+            <span class="nav-icon">👥</span> 用户
+          </a>
+          <a href="#" class="admin-nav-item" data-tab="logs">
+            <span class="nav-icon">📜</span> 日志
+          </a>
+          <a href="#" class="admin-nav-item" data-tab="links">
+            <span class="nav-icon">🔗</span> 友链
+          </a>
+          <a href="#" class="admin-nav-item" data-tab="settings">
+            <span class="nav-icon">⚙️</span> 论坛设置
+          </a>
+          <a href="#" class="admin-nav-item" data-tab="custom">
+            <span class="nav-icon">📄</span> 自定义页面
+          </a>
+        </nav>
+      </aside>
+      <main class="admin-content" id="adminContent">
+        <div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>
+      </main>
     </div>
   </div>
 
