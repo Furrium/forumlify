@@ -2147,21 +2147,3 @@ a.btn-secondary {
   margin-left: 4px !important;
 }
 
-/* ============================================================
-   管理后台 —— 宽度修复
-   ============================================================ */
-
-/* 让管理后台内容撑满 */
-.admin-layout {
-  max-width: 100% !important;
-  padding: 0 24px !important;
-}
-
-.admin-content {
-  max-width: 100% !important;
-}
-
-/* 表格和卡片占满 */
-#adminContent table {
-  width: 100% !important;
-}
