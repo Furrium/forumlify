@@ -54,7 +54,6 @@ async function renderPostDetail(postId) {
       imagesHtml += '</div>';
     }
 
-    // Markdown 渲染（安全处理）
     let renderedContent = post.content || '';
     try {
       if (typeof marked !== 'undefined' && marked.parse) {
@@ -73,7 +72,13 @@ async function renderPostDetail(postId) {
           <span class="post-username" style="cursor:pointer;color:var(--primary);" onclick="switchPage('user','${username}')">${username}</span>
           <span class="post-time">${time}</span>
           ${post.edited_at ? `<span style="font-size:12px;color:var(--text-light);margin-left:8px;">（已编辑 ${new Date(post.edited_at).toLocaleString('zh-CN')}）</span>` : ''}
+          ${post.is_pinned ? '<span style="font-size:12px;color:var(--primary);margin-left:8px;">📌 置顶</span>' : ''}
           <div style="display:flex;gap:4px;margin-left:auto;">
+            ${currentUser && currentUser.role === 'admin' ? `
+              <button class="btn-sm btn-secondary" id="pinPostBtn" data-postid="${post.id}" style="padding:4px 10px;">
+                ${post.is_pinned ? '📌 取消置顶' : '📌 置顶'}
+              </button>
+            ` : ''}
             ${currentUser && currentUser.id === post.user_id ? `<button class="btn-sm btn-secondary" id="editPostBtn" data-postid="${post.id}" style="padding:4px 10px;">✏️ 编辑</button>` : ''}
             ${currentUser && currentUser.id === post.user_id ? `<button class="btn-sm btn-danger" id="detailDeleteBtn" data-postid="${post.id}" style="padding:4px 10px;">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -124,6 +129,19 @@ async function renderPostDetail(postId) {
     document.getElementById('replyContent').value = '';
     document.getElementById('replyCaptchaInput').value = '';
     refreshCaptcha('reply');
+
+    // 置顶按钮
+    const pinBtn = document.getElementById('pinPostBtn');
+    if (pinBtn) {
+      pinBtn.addEventListener('click', function() {
+        const postId = this.dataset.postid;
+        if (!confirm('确定要' + (this.textContent.includes('取消') ? '取消' : '') + '置顶吗？')) return;
+        API.togglePinPost(postId).then(() => {
+          renderPostDetail(postId);
+          renderFeed();
+        }).catch(err => alert('操作失败：' + err.message));
+      });
+    }
 
     // 编辑按钮
     const editBtn = document.getElementById('editPostBtn');
