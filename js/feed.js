@@ -46,6 +46,17 @@ function renderFeed() {
 
       const renderedContent = marked ? marked.parse(p.content || '') : (p.content || '').replace(/\n/g, '<br>');
 
+      // 签名渲染
+      let signatureHtml = '';
+      if (p.signature) {
+        const sigContent = marked ? marked.parse(p.signature) : p.signature;
+        signatureHtml = `
+          <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border-light);font-size:12px;color:var(--text-secondary);">
+            ${sigContent}
+          </div>
+        `;
+      }
+
       html += `
         <div class="post-card" data-postid="${p.id}" style="cursor:pointer;">
           ${p.is_pinned ? '<div style="font-size:12px;color:var(--primary);font-weight:600;margin-bottom:4px;">📌 置顶</div>' : ''}
@@ -72,6 +83,7 @@ function renderFeed() {
               删除
             </button>` : ''}
           </div>
+          ${signatureHtml}
         </div>
       `;
     });
