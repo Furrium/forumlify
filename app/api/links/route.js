@@ -2,6 +2,10 @@
 import pool from '@/lib/db';
 import { getUser, requireAdmin } from '@/lib/auth';
 
+// 避免 GET 被静态优化导致写方法 405（动态接口，不能缓存）
+export const dynamic = 'force-dynamic';
+
+
 export async function GET() {
   try {
     const r = await pool.query('SELECT * FROM friendly_links ORDER BY sort_order');
