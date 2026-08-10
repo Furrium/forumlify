@@ -512,7 +512,7 @@ async function renderMessagesPage() {
 }
 
 // ============================================================
-//  ⚙️ 设置页面（含头像上传、恢复码、修改密码和邮箱）
+//  ⚙️ 设置页面（含头像上传、恢复码、修改密码和邮箱、签名）
 // ============================================================
 
 async function renderSettingsPage() {
@@ -567,6 +567,11 @@ async function renderSettingsPage() {
           <div style="margin-bottom:16px;">
             <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">个人简介</label>
             <textarea id="settingsBio" rows="3" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);resize:vertical;">${user.bio || ''}</textarea>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">帖子签名</label>
+            <textarea id="settingsSignature" rows="2" placeholder="显示在每篇帖子底部，支持 Markdown" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:13px;background:var(--bg);color:var(--text);resize:vertical;font-family:inherit;">${user.signature || ''}</textarea>
+            <div style="font-size:12px;color:var(--text-light);margin-top:2px;">用 --- 分隔，支持 Markdown</div>
           </div>
           <button id="settingsSaveBtn" class="btn-primary" style="width:100%;padding:10px;">保存设置</button>
         </div>
@@ -675,19 +680,17 @@ async function renderSettingsPage() {
       });
     }
 
-    // ===== 保存设置 =====
+    // ===== 保存设置（含签名） =====
     document.getElementById('settingsSaveBtn').addEventListener('click', async function() {
       const username = document.getElementById('settingsUsername').value.trim();
       const bio = document.getElementById('settingsBio').value.trim();
+      const signature = document.getElementById('settingsSignature').value.trim();
       if (!username) { alert('用户名不能为空'); return; }
       try {
-        const data = await apiFetch('/users/' + user.id, {
-          method: 'PUT',
-          body: JSON.stringify({ username, bio })
-        });
-        if (data.error) throw new Error(data.error);
+        await API.updateProfile(user.id, username, bio, signature);
         currentUser.username = username;
         currentUser.bio = bio;
+        currentUser.signature = signature;
         alert('保存成功！');
         renderNav();
         renderSettingsPage();
