@@ -16,6 +16,13 @@ export default function Navbar({ onOpenModal }) {
     API.getCustomPages().then(setCustomPages).catch(() => {});
   }, []);
 
+  // 点击菜单外部关闭下拉（与原版行为一致）
+  useEffect(() => {
+    const closeMenu = () => setMenuOpen(false);
+    document.addEventListener('click', closeMenu);
+    return () => document.removeEventListener('click', closeMenu);
+  }, []);
+
   const avatarSrc = currentUser?.avatar_url ||
     'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentUser?.username || 'U') +
     '&background=6366f1&color=fff';

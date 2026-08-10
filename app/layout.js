@@ -1,5 +1,6 @@
 // 全局布局
 import './globals.css';
+import CustomCssLoader from '@/components/CustomCssLoader';
 
 export const metadata = {
   title: 'Forumlify',
@@ -9,7 +10,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body>{children}</body>
+      <body>
+        <CustomCssLoader />
+        {children}
+      </body>
     </html>
   );
 }
