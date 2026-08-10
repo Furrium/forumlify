@@ -8,6 +8,17 @@ const nextConfig = {
       { source: '/uploads/:name', destination: '/api/uploads/:name' },
     ];
   },
+  // 论坛是动态内容：HTML 页面不缓存，避免 CDN/浏览器拿到旧版本
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+        ],
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
