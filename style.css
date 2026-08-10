@@ -2369,11 +2369,24 @@ a.btn-secondary {
   border-color: var(--glass-border) !important;
 }
 /* ============================================================
-   设置页面 —— 侧边栏布局（玻璃风格）
+   设置页面 —— 布局修复
    ============================================================ */
 
-/* 设置页面侧边栏容器 */
+/* 设置页面整体布局 */
+.settings-layout {
+  display: flex !important;
+  gap: 28px !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  align-items: flex-start !important;
+  padding-top: 12px !important;
+  width: 100% !important;
+}
+
+/* 设置页面侧边栏 */
 .settings-sidebar {
+  width: 200px !important;
+  flex-shrink: 0 !important;
   background: var(--glass-bg) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
@@ -2381,11 +2394,27 @@ a.btn-secondary {
   border-radius: var(--radius) !important;
   padding: 8px 0 !important;
   box-shadow: var(--glass-shadow) !important;
-  position: sticky;
-  top: 84px;
+  position: sticky !important;
+  top: 84px !important;
 }
 
-/* 设置页面侧边栏导航项 */
+/* 设置页面内容区 */
+.settings-content {
+  flex: 1 !important;
+  min-width: 0 !important;
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius) !important;
+  padding: 20px 24px !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+
+/* ============================================================
+   设置页面侧边栏导航项
+   ============================================================ */
+
 .settings-nav-item {
   display: flex !important;
   align-items: center !important;
@@ -2421,16 +2450,9 @@ a.btn-secondary {
   stroke: currentColor !important;
 }
 
-/* 设置页面内容区 */
-.settings-content {
-  background: var(--glass-bg) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid var(--glass-border) !important;
-  border-radius: var(--radius) !important;
-  padding: 20px 24px !important;
-  box-shadow: var(--glass-shadow) !important;
-}
+/* ============================================================
+   设置页面内容区样式
+   ============================================================ */
 
 /* 设置页面内部卡片 */
 .settings-content [style*="background:var(--surface)"] {
@@ -2470,36 +2492,45 @@ a.btn-secondary {
   color: var(--glass-text-light) !important;
 }
 
-/* 设置页面按钮 */
-.settings-content .btn-secondary {
-  background: var(--glass-bg) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-  border: 1px solid var(--glass-border) !important;
-  color: var(--glass-text-secondary) !important;
-}
-.settings-content .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: var(--glass-text) !important;
+/* ============================================================
+   移动端适配
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .settings-layout {
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+  .settings-sidebar {
+    width: 100% !important;
+    position: static !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    padding: 8px !important;
+    border: none !important;
+    background: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  .settings-nav-item {
+    border-left: none !important;
+    border-bottom: 2px solid transparent !important;
+    padding: 8px 14px !important;
+    border-radius: var(--radius-sm) !important;
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+  }
+  .settings-nav-item.active {
+    border-bottom-color: var(--primary) !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+  }
 }
 
-.settings-content .btn-primary {
-  background: var(--glass-bg) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  border: 1px solid var(--glass-border) !important;
-  color: var(--glass-text) !important;
-}
-.settings-content .btn-primary:hover {
-  background: rgba(255, 255, 255, 0.25) !important;
-}
+/* ============================================================
+   暗色模式适配
+   ============================================================ */
 
-/* 设置页面头像边框 */
-.settings-content img[style*="border-radius:50%"] {
-  border-color: var(--glass-border) !important;
-}
-
-/* 暗色模式适配 */
 [data-theme="dark"] .settings-sidebar {
   background: var(--glass-bg) !important;
   border-color: var(--glass-border) !important;
