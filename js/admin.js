@@ -60,13 +60,31 @@ function renderAdminReports() {
   });
 }
 
-function renderAdminUsers() {
+let currentUsersPage = 1;
+let usersTotalPages = 1;
+let usersSearchKeyword = '';
+
+function renderAdminUsers(page = 1, search = '') {
   const container = document.getElementById('adminContent');
   container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px 0;">加载中...</div>';
-  API.getUsers().then(users => {
+
+  currentUsersPage = page;
+  usersSearchKeyword = search;
+
+  API.getUsers(page, 20, search).then(result => {
+    const users = result.data || [];
+    const pagination = result.pagination || { total: 0, totalPages: 1, page: 1 };
+    usersTotalPages = pagination.totalPages || 1;
+
     let html = `
-      <div style="margin-bottom:12px;font-size:13px;color:#94a3b8;">
-        共 <strong>${users.length}</strong> 位用户
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <span style="font-size:13px;color:#94a3b8;">共 <strong>${pagination.total}</strong> 位用户</span>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="userSearchInput" placeholder="搜索用户名..." value="${search}" 
+                 style="padding:6px 12px;border:1px solid var(--border);border-radius:4px;font-size:13px;background:var(--bg);color:var(--text);" />
+          <button id="userSearchBtn" class="btn-sm btn-primary" style="padding:6px 14px;">搜索</button>
+          <button id="userClearSearchBtn" class="btn-sm btn-secondary" style="padding:6px 14px;">清空</button>
+        </div>
       </div>
       <div style="overflow-x:auto;">
         <table style="width:100%;border-collapse:collapse;font-size:14px;">
@@ -80,40 +98,106 @@ function renderAdminUsers() {
           </thead>
           <tbody>
     `;
-    users.forEach(u => {
-      const isAdmin = u.role === 'admin';
-      const isCurrentUser = currentUser && currentUser.id === u.id;
-      html += `
-        <tr style="border-bottom:1px solid #f1f5f9;${isCurrentUser ? 'background:var(--primary-bg);' : ''}">
-          <td style="padding:10px 12px;">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <img src="${u.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.username) + '&background=6366f1&color=fff&size=64'}" 
-                   style="width:28px;height:28px;border-radius:50%;object-fit:cover;" />
-              <span style="font-weight:500;">${u.username}</span>
-              ${isCurrentUser ? '<span style="font-size:11px;color:#94a3b8;background:#eef2ff;padding:1px 8px;border-radius:4px;">你</span>' : ''}
-            </div>
-          </td>
-          <td style="padding:10px 12px;">
-            <span style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:500;${isAdmin ? 'background:#6366f1;color:#fff;' : 'background:#e2e8f0;color:#64748b;'}">
-              ${isAdmin ? '管理员' : '普通用户'}
-            </span>
-          </td>
-          <td style="padding:10px 12px;color:#94a3b8;font-size:13px;">${u.created_at ? new Date(u.created_at).toLocaleDateString('zh-CN') : '—'}</td>
-          <td style="padding:10px 12px;text-align:center;">
-            ${isCurrentUser ? 
-              '<span style="font-size:12px;color:#94a3b8;">不可操作自己</span>' :
-              (isAdmin ? 
-                `<button class="btn-sm btn-secondary" data-userid="${u.id}" data-role="user" style="padding:4px 12px;">设为普通用户</button>` :
-                `<button class="btn-sm btn-primary" data-userid="${u.id}" data-role="admin" style="padding:4px 12px;background:#6366f1;color:#fff;border:none;border-radius:4px;cursor:pointer;">设为管理员</button>`
-              )
-            }
-          </td>
-        </tr>
-      `;
-    });
+
+    if (users.length === 0) {
+      html += `<tr><td colspan="4" style="text-align:center;padding:40px 0;color:#94a3b8;">暂无用户</td></tr>`;
+    } else {
+      users.forEach(u => {
+        const isAdmin = u.role === 'admin';
+        const isCurrentUser = currentUser && currentUser.id === u.id;
+        html += `
+          <tr style="border-bottom:1px solid #f1f5f9;${isCurrentUser ? 'background:var(--primary-bg);' : ''}">
+            <td style="padding:10px 12px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <img src="${u.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.username) + '&background=6366f1&color=fff&size=64'}" 
+                     style="width:28px;height:28px;border-radius:50%;object-fit:cover;" />
+                <span style="font-weight:500;">${u.username}</span>
+                ${isCurrentUser ? '<span style="font-size:11px;color:#94a3b8;background:#eef2ff;padding:1px 8px;border-radius:4px;">你</span>' : ''}
+              </div>
+            </td>
+            <td style="padding:10px 12px;">
+              <span style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:500;${isAdmin ? 'background:#6366f1;color:#fff;' : 'background:#e2e8f0;color:#64748b;'}">
+                ${isAdmin ? '管理员' : '普通用户'}
+              </span>
+            </td>
+            <td style="padding:10px 12px;color:#94a3b8;font-size:13px;">${u.created_at ? new Date(u.created_at).toLocaleDateString('zh-CN') : '—'}</td>
+            <td style="padding:10px 12px;text-align:center;">
+              ${isCurrentUser ? 
+                '<span style="font-size:12px;color:#94a3b8;">不可操作自己</span>' :
+                (isAdmin ? 
+                  `<button class="btn-sm btn-secondary" data-userid="${u.id}" data-role="user" style="padding:4px 12px;">设为普通用户</button>` :
+                  `<button class="btn-sm btn-primary" data-userid="${u.id}" data-role="admin" style="padding:4px 12px;background:#6366f1;color:#fff;border:none;border-radius:4px;cursor:pointer;">设为管理员</button>`
+                )
+              }
+            </td>
+          </tr>
+        `;
+      });
+    }
+
     html += '</tbody></table></div>';
+
+    // 分页控件
+    if (usersTotalPages > 1) {
+      html += `
+        <div style="display:flex;justify-content:center;align-items:center;gap:6px;padding:16px 0;margin-top:8px;border-top:1px solid var(--border);flex-wrap:wrap;">
+          <button class="users-page-btn" data-page="${page - 1}" ${page <= 1 ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}
+                  style="padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">
+            &laquo;
+          </button>
+      `;
+
+      let startPage = Math.max(1, page - 4);
+      let endPage = Math.min(usersTotalPages, page + 4);
+
+      if (page <= 4) endPage = Math.min(usersTotalPages, 9);
+      if (page > usersTotalPages - 4) startPage = Math.max(1, usersTotalPages - 8);
+
+      if (startPage > 1) {
+        html += `<button class="users-page-btn" data-page="1" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">1</button>`;
+        if (startPage > 2) html += `<span style="color:var(--text-light);padding:0 4px;">…</span>`;
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        const isActive = i === page;
+        html += `
+          <button class="users-page-btn" data-page="${i}" ${isActive ? 'disabled style="background:var(--primary);color:#fff;cursor:default;border-color:var(--primary);"' : ''}
+                  style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:${isActive ? 'var(--primary)' : 'var(--surface)'};color:${isActive ? '#fff' : 'var(--text)'};cursor:${isActive ? 'default' : 'pointer'};font-size:13px;min-width:32px;text-align:center;">
+            ${i}
+          </button>
+        `;
+      }
+
+      if (endPage < usersTotalPages) {
+        if (endPage < usersTotalPages - 1) html += `<span style="color:var(--text-light);padding:0 4px;">…</span>`;
+        html += `<button class="users-page-btn" data-page="${usersTotalPages}" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">${usersTotalPages}</button>`;
+      }
+
+      html += `
+          <button class="users-page-btn" data-page="${page + 1}" ${page >= usersTotalPages ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}
+                  style="padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">
+            &raquo;
+          </button>
+          <span style="font-size:13px;color:var(--text-light);margin-left:8px;">
+            ${pagination.total} 位用户
+          </span>
+        </div>
+      `;
+    }
+
     container.innerHTML = html;
 
+    // 绑定分页按钮事件
+    container.querySelectorAll('.users-page-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const newPage = parseInt(this.dataset.page);
+        if (newPage >= 1 && newPage <= usersTotalPages) {
+          renderAdminUsers(newPage, usersSearchKeyword);
+        }
+      });
+    });
+
+    // 绑定角色切换事件
     container.querySelectorAll('[data-role]').forEach(btn => {
       btn.addEventListener('click', function() {
         const userId = this.dataset.userid;
@@ -121,32 +205,53 @@ function renderAdminUsers() {
         const roleName = role === 'admin' ? '管理员' : '普通用户';
         if (!confirm(`确定要将该用户设为「${roleName}」吗？`)) return;
         API.updateUserRole(userId, role).then(() => {
-          renderAdminUsers();
+          renderAdminUsers(currentUsersPage, usersSearchKeyword);
         }).catch(err => alert('操作失败：' + err.message));
       });
     });
+
+    // 搜索按钮
+    const searchBtn = document.getElementById('userSearchBtn');
+    if (searchBtn) {
+      searchBtn.addEventListener('click', function() {
+        const input = document.getElementById('userSearchInput');
+        renderAdminUsers(1, input.value.trim());
+      });
+    }
+
+    // 清空搜索
+    const clearBtn = document.getElementById('userClearSearchBtn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function() {
+        const input = document.getElementById('userSearchInput');
+        input.value = '';
+        renderAdminUsers(1, '');
+      });
+    }
+
+    // 回车搜索
+    const searchInput = document.getElementById('userSearchInput');
+    if (searchInput) {
+      searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          renderAdminUsers(1, this.value.trim());
+        }
+      });
+    }
+
   }).catch(() => {
     container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载失败</div>';
   });
 }
 
-// ============================================================
-//  事件日志 —— 支持分页
-// ============================================================
-
-let currentLogsPage = 1;
-let logsTotalPages = 1;
-
 function renderAdminLogs(page = 1) {
   const container = document.getElementById('adminContent');
   container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px 0;">加载中...</div>';
   
-  currentLogsPage = page;
-
   API.getEventLogs(page, 20).then(result => {
     const logs = result.data || [];
     const pagination = result.pagination || { total: 0, totalPages: 1, page: 1 };
-    logsTotalPages = pagination.totalPages || 1;
+    const totalPages = pagination.totalPages || 1;
 
     if (!logs || logs.length === 0) {
       container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">暂无日志</div>';
@@ -176,7 +281,7 @@ function renderAdminLogs(page = 1) {
     html += '</tbody></table>';
 
     // 分页控件
-    if (logsTotalPages > 1) {
+    if (totalPages > 1) {
       html += `
         <div style="display:flex;justify-content:center;align-items:center;gap:6px;padding:16px 0;margin-top:8px;border-top:1px solid var(--border);flex-wrap:wrap;">
           <button class="logs-page-btn" data-page="${page - 1}" ${page <= 1 ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}
@@ -186,10 +291,10 @@ function renderAdminLogs(page = 1) {
       `;
 
       let startPage = Math.max(1, page - 4);
-      let endPage = Math.min(logsTotalPages, page + 4);
+      let endPage = Math.min(totalPages, page + 4);
 
-      if (page <= 4) endPage = Math.min(logsTotalPages, 9);
-      if (page > logsTotalPages - 4) startPage = Math.max(1, logsTotalPages - 8);
+      if (page <= 4) endPage = Math.min(totalPages, 9);
+      if (page > totalPages - 4) startPage = Math.max(1, totalPages - 8);
 
       if (startPage > 1) {
         html += `<button class="logs-page-btn" data-page="1" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">1</button>`;
@@ -206,13 +311,13 @@ function renderAdminLogs(page = 1) {
         `;
       }
 
-      if (endPage < logsTotalPages) {
-        if (endPage < logsTotalPages - 1) html += `<span style="color:var(--text-light);padding:0 4px;">…</span>`;
-        html += `<button class="logs-page-btn" data-page="${logsTotalPages}" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">${logsTotalPages}</button>`;
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) html += `<span style="color:var(--text-light);padding:0 4px;">…</span>`;
+        html += `<button class="logs-page-btn" data-page="${totalPages}" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">${totalPages}</button>`;
       }
 
       html += `
-          <button class="logs-page-btn" data-page="${page + 1}" ${page >= logsTotalPages ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}
+          <button class="logs-page-btn" data-page="${page + 1}" ${page >= totalPages ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}
                   style="padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">
             &raquo;
           </button>
@@ -229,7 +334,7 @@ function renderAdminLogs(page = 1) {
     container.querySelectorAll('.logs-page-btn:not([disabled])').forEach(btn => {
       btn.addEventListener('click', function() {
         const newPage = parseInt(this.dataset.page);
-        if (newPage >= 1 && newPage <= logsTotalPages) {
+        if (newPage >= 1 && newPage <= totalPages) {
           renderAdminLogs(newPage);
         }
       });
