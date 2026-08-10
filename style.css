@@ -2172,3 +2172,29 @@ a.btn-secondary {
   opacity: 0 !important;
   pointer-events: none !important;
 }
+/* ============================================================
+   管理后台 —— 表格撑满
+   ============================================================ */
+
+#adminContent {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+#adminContent table {
+  width: 100% !important;
+  min-width: 100% !important;
+  table-layout: auto !important;
+}
+
+/* 表格单元格不换行（根据需要） */
+#adminContent th,
+#adminContent td {
+  white-space: nowrap !important;
+}
+
+/* 如果内容太长，允许换行 */
+#adminContent td:first-child,
+#adminContent td:nth-child(2) {
+  white-space: normal !important;
+}
