@@ -26,12 +26,8 @@ function HomeInner() {
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Navbar onOpenModal={openModal} style={{ flex: 1 }} />
-        <div style={{ paddingRight: 16 }}>
-          <ChatManager />
-        </div>
-      </div>
+      <Navbar onOpenModal={openModal} />
+      <ChatManager />
 
       <div id="app" style={{ display: view === 'feed' ? 'flex' : 'none' }}>
         <Sidebar />

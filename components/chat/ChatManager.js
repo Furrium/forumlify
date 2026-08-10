@@ -1,38 +1,55 @@
 'use client';
 
-// 私信管理器：会话列表 modal + 聊天窗口 modal + 未读 badge + openPrivateChat
+// 私信管理器：会话列表 modal + 聊天窗口 modal + 未读 badge
 import { useState, useEffect, useCallback } from 'react';
 import { API } from '@/lib/api';
 import { useApp } from '../AppProvider';
 import ConversationList from './ConversationList';
 import ChatWindow from './ChatWindow';
 
-export default function ChatManager() {
+// 私信按钮（含未读 badge），渲染在导航栏内
+export function DMButton() {
   const { currentUser } = useApp();
-  const [listOpen, setListOpen] = useState(false);
-  const [chat, setChat] = useState(null); // {conversationId, otherUserId, otherUsername}
   const [unread, setUnread] = useState(0);
-  const [refreshKey, setRefreshKey] = useState(0);
 
-  const refreshList = useCallback(() => setRefreshKey((k) => k + 1), []);
-
-  // 未读 badge 轮询（30 秒 + 每次刷新）
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser) { setUnread(0); return; }
     const update = () => {
       API.getConversations()
-        .then((cs) => {
-          const total = (cs || []).reduce((s, c) => s + (c.unread_count || 0), 0);
-          setUnread(total);
-        })
+        .then((cs) => setUnread((cs || []).reduce((s, c) => s + (c.unread_count || 0), 0)))
         .catch(() => {});
     };
     update();
     const t = setInterval(update, 30000);
     return () => clearInterval(t);
-  }, [currentUser, refreshKey]);
+  }, [currentUser]);
 
-  // 监听其他组件发起的打开私信事件
+  return (
+    <button
+      className="nav-icon-btn"
+      title="私信"
+      style={{ position: 'relative', padding: '6px 8px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', borderRadius: 4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={() => window.dispatchEvent(new CustomEvent('forumlify-open-messages'))}
+    >
+      ✉️
+      {unread > 0 && (
+        <span style={{ position: 'absolute', top: -2, right: -2, background: '#ef4444', color: '#fff', borderRadius: '50%', padding: '2px 6px', fontSize: 10, fontWeight: 600, minWidth: 18, textAlign: 'center', lineHeight: 1.4 }}>
+          {unread > 99 ? '99+' : unread}
+        </span>
+      )}
+    </button>
+  );
+}
+
+// 私信 modals 容器（会话列表 + 聊天窗口）
+export default function ChatManager() {
+  const [listOpen, setListOpen] = useState(false);
+  const [chat, setChat] = useState(null); // {conversationId, otherUserId, otherUsername}
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refreshList = useCallback(() => setRefreshKey((k) => k + 1), []);
+
+  // 监听事件：打开会话列表 / 打开聊天
   useEffect(() => {
     const handler = (e) => {
       setChat(e.detail);
@@ -59,21 +76,6 @@ export default function ChatManager() {
 
   return (
     <>
-      {/* 导航栏私信按钮 + 未读 badge */}
-      <button
-        className="nav-icon-btn"
-        title="私信"
-        style={{ position: 'relative', padding: '6px 8px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', borderRadius: 4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-        onClick={() => setListOpen(true)}
-      >
-        ✉️
-        {unread > 0 && (
-          <span style={{ position: 'absolute', top: -2, right: -2, background: '#ef4444', color: '#fff', borderRadius: '50%', padding: '2px 6px', fontSize: 10, fontWeight: 600, minWidth: 18, textAlign: 'center', lineHeight: 1.4 }}>
-            {unread > 99 ? '99+' : unread}
-          </span>
-        )}
-      </button>
-
       {listOpen && (
         <ConversationList
           onOpenChat={openChat}

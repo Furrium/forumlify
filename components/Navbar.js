@@ -1,10 +1,11 @@
 'use client';
 
-// 导航栏：论坛名、自定义页面链接、登录/注册、用户菜单、主题切换
+// 导航栏：论坛名、自定义页面链接、登录/注册、私信、用户菜单、主题切换
 import { useState, useEffect } from 'react';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
 import { API } from '@/lib/api';
+import { DMButton } from './chat/ChatManager';
 
 export default function Navbar({ onOpenModal }) {
   const { currentUser, forumName, theme, toggleTheme, navigate, openCustomPage, logout } = useApp();
@@ -59,6 +60,7 @@ export default function Navbar({ onOpenModal }) {
         </span>
       </div>
       <div className="nav-right">
+        <DMButton />
         <div id="userMenu">
           {!currentUser ? (
             <div id="authButtons">
