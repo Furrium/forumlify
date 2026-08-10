@@ -176,3 +176,9 @@ ALTER TABLE posts ADD COLUMN IF NOT EXISTS pinned_at TIMESTAMPTZ;
 CREATE INDEX IF NOT EXISTS idx_posts_is_pinned ON posts(is_pinned);
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS signature TEXT DEFAULT '';
+
+-- ============================================================
+--  论坛默认设置
+-- ============================================================
+INSERT INTO settings (key, value) VALUES ('forum_name', 'Forumlify')
+ON CONFLICT (key) DO NOTHING;
