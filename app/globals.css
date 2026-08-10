@@ -41,191 +41,6 @@
   --modal-overlay: rgba(0, 0, 0, 0.7);
 }
 
-/* 暗色模式下的输入框修复 */
-[data-theme="dark"] input,
-[data-theme="dark"] textarea,
-[data-theme="dark"] select {
-  background: #0f1117 !important;
-  color: #e8edf5 !important;
-  border-color: #2a2d3a !important;
-}
-
-[data-theme="dark"] input::placeholder,
-[data-theme="dark"] textarea::placeholder {
-  color: #6b7280 !important;
-}
-
-[data-theme="dark"] input:focus,
-[data-theme="dark"] textarea:focus,
-[data-theme="dark"] select:focus {
-  background: #1a1d27 !important;
-  border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
-}
-
-[data-theme="dark"] .modal-content input,
-[data-theme="dark"] .modal-content textarea,
-[data-theme="dark"] .modal-content select {
-  background: #0f1117 !important;
-  color: #e8edf5 !important;
-  border-color: #2a2d3a !important;
-}
-
-[data-theme="dark"] .modal-content input:focus,
-[data-theme="dark"] .modal-content textarea:focus,
-[data-theme="dark"] .modal-content select:focus {
-  background: #1a1d27 !important;
-  border-color: var(--primary) !important;
-}
-
-[data-theme="dark"] #settingsUsername,
-[data-theme="dark"] #settingsBio,
-[data-theme="dark"] #postTitle,
-[data-theme="dark"] #postContent,
-[data-theme="dark"] #replyContent {
-  background: #0f1117 !important;
-  color: #e8edf5 !important;
-  border-color: #2a2d3a !important;
-}
-
-[data-theme="dark"] #settingsUsername:focus,
-[data-theme="dark"] #settingsBio:focus,
-[data-theme="dark"] #postTitle:focus,
-[data-theme="dark"] #postContent:focus,
-[data-theme="dark"] #replyContent:focus {
-  background: #1a1d27 !important;
-  border-color: var(--primary) !important;
-}
-
-[data-theme="dark"] .captcha-row input {
-  background: #0f1117 !important;
-  color: #e8edf5 !important;
-  border-color: #2a2d3a !important;
-}
-
-[data-theme="dark"] .captcha-row input:focus {
-  background: #1a1d27 !important;
-  border-color: var(--primary) !important;
-}
-
-[data-theme="dark"] #reportReason {
-  background: #0f1117 !important;
-  color: #e8edf5 !important;
-  border-color: #2a2d3a !important;
-}
-
-[data-theme="dark"] #reportReason option {
-  background: #0f1117 !important;
-  color: #e8edf5 !important;
-}
-
-[data-theme="dark"] .post-card {
-  background: var(--surface);
-}
-
-[data-theme="dark"] .post-card:hover {
-  border-color: var(--primary-light);
-}
-
-[data-theme="dark"] .stats-box,
-[data-theme="dark"] .links-box {
-  background: var(--surface);
-}
-
-[data-theme="dark"] .reply-item {
-  background: var(--surface);
-}
-
-[data-theme="dark"] .dropdown-menu {
-  background: var(--surface);
-  border-color: var(--border);
-}
-
-[data-theme="dark"] .dropdown-menu a:hover {
-  background: var(--border-light);
-}
-
-[data-theme="dark"] .tab {
-  color: var(--text-secondary);
-}
-[data-theme="dark"] .tab:hover {
-  color: var(--text);
-}
-[data-theme="dark"] .tab.active {
-  color: #fff;
-}
-
-[data-theme="dark"] .admin-tab {
-  background: var(--surface);
-  border-color: var(--border);
-  color: var(--text-secondary);
-}
-[data-theme="dark"] .admin-tab:hover {
-  background: var(--border-light);
-}
-[data-theme="dark"] .admin-tab.active {
-  background: var(--primary);
-  color: #fff;
-}
-
-[data-theme="dark"] .btn-ghost {
-  border-color: var(--border);
-  color: var(--text-secondary);
-}
-[data-theme="dark"] .btn-ghost:hover {
-  background: var(--border-light);
-  color: var(--text);
-}
-
-[data-theme="dark"] .report-item {
-  background: var(--surface);
-}
-
-[data-theme="dark"] #adminContent table {
-  background: var(--surface);
-}
-[data-theme="dark"] #adminContent th {
-  background: var(--border-light);
-  color: var(--text-secondary);
-}
-[data-theme="dark"] #adminContent td {
-  border-bottom-color: var(--border-light);
-}
-
-[data-theme="dark"] .captcha-row span {
-  background: var(--border-light);
-  color: var(--primary-light);
-}
-
-[data-theme="dark"] .page-slide {
-  background: var(--bg);
-}
-
-[data-theme="dark"] .post-detail-card {
-  background: var(--surface);
-}
-
-[data-theme="dark"] #replyArea textarea {
-  background: #0f1117 !important;
-  color: #e8edf5 !important;
-  border-color: #2a2d3a !important;
-}
-[data-theme="dark"] #replyArea textarea:focus {
-  background: #1a1d27 !important;
-  border-color: var(--primary) !important;
-}
-
-[data-theme="dark"] .modal-content {
-  background: var(--surface);
-}
-
-[data-theme="dark"] .modal-content .close svg {
-  stroke: var(--text-secondary);
-}
-[data-theme="dark"] .modal-content .close:hover svg {
-  stroke: var(--text);
-}
-
 * {
   margin: 0;
   padding: 0;
@@ -445,6 +260,8 @@ svg {
 /* ===== 主布局 ===== */
 #app {
   display: flex;
+  justify-content: center;
+  align-items: flex-start;
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px 32px 40px;
@@ -806,7 +623,7 @@ svg {
   inset: 0;
   background: var(--bg);
   z-index: 50;
-  padding: 24px 32px 40px;
+  padding: 84px 32px 40px;
   overflow-y: auto;
   transition: background var(--transition);
 }
@@ -1048,6 +865,153 @@ svg {
   border-bottom: none;
 }
 
+/* ===== 暗色模式修复 ===== */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background: #0f1117 !important;
+  color: #e8edf5 !important;
+  border-color: #2a2d3a !important;
+}
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: #6b7280 !important;
+}
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus {
+  background: #1a1d27 !important;
+  border-color: var(--primary) !important;
+}
+[data-theme="dark"] .modal-content input,
+[data-theme="dark"] .modal-content textarea,
+[data-theme="dark"] .modal-content select {
+  background: #0f1117 !important;
+  color: #e8edf5 !important;
+}
+[data-theme="dark"] .modal-content input:focus,
+[data-theme="dark"] .modal-content textarea:focus {
+  background: #1a1d27 !important;
+}
+[data-theme="dark"] #settingsUsername,
+[data-theme="dark"] #settingsBio,
+[data-theme="dark"] #postTitle,
+[data-theme="dark"] #postContent,
+[data-theme="dark"] #replyContent {
+  background: #0f1117 !important;
+  color: #e8edf5 !important;
+}
+[data-theme="dark"] #settingsUsername:focus,
+[data-theme="dark"] #settingsBio:focus,
+[data-theme="dark"] #postTitle:focus,
+[data-theme="dark"] #postContent:focus,
+[data-theme="dark"] #replyContent:focus {
+  background: #1a1d27 !important;
+}
+[data-theme="dark"] .captcha-row input {
+  background: #0f1117 !important;
+  color: #e8edf5 !important;
+}
+[data-theme="dark"] .captcha-row input:focus {
+  background: #1a1d27 !important;
+}
+[data-theme="dark"] #reportReason {
+  background: #0f1117 !important;
+  color: #e8edf5 !important;
+}
+[data-theme="dark"] #reportReason option {
+  background: #0f1117 !important;
+  color: #e8edf5 !important;
+}
+[data-theme="dark"] .post-card {
+  background: var(--surface);
+}
+[data-theme="dark"] .post-card:hover {
+  border-color: var(--primary-light);
+}
+[data-theme="dark"] .stats-box,
+[data-theme="dark"] .links-box {
+  background: var(--surface);
+}
+[data-theme="dark"] .reply-item {
+  background: var(--surface);
+}
+[data-theme="dark"] .dropdown-menu {
+  background: var(--surface);
+  border-color: var(--border);
+}
+[data-theme="dark"] .dropdown-menu a:hover {
+  background: var(--border-light);
+}
+[data-theme="dark"] .tab {
+  color: var(--text-secondary);
+}
+[data-theme="dark"] .tab:hover {
+  color: var(--text);
+}
+[data-theme="dark"] .tab.active {
+  color: #fff;
+}
+[data-theme="dark"] .admin-tab {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+[data-theme="dark"] .admin-tab:hover {
+  background: var(--border-light);
+}
+[data-theme="dark"] .admin-tab.active {
+  background: var(--primary);
+  color: #fff;
+}
+[data-theme="dark"] .btn-ghost {
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+[data-theme="dark"] .btn-ghost:hover {
+  background: var(--border-light);
+  color: var(--text);
+}
+[data-theme="dark"] .report-item {
+  background: var(--surface);
+}
+[data-theme="dark"] #adminContent table {
+  background: var(--surface);
+}
+[data-theme="dark"] #adminContent th {
+  background: var(--border-light);
+  color: var(--text-secondary);
+}
+[data-theme="dark"] #adminContent td {
+  border-bottom-color: var(--border-light);
+}
+[data-theme="dark"] .captcha-row span {
+  background: var(--border-light);
+  color: var(--primary-light);
+}
+[data-theme="dark"] .page-slide {
+  background: var(--bg);
+}
+[data-theme="dark"] .post-detail-card {
+  background: var(--surface);
+}
+[data-theme="dark"] #replyArea textarea {
+  background: #0f1117 !important;
+  color: #e8edf5 !important;
+}
+[data-theme="dark"] #replyArea textarea:focus {
+  background: #1a1d27 !important;
+}
+[data-theme="dark"] .modal-content {
+  background: var(--surface);
+}
+[data-theme="dark"] .modal-content .close svg {
+  stroke: var(--text-secondary);
+}
+[data-theme="dark"] .modal-content .close:hover svg {
+  stroke: var(--text);
+}
+
 /* ===== 响应式 ===== */
 @media (max-width: 768px) {
   #sidebar {
@@ -1088,7 +1052,7 @@ svg {
     max-height: 100px;
   }
   .page-slide {
-    padding: 16px;
+    padding: 84px 16px 20px;
   }
   .post-detail-card {
     padding: 16px !important;
@@ -1104,37 +1068,25 @@ svg {
   }
 }
 
-/* ===== 独立页面内容居中 ===== */
-.page-slide .page-header,
-.page-slide > div,
-#postDetailContent,
-#replyArea {
-  max-width: 700px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-/* 帖子详情页内容居中 */
-#pagePost .post-detail-card {
-  max-width: 700px;
-  margin: 0 auto;
-}
-
-/* 设置页面居中 */
-#pageSettings > div {
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-/* 发布新帖居中 */
-#pageNew > div {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-/* 管理后台居中 */
-#pageAdmin .admin-tabs,
-#adminContent {
-  max-width: 900px;
-  margin: 0 auto;
+@media (max-width: 480px) {
+  .forum-name {
+    font-size: 17px;
+  }
+  .btn-primary,
+  .btn-ghost {
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+  .modal-content {
+    padding: 20px 16px;
+  }
+  .post-actions {
+    gap: 12px;
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+  #customNavLinks a {
+    font-size: 12px !important;
+    padding: 2px 6px !important;
+  }
 }

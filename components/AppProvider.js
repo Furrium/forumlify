@@ -14,9 +14,10 @@ export default function AppProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [forumName, setForumName] = useState('Forumlify');
   const [theme, setThemeState] = useState('light');
-  const [view, setView] = useState('feed'); // feed | post | new | admin | settings | messages | user
+  const [view, setView] = useState('feed'); // feed | post | new | admin | settings | messages | user | custom
   const [currentPostId, setCurrentPostId] = useState(null);
   const [currentUsername, setCurrentUsername] = useState(null);
+  const [currentPageName, setCurrentPageName] = useState(null);
   const [sort, setSort] = useState('latest');
   const [refreshKey, setRefreshKey] = useState(0);
   const loadedRef = useRef(false);
@@ -77,6 +78,10 @@ export default function AppProvider({ children }) {
       setCurrentUsername(userParam);
     } else if (pageParam && ['messages', 'settings', 'admin', 'new'].includes(pageParam)) {
       setView(pageParam);
+    } else if (pageParam) {
+      // 未知 page 参数视为自定义页面
+      setView('custom');
+      setCurrentPageName(pageParam);
     }
   }, []);
 
@@ -116,6 +121,16 @@ export default function AppProvider({ children }) {
     setCurrentUsername(username);
   }, []);
 
+  const openCustomPage = useCallback((pageName) => {
+    const url = new URL(window.location);
+    url.searchParams.set('page', pageName);
+    url.searchParams.delete('post');
+    url.searchParams.delete('user');
+    window.history.pushState({ page: 'custom', pageName }, '', url);
+    setView('custom');
+    setCurrentPageName(pageName);
+  }, []);
+
   // 浏览器前进后退
   useEffect(() => {
     const onPop = (e) => {
@@ -126,10 +141,14 @@ export default function AppProvider({ children }) {
       } else if (state.username) {
         setView('user');
         setCurrentUsername(state.username);
+      } else if (state.pageName) {
+        setView('custom');
+        setCurrentPageName(state.pageName);
       } else {
         setView(state.page || 'feed');
         setCurrentPostId(null);
         setCurrentUsername(null);
+        setCurrentPageName(null);
       }
     };
     window.addEventListener('popstate', onPop);
@@ -173,6 +192,7 @@ export default function AppProvider({ children }) {
     view, navigate,
     currentPostId, openPost,
     currentUsername, openUser,
+    currentPageName, openCustomPage,
     sort, setSort,
     refreshKey, refresh,
     login, register, logout,

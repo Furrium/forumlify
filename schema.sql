@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS posts (
   content TEXT NOT NULL,
   images TEXT[] DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  edited_at TIMESTAMPTZ
 );
 
 -- 回复表
@@ -97,7 +98,8 @@ CREATE TABLE IF NOT EXISTS conversations (
   user1_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   user2_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   last_message_at TIMESTAMPTZ DEFAULT now(),
-  created_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(user1_id, user2_id)
 );
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -112,3 +114,49 @@ CREATE TABLE IF NOT EXISTS messages (
 CREATE INDEX IF NOT EXISTS idx_conversations_user1 ON conversations(user1_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_user2 ON conversations(user2_id);
 CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id);
+
+-- ============================================================
+--  自定义页面表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS custom_pages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(50) NOT NULL UNIQUE,
+  title VARCHAR(100) NOT NULL,
+  content TEXT NOT NULL,
+  enabled BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_custom_pages_name ON custom_pages(name);
+
+-- ============================================================
+--  通知系统
+-- ============================================================
+CREATE TABLE IF NOT EXISTS notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type VARCHAR(30) NOT NULL,
+  title VARCHAR(100) NOT NULL,
+  content TEXT NOT NULL,
+  link TEXT,
+  is_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(is_read);
+
+-- ============================================================
+--  恢复码系统（密码重置）
+-- ============================================================
+CREATE TABLE IF NOT EXISTS recovery_codes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  code_hash VARCHAR(255) NOT NULL,
+  is_used BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_recovery_codes_user ON recovery_codes(user_id);

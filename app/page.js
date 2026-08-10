@@ -11,11 +11,13 @@ import NewPost from '@/components/NewPost';
 import AdminPage from '@/components/AdminPage';
 import SettingsPage from '@/components/SettingsPage';
 import UserProfile from '@/components/UserProfile';
+import CustomPage from '@/components/CustomPage';
+import MessagesPage from '@/components/MessagesPage';
 import ChatManager from '@/components/chat/ChatManager';
 import Modals from '@/components/Modals';
 
 function HomeInner() {
-  const { view, currentPostId, currentUsername } = useApp();
+  const { view, currentPostId, currentUsername, currentPageName } = useApp();
   const [modal, setModal] = useState(null); // null | login | register | report
   const [reportPostId, setReportPostId] = useState(null);
 
@@ -40,17 +42,11 @@ function HomeInner() {
       <div style={{ display: view !== 'feed' ? 'block' : 'none' }}>
         {view === 'post' && currentPostId && <PostDetail postId={currentPostId} />}
         {view === 'user' && currentUsername && <UserProfile username={currentUsername} />}
+        {view === 'custom' && currentPageName && <CustomPage pageName={currentPageName} />}
         {view === 'new' && <NewPost />}
         {view === 'admin' && <AdminPage />}
         {view === 'settings' && <SettingsPage />}
-        {view === 'messages' && (
-          <div className="page-slide active">
-            <div className="page-header" style={{ maxWidth: 700, margin: '0 auto', width: '100%' }}>
-              <h2><Icon name="message" size={20} /> 消息</h2>
-            </div>
-            <p style={{ color: '#94a3b8', padding: '20px 0', maxWidth: 700, margin: '0 auto', width: '100%' }}>暂无消息</p>
-          </div>
-        )}
+        {view === 'messages' && <MessagesPage />}
       </div>
 
       <Modals modal={modal} onClose={() => setModal(null)} reportPostId={reportPostId} />

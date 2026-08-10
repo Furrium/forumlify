@@ -1,13 +1,19 @@
 'use client';
 
-// 导航栏：论坛名、登录/注册按钮、用户下拉菜单、主题切换
-import { useState } from 'react';
+// 导航栏：论坛名、自定义页面链接、登录/注册、用户菜单、主题切换
+import { useState, useEffect } from 'react';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
+import { API } from '@/lib/api';
 
 export default function Navbar({ onOpenModal }) {
-  const { currentUser, forumName, theme, toggleTheme, navigate, logout } = useApp();
+  const { currentUser, forumName, theme, toggleTheme, navigate, openCustomPage, logout } = useApp();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [customPages, setCustomPages] = useState([]);
+
+  useEffect(() => {
+    API.getCustomPages().then(setCustomPages).catch(() => {});
+  }, []);
 
   const avatarSrc = currentUser?.avatar_url ||
     'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentUser?.username || 'U') +
@@ -34,6 +40,22 @@ export default function Navbar({ onOpenModal }) {
       <div className="nav-left">
         <span className="forum-name" onClick={() => navigate('feed')} style={{ cursor: 'pointer' }}>
           {forumName}
+        </span>
+        <span id="customNavLinks" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginLeft: 16 }}>
+          {customPages.map((p) => (
+            <a
+              key={p.id}
+              href="#"
+              className="custom-page-nav-link"
+              data-custom={p.name}
+              onClick={(e) => { e.preventDefault(); openCustomPage(p.name); }}
+              style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: 14, padding: '4px 10px', borderRadius: 4, transition: 'color 0.15s' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
+            >
+              {p.title}
+            </a>
+          ))}
         </span>
       </div>
       <div className="nav-right">
