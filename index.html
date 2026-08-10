@@ -412,6 +412,14 @@
   <script src="js/admin.js"></script>
   <script src="js/user.js"></script>
   <script src="js/app.js"></script>
+  <script>
+  setTimeout(function() {
+    var overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+      overlay.style.display = 'none';
+    }
+  }, 2000);
+</script>
  
 </body>
 </html>
