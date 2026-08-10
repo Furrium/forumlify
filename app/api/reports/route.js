@@ -2,6 +2,10 @@
 import pool from '@/lib/db';
 import { getUser, requireAdmin } from '@/lib/auth';
 
+// 避免 GET 被静态优化导致写方法 405（动态接口，不能缓存）
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(req) {
   const user = getUser(req);
   const forbidden = await requireAdmin(user);
