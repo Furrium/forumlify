@@ -25,18 +25,15 @@ function renderNav() {
 async function loadForumName() {
   try {
     const data = await API.getSettings();
-    // 数据库有值就用数据库的，否则用 'Forumlify'
-    const name = data.forum_name || 'Forumlify';
-    document.getElementById('forumName').textContent = name;
-    document.title = name;
-    const titleEl = document.getElementById('pageTitle');
-    if (titleEl) titleEl.textContent = name;
+    if (data.forum_name && data.forum_name.trim()) {
+      const name = data.forum_name.trim();
+      document.getElementById('forumName').textContent = name;
+      document.title = name;
+      const titleEl = document.getElementById('pageTitle');
+      if (titleEl) titleEl.textContent = name;
+    }
   } catch (e) {
-    const name = 'Forumlify';
-    document.getElementById('forumName').textContent = name;
-    document.title = name;
-    const titleEl = document.getElementById('pageTitle');
-    if (titleEl) titleEl.textContent = name;
+    // 保留 config.js 的默认值，什么都不做
   }
 }
 
@@ -962,8 +959,6 @@ function openImageViewer(imageUrl) {
 async function init() {
   applyTheme();
 
-  document.getElementById('forumName').textContent = 'Forumlify';
-
   refreshCaptcha('reg');
   refreshCaptcha('post');
   refreshCaptcha('reply');
@@ -1267,9 +1262,5 @@ async function init() {
     });
   });
 }
-// 加载完成，隐藏 loading 动画
-
 
 document.addEventListener('DOMContentLoaded', init);
-// 强制隐藏加载动画（无论 init 是否执行）
-
