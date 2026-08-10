@@ -408,5 +408,34 @@ const API = {
     });
     if (data.error) throw new Error(data.error);
     return data;
+  },
+
+  // ============================================================
+  //  自定义 CSS
+  // ============================================================
+
+  async uploadCustomCSS(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const url = CONFIG.API_BASE_URL + '/admin/custom-css';
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('forumlify-token')
+      },
+      body: formData
+    });
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    return data;
+  },
+
+  async deleteCustomCSS() {
+    const data = await apiFetch('/admin/custom-css', {
+      method: 'DELETE'
+    });
+    if (data.error) throw new Error(data.error);
+    return data;
   }
 };
