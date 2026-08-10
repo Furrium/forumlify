@@ -95,6 +95,14 @@ const API = {
     return data;
   },
 
+  async togglePinPost(postId) {
+    const data = await apiFetch('/posts/' + postId + '/pin', {
+      method: 'PUT'
+    });
+    if (data.error) throw new Error(data.error);
+    return data;
+  },
+
   // ============================================================
   //  回复
   // ============================================================
@@ -373,6 +381,18 @@ const API = {
     const data = await apiFetch('/users/' + currentUser.id + '/email', {
       method: 'PUT',
       body: JSON.stringify({ password, newEmail })
+    });
+    if (data.error) throw new Error(data.error);
+    return data;
+  },
+
+  // ============================================================
+  //  置顶
+  // ============================================================
+
+  async togglePinPost(postId) {
+    const data = await apiFetch('/posts/' + postId + '/pin', {
+      method: 'PUT'
     });
     if (data.error) throw new Error(data.error);
     return data;
