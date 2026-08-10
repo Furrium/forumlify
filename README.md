@@ -20,6 +20,10 @@ git clone https://github.com/furrium/forumlify.git
 cd forumlify
 docker-compose up -d
 ```
+如果无法访问就执行
+```
+docker-compose up
+```
 
 应用默认运行在 `http://localhost:3003`。
 
