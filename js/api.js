@@ -206,12 +206,12 @@ const API = {
   },
 
   // ============================================================
-  //  事件日志
+  //  事件日志（支持分页）
   // ============================================================
-  async getEventLogs() {
-    const data = await apiFetch('/event-logs');
+  async getEventLogs(page = 1, limit = 20) {
+    const data = await apiFetch('/event-logs?page=' + page + '&limit=' + limit);
     if (data.error) throw new Error(data.error);
-    return data || [];
+    return data;
   },
 
   async logEvent(action) {
