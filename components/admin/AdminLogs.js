@@ -23,7 +23,7 @@ export default function AdminLogs() {
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
       <thead>
-        <tr style={{ textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>
+        <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
           <th>时间</th><th>用户</th><th>操作</th>
         </tr>
       </thead>

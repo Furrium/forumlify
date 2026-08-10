@@ -38,7 +38,7 @@ export default function AdminUsers() {
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
           <thead>
-            <tr style={{ textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>
+            <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>
               <th style={{ padding: '10px 12px' }}>用户</th>
               <th style={{ padding: '10px 12px' }}>角色</th>
               <th style={{ padding: '10px 12px' }}>注册时间</th>
@@ -65,7 +65,7 @@ export default function AdminUsers() {
                   <td style={{ padding: '10px 12px' }}>
                     <span style={{
                       display: 'inline-block', padding: '2px 10px', borderRadius: 4, fontSize: 12, fontWeight: 500,
-                      ...(isAdmin ? { background: '#6366f1', color: '#fff' } : { background: '#e2e8f0', color: '#64748b' }),
+                      ...(isAdmin ? { background: '#6366f1', color: '#fff' } : { background: 'var(--border)', color: 'var(--text-secondary)' }),
                     }}>
                       {isAdmin ? '管理员' : '普通用户'}
                     </span>

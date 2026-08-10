@@ -6,6 +6,7 @@ import { API } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
 import ImageViewer from './ImageViewer';
+import { renderMarkdown } from '@/lib/markdown';
 
 function avatar(username) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || '匿名用户') +
@@ -99,7 +100,7 @@ export default function Feed({ onOpenModal, onReport }) {
                   )}
                 </div>
                 <div className="post-title">{p.title || '无标题'}</div>
-                <div className="post-content">{(p.content || '').split('\n').map((l, i) => <span key={i}>{l}<br /></span>)}</div>
+                <div className="post-content" dangerouslySetInnerHTML={{ __html: renderMarkdown(p.content) }} />
                 {p.images && p.images.length > 0 && (
                   <div className="post-images">
                     {p.images.map((img, i) => (

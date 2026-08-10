@@ -1978,3 +1978,65 @@ a.btn-secondary {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* ===== Markdown 渲染样式 ===== */
+.post-content code,
+.reply-content code {
+  background: rgba(91, 155, 213, 0.12);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--glass-text);
+}
+.post-content pre {
+  background: rgba(15, 15, 26, 0.75);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  overflow-x: auto;
+  margin: 10px 0;
+}
+.post-content pre code {
+  background: none;
+  padding: 0;
+  color: #e8e8f0;
+}
+.post-content blockquote {
+  border-left: 3px solid var(--primary);
+  margin: 10px 0;
+  padding: 4px 14px;
+  color: var(--glass-text-secondary);
+  background: rgba(91, 155, 213, 0.08);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.post-content img {
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+}
+.post-content ul,
+.post-content ol {
+  padding-left: 24px;
+  margin: 8px 0;
+}
+.post-content table {
+  border-collapse: collapse;
+  margin: 10px 0;
+}
+.post-content th,
+.post-content td {
+  border: 1px solid var(--glass-border);
+  padding: 6px 12px;
+}
+.post-content h1,
+.post-content h2,
+.post-content h3,
+.post-content h4 {
+  margin: 14px 0 8px;
+  color: var(--glass-text);
+}
+.post-content hr {
+  border: none;
+  border-top: 1px solid var(--glass-border);
+  margin: 14px 0;
+}

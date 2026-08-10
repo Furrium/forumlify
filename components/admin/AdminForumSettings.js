@@ -36,7 +36,7 @@ export default function AdminForumSettings() {
         <label style={{ fontWeight: 600, fontSize: 14, display: 'block', marginBottom: 6 }}>论坛名称</label>
         <input
           type="text"
-          style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 6, fontSize: 15, marginBottom: 12, fontFamily: 'inherit' }}
+          style={{ width: '100%', padding: '10px 14px', border: '1.5px solid var(--border)', borderRadius: 6, fontSize: 15, marginBottom: 12, fontFamily: 'inherit', background: 'var(--bg)', color: 'var(--text)' }}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
