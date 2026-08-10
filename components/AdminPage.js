@@ -1,6 +1,6 @@
 'use client';
 
-// 管理后台：5 个 tab
+// 管理后台：侧边栏布局（对齐上游 main 分支）
 import { useState } from 'react';
 import { Icon } from './Icons';
 import AdminReports from './admin/AdminReports';
@@ -11,14 +11,14 @@ import AdminForumSettings from './admin/AdminForumSettings';
 import AdminCustomPages from './admin/AdminCustomPages';
 import AdminCustomCss from './admin/AdminCustomCss';
 
-const TABS = [
+const NAV = [
   { key: 'reports', label: '举报', icon: 'shieldAlert' },
   { key: 'users', label: '用户', icon: 'users' },
   { key: 'logs', label: '日志', icon: 'file' },
   { key: 'links', label: '友链', icon: 'link' },
+  { key: 'settings', label: '论坛设置', icon: 'settings' },
   { key: 'custom', label: '自定义页面', icon: 'file' },
   { key: 'css', label: '自定义CSS', icon: 'file' },
-  { key: 'settings', label: '论坛设置', icon: 'settings' },
 ];
 
 export default function AdminPage() {
@@ -26,28 +26,35 @@ export default function AdminPage() {
 
   return (
     <div className="page-slide active">
-      <div className="page-header" style={{ maxWidth: 900, margin: '0 auto', width: '100%' }}>
+      <div className="page-header" style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
         <h2><Icon name="shieldAlert" size={20} /> 管理后台</h2>
       </div>
-      <div className="admin-tabs" style={{ maxWidth: 900, margin: '0 auto', width: '100%' }}>
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            className={'admin-tab' + (tab === t.key ? ' active' : '')}
-            onClick={() => setTab(t.key)}
-          >
-            <Icon name={t.icon} size={14} /> {t.label}
-          </button>
-        ))}
-      </div>
-      <div id="adminContent" style={{ maxWidth: 900, margin: '0 auto', width: '100%' }}>
-        {tab === 'reports' && <AdminReports />}
-        {tab === 'users' && <AdminUsers />}
-        {tab === 'logs' && <AdminLogs />}
-        {tab === 'links' && <AdminLinks />}
-        {tab === 'custom' && <AdminCustomPages />}
-        {tab === 'css' && <AdminCustomCss />}
-        {tab === 'settings' && <AdminForumSettings />}
+      <div className="admin-layout" style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
+        <aside className="admin-sidebar">
+          <nav className="admin-nav">
+            {NAV.map((n) => (
+              <a
+                key={n.key}
+                href="#"
+                className={'admin-nav-item' + (tab === n.key ? ' active' : '')}
+                data-tab={n.key}
+                onClick={(e) => { e.preventDefault(); setTab(n.key); }}
+              >
+                <span className="nav-icon"><Icon name={n.icon} size={18} /></span>
+                {n.label}
+              </a>
+            ))}
+          </nav>
+        </aside>
+        <main className="admin-content" id="adminContent">
+          {tab === 'reports' && <AdminReports />}
+          {tab === 'users' && <AdminUsers />}
+          {tab === 'logs' && <AdminLogs />}
+          {tab === 'links' && <AdminLinks />}
+          {tab === 'custom' && <AdminCustomPages />}
+          {tab === 'css' && <AdminCustomCss />}
+          {tab === 'settings' && <AdminForumSettings />}
+        </main>
       </div>
     </div>
   );
