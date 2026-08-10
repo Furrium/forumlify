@@ -5,9 +5,12 @@ import { useState, useEffect, useRef } from 'react';
 import { API, generateCaptcha, uploadImage } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
+import { useToast } from './Toast';
+import CaptchaImage from './CaptchaImage';
 
 export default function NewPost() {
   const { currentUser, navigate, refresh } = useApp();
+  const { toast } = useToast();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [images, setImages] = useState([]); // 上传后的 URL 列表
@@ -57,13 +60,13 @@ export default function NewPost() {
 
   const handleSubmit = async () => {
     if (!currentUser || !currentUser.id) {
-      alert('请先登录');
+      toast('请先登录', 'error');
       navigate('feed');
       return;
     }
-    if (!content.trim()) { alert('请填写内容'); return; }
+    if (!content.trim()) { toast('请填写内容', 'error'); return; }
     if (!captcha || parseInt(captchaInput) !== captcha.answer) {
-      alert('验证码错误，请重新计算');
+      toast('验证码错误，请重新计算', 'error');
       setCaptcha(generateCaptcha());
       setCaptchaInput('');
       return;
@@ -71,11 +74,11 @@ export default function NewPost() {
     try {
       await API.createPost(title.trim() || '无标题', content.trim(), images);
       API.logEvent('create_post').catch(() => {});
-      alert('发布成功！');
+      toast('发布成功', 'success');
       navigate('feed');
       refresh();
     } catch (err) {
-      alert('发布失败：' + err.message);
+      toast('发布失败：' + err.message, 'error');
     }
   };
 
@@ -125,10 +128,12 @@ export default function NewPost() {
           style={{ display: 'none' }}
           onChange={(e) => { if (e.target.files) handleFiles(Array.from(e.target.files)); }}
         />
-        <div className="captcha-row" style={{ margin: '12px 0' }}>
-          <span onClick={() => setCaptcha(generateCaptcha())} style={{ cursor: 'pointer' }}>
-            {captcha ? captcha.question : ''}
-          </span>
+        <div className="captcha-row" style={{ margin: '12px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
+          {captcha ? (
+            <CaptchaImage captcha={captcha} onRefresh={() => { setCaptcha(generateCaptcha()); setCaptchaInput(''); }} />
+          ) : (
+            <span style={{ color: 'var(--text-light)' }}>验证码加载中...</span>
+          )}
           <input
             type="text"
             placeholder="答案"

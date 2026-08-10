@@ -1,6 +1,7 @@
 // 全局布局
 import './globals.css';
 import CustomCssLoader from '@/components/CustomCssLoader';
+import { ToastProvider } from '@/components/Toast';
 
 export const metadata = {
   // 初始标题由客户端 AppProvider 接管（加载时轮换 Loading.，完成后显示论坛名）
@@ -28,8 +29,10 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        <CustomCssLoader />
-        {children}
+        <ToastProvider>
+          <CustomCssLoader />
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

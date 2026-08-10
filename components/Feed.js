@@ -1,7 +1,7 @@
 'use client';
 
 // 信息流：帖子列表 + 排序 tab + 发布新帖按钮
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { API } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
@@ -21,6 +21,7 @@ export default function Feed({ onOpenModal, onReport }) {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [viewerSrc, setViewerSrc] = useState(null);
+  const postListRef = useRef(null);
   const PAGE_SIZE = 20;
 
   const load = useCallback(async (targetPage) => {
@@ -38,6 +39,19 @@ export default function Feed({ onOpenModal, onReport }) {
   }, [sort, refreshKey]);
 
   useEffect(() => { load(page); }, [load]);
+
+  // 长帖内容：超过 3 行时加 .has-fade（底部渐变遮罩提示还有更多内容）
+  useEffect(() => {
+    if (!posts || posts.length === 0 || !postListRef.current) return;
+    const els = postListRef.current.querySelectorAll('.post-content');
+    els.forEach((el) => {
+      if (el.scrollHeight > el.clientHeight + 4) {
+        el.classList.add('has-fade');
+      } else {
+        el.classList.remove('has-fade');
+      }
+    });
+  }, [posts]);
 
   // 排序切换时回第一页
   useEffect(() => { setPage(1); }, [sort]);
@@ -69,7 +83,7 @@ export default function Feed({ onOpenModal, onReport }) {
           <Icon name="plus" /> 发布新帖
         </button>
       </div>
-      <div id="postList">
+      <div id="postList" ref={postListRef}>
         {posts === null ? (
           <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}>加载中...</div>
         ) : error ? (
@@ -119,7 +133,7 @@ export default function Feed({ onOpenModal, onReport }) {
                   }}>
                     <Icon name="flag" size={14} /> 举报
                   </button>
-                  {currentUser && currentUser.id === p.user_id && (
+                  {currentUser && (currentUser.id === p.user_id || currentUser.role === 'admin') && (
                     <button className="action-delete" onClick={(e) => {
                       e.stopPropagation();
                       handleDelete(p.id);
