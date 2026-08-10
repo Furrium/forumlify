@@ -7,9 +7,16 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    // 确保 forum_name 始终存在（未设置过则初始化默认值），前端拿到后显示
+    await pool.query(
+      `INSERT INTO settings (key, value) VALUES ('forum_name', 'Forumlify')
+       ON CONFLICT (key) DO NOTHING`
+    );
     const r = await pool.query('SELECT key, value FROM settings');
     const settings = {};
     r.rows.forEach((row) => { settings[row.key] = row.value; });
+    // 兜底：即使插入失败也保证返回 forum_name
+    if (!settings.forum_name) settings.forum_name = 'Forumlify';
     return Response.json(settings);
   } catch {
     return Response.json({ error: '服务器错误' }, { status: 500 });

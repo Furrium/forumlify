@@ -36,7 +36,7 @@ export default function PostDetail({ postId }) {
 
   if (error) {
     return (
-      <div className="page-slide active" style={{ padding: '40px 0', textAlign: 'center', color: '#ef4444' }}>
+      <div id="pagePost" className="page-slide active" style={{ padding: '40px 0', textAlign: 'center', color: '#ef4444' }}>
         加载失败：{error}
       </div>
     );
@@ -88,7 +88,7 @@ export default function PostDetail({ postId }) {
   };
 
   return (
-    <div className="page-slide active">
+    <div id="pagePost" className="page-slide active">
       <div className="page-header" style={{ maxWidth: 700, margin: '0 auto', width: '100%' }}>
         <h2>{post.title || '帖子详情'}</h2>
       </div>

@@ -1218,15 +1218,14 @@ svg {
   gap: 16px;
 }
 
-.loading-logo {
-  font-size: 44px;
-  line-height: 1;
-  animation: float 2.4s ease-in-out infinite;
+/* 论坛名收到后淡入出现 */
+.loading-title-appear {
+  animation: titleFadeIn 0.6s ease-out;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+@keyframes titleFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .loading-spinner {
