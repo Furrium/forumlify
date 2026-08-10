@@ -807,6 +807,19 @@ async function renderSettingsPage(tab = 'profile') {
 }
 
 // ============================================================
+//  设置页面侧边栏切换
+// ============================================================
+
+document.querySelector('.settings-nav')?.addEventListener('click', function(e) {
+  const tabLink = e.target.closest('.settings-nav-item');
+  if (!tabLink) return;
+  e.preventDefault();
+  const tab = tabLink.dataset.settingsTab;
+  if (!tab) return;
+  renderSettingsPage(tab);
+});
+
+// ============================================================
 //  ✏️ 编辑帖子模态框
 // ============================================================
 
@@ -970,19 +983,6 @@ function openImageViewer(imageUrl) {
   `;
   document.head.appendChild(style);
 })();
-
-// ============================================================
-//  设置页面侧边栏切换
-// ============================================================
-
-document.querySelector('.settings-nav')?.addEventListener('click', function(e) {
-  const tabLink = e.target.closest('.settings-nav-item');
-  if (!tabLink) return;
-  e.preventDefault();
-  const tab = tabLink.dataset.settingsTab;
-  if (!tab) return;
-  renderSettingsPage(tab);
-});
 
 // ============================================================
 //  🚀 初始化
