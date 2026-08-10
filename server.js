@@ -140,10 +140,10 @@ app.post('/api/auth/register', async (req, res) => {
     const role = isFirstUser ? 'admin' : 'user';
 
     const r = await pool.query(
-      `INSERT INTO users (email, password_hash, username, avatar_url, role)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, username, avatar_url, role, created_at`,
-      [email, hash, username, avatar, role]
+      `INSERT INTO users (email, password_hash, username, avatar_url, role, signature)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, username, avatar_url, role, signature, created_at`,
+      [email, hash, username, avatar, role, '']
     );
 
     res.json({
@@ -194,6 +194,7 @@ app.post('/api/auth/login', async (req, res) => {
         avatar_url: user.avatar_url,
         bio: user.bio,
         role: user.role,
+        signature: user.signature || '',
       }
     });
   } catch (err) {
@@ -205,7 +206,7 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/auth/me', auth, async (req, res) => {
   try {
     const r = await pool.query(
-      'SELECT id, username, avatar_url, bio, role, created_at FROM users WHERE id = $1',
+      'SELECT id, username, avatar_url, bio, role, signature, created_at FROM users WHERE id = $1',
       [req.user.id]
     );
     if (!r.rows[0]) {
@@ -224,7 +225,7 @@ app.get('/api/auth/me', auth, async (req, res) => {
 // 获取用户信息（支持按用户名查询）
 app.get('/api/users', auth, admin, async (req, res) => {
   try {
-    let query = 'SELECT id, username, avatar_url, bio, role, created_at FROM users';
+    let query = 'SELECT id, username, avatar_url, bio, role, signature, created_at FROM users';
     const params = [];
 
     if (req.query.username) {
@@ -261,9 +262,9 @@ app.put('/api/users/:id/role', auth, admin, async (req, res) => {
   }
 });
 
-// 更新用户资料
+// 更新用户资料（含签名）
 app.put('/api/users/:id', auth, async (req, res) => {
-  const { username, bio } = req.body;
+  const { username, bio, signature } = req.body;
   const userId = req.params.id;
 
   if (userId !== req.user.id) {
@@ -271,7 +272,10 @@ app.put('/api/users/:id', auth, async (req, res) => {
   }
 
   try {
-    await pool.query('UPDATE users SET username = $1, bio = $2 WHERE id = $3', [username, bio || '', userId]);
+    await pool.query(
+      'UPDATE users SET username = $1, bio = $2, signature = $3 WHERE id = $4',
+      [username, bio || '', signature || '', userId]
+    );
     res.json({ success: true });
   } catch (err) {
     if (err.code === '23505') {
@@ -395,6 +399,7 @@ app.get('/api/posts', async (req, res) => {
         p.*,
         u.username,
         u.avatar_url,
+        u.signature,
         (SELECT COUNT(*) FROM replies WHERE post_id = p.id) as reply_count
       FROM posts p
       JOIN users u ON p.user_id = u.id
@@ -415,7 +420,6 @@ app.get('/api/posts', async (req, res) => {
     const countResult = await pool.query(countQuery, req.query.user_id ? [req.query.user_id] : []);
     const total = parseInt(countResult.rows[0]?.total || 0);
 
-    // 置顶优先排序
     query += ` ORDER BY p.is_pinned DESC, p.pinned_at DESC NULLS LAST, ${sort} DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
 
@@ -438,7 +442,7 @@ app.get('/api/posts', async (req, res) => {
 app.get('/api/posts/:id', async (req, res) => {
   try {
     const r = await pool.query(
-      `SELECT p.*, u.username, u.avatar_url
+      `SELECT p.*, u.username, u.avatar_url, u.signature
        FROM posts p
        JOIN users u ON p.user_id = u.id
        WHERE p.id = $1`,
