@@ -1279,3 +1279,10 @@ setTimeout(() => {
 }, 500);
 
 document.addEventListener('DOMContentLoaded', init);
+// 强制隐藏加载动画（无论 init 是否执行）
+setTimeout(() => {
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) {
+    overlay.style.display = 'none';
+  }
+}, 3000);
