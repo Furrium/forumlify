@@ -124,7 +124,7 @@ export default function Modals({ modal, onClose, reportPostId }) {
             <h2 style={{ marginBottom: 16 }}><Icon name="shieldAlert" size={20} /> 举报帖子</h2>
             <p style={{ fontSize: 14, color: '#64748b', marginBottom: 12 }}>请选择举报原因：</p>
             <select
-              style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 4, marginBottom: 16 }}
+              style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 4, marginBottom: 16, background: 'var(--bg)', color: 'var(--text)' }}
               value={reportReason}
               onChange={(e) => setReportReason(e.target.value)}
             >

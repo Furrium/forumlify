@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { API, generateCaptcha } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
+import { renderMarkdown } from '@/lib/markdown';
 
 function avatar(username) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || '匿名用户') +
@@ -89,21 +90,19 @@ export default function ReplyList({ postId, onRefresh }) {
                     </button>
                   )}
                 </div>
-                <div className="reply-content">
-                  {(r.content || '').split('\n').map((l, i) => <span key={i}>{l}<br /></span>)}
-                </div>
+                <div className="reply-content" dangerouslySetInnerHTML={{ __html: renderMarkdown(r.content) }} />
               </div>
             );
           })
         )}
       </div>
 
-      <div id="replyArea" style={{ marginTop: 24, borderTop: '1px solid #e2e8f0', paddingTop: 20 }}>
+      <div id="replyArea" style={{ marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
         <h3 style={{ fontSize: 16, marginBottom: 12 }}><Icon name="message" size={16} /> 发表回复</h3>
         <textarea
           rows={3}
           placeholder="写下你的回复..."
-          style={{ width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 4, fontSize: 14, fontFamily: 'inherit', resize: 'vertical' }}
+          style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 14, fontFamily: 'inherit', resize: 'vertical', background: 'var(--bg)', color: 'var(--text)' }}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSubmit(); }}

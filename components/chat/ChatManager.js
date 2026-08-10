@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { API } from '@/lib/api';
 import { useApp } from '../AppProvider';
+import { Icon } from '../Icons';
 import ConversationList from './ConversationList';
 import ChatWindow from './ChatWindow';
 
@@ -33,7 +34,7 @@ export function DMButton() {
       style={{ position: 'relative', padding: '6px 8px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', borderRadius: 4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
       onClick={() => window.dispatchEvent(new CustomEvent('forumlify-open-messages'))}
     >
-      ✉️
+      <Icon name="message" size={20} />
       {unread > 0 && (
         <span style={{ position: 'absolute', top: -2, right: -2, background: '#ef4444', color: '#fff', borderRadius: '50%', padding: '2px 6px', fontSize: 10, fontWeight: 600, minWidth: 18, textAlign: 'center', lineHeight: 1.4 }}>
           {unread > 99 ? '99+' : unread}

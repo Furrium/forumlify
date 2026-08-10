@@ -40,12 +40,12 @@ export default function AdminLinks() {
       <div style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <input
           type="text" placeholder="链接名称"
-          style={{ flex: 1, minWidth: 120, padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 4 }}
+          style={{ flex: 1, minWidth: 120, padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 4, background: 'var(--bg)', color: 'var(--text)' }}
           value={title} onChange={(e) => setTitle(e.target.value)}
         />
         <input
           type="url" placeholder="链接地址"
-          style={{ flex: 2, minWidth: 160, padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 4 }}
+          style={{ flex: 2, minWidth: 160, padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 4, background: 'var(--bg)', color: 'var(--text)' }}
           value={url} onChange={(e) => setUrl(e.target.value)}
         />
         <button className="btn-primary" style={{ padding: '8px 16px' }} onClick={handleAdd}>添加</button>

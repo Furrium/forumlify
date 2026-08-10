@@ -7,6 +7,7 @@ import { useApp } from './AppProvider';
 import ReplyList from './ReplyList';
 import { Icon } from './Icons';
 import ImageViewer from './ImageViewer';
+import { renderMarkdown } from '@/lib/markdown';
 
 function avatar(username) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || '匿名用户') +
@@ -155,9 +156,7 @@ export default function PostDetail({ postId }) {
               )}
             </div>
           </div>
-          <div className="post-content" style={{ fontSize: 16, lineHeight: 1.8 }}>
-            {(post.content || '').split('\n').map((l, i) => <span key={i}>{l}<br /></span>)}
-          </div>
+          <div className="post-content" style={{ fontSize: 16, lineHeight: 1.8 }} dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content) }} />
           {post.images && post.images.length > 0 && (
             <div className="post-images">
               {post.images.map((img, i) => (
@@ -166,9 +165,7 @@ export default function PostDetail({ postId }) {
             </div>
           )}
           {post.signature && (
-            <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid var(--border-light)', fontSize: 12, color: 'var(--text-secondary)' }}>
-              {post.signature}
-            </div>
+            <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid var(--border-light)', fontSize: 12, color: 'var(--text-secondary)' }} dangerouslySetInnerHTML={{ __html: renderMarkdown(post.signature) }} />
           )}
         </div>
         <ReplyList postId={postId} onRefresh={load} />

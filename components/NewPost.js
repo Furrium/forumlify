@@ -88,14 +88,14 @@ export default function NewPost() {
         <input
           type="text"
           placeholder="标题"
-          style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 6, fontSize: 15, fontWeight: 600, marginBottom: 12, fontFamily: 'inherit' }}
+          style={{ width: '100%', padding: '10px 14px', border: '1.5px solid var(--border)', borderRadius: 6, fontSize: 15, fontWeight: 600, marginBottom: 12, fontFamily: 'inherit', background: 'var(--bg)', color: 'var(--text)' }}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
         <textarea
           rows={6}
           placeholder="说点什么..."
-          style={{ width: '100%', padding: 12, border: '1.5px solid #e2e8f0', borderRadius: 6, fontSize: 15, fontFamily: 'inherit', resize: 'vertical' }}
+          style={{ width: '100%', padding: 12, border: '1.5px solid var(--border)', borderRadius: 6, fontSize: 15, fontFamily: 'inherit', resize: 'vertical', background: 'var(--bg)', color: 'var(--text)' }}
           value={content}
           onChange={(e) => setContent(e.target.value)}
         />
