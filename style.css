@@ -2368,3 +2368,173 @@ a.btn-secondary {
   background: rgba(255, 255, 255, 0.04) !important;
   border-color: var(--glass-border) !important;
 }
+/* ============================================================
+   设置页面 —— 侧边栏布局（玻璃风格）
+   ============================================================ */
+
+/* 设置页面侧边栏容器 */
+.settings-sidebar {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius) !important;
+  padding: 8px 0 !important;
+  box-shadow: var(--glass-shadow) !important;
+  position: sticky;
+  top: 84px;
+}
+
+/* 设置页面侧边栏导航项 */
+.settings-nav-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 18px !important;
+  color: var(--glass-text-secondary) !important;
+  text-decoration: none !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  transition: all var(--transition) !important;
+  border-left: 3px solid transparent !important;
+  cursor: pointer !important;
+}
+.settings-nav-item:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: var(--glass-text) !important;
+}
+.settings-nav-item.active {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: var(--primary) !important;
+  border-left-color: var(--primary) !important;
+}
+.settings-nav-item .nav-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  flex-shrink: 0 !important;
+}
+.settings-nav-item .nav-icon svg {
+  width: 18px !important;
+  height: 18px !important;
+  stroke: currentColor !important;
+}
+
+/* 设置页面内容区 */
+.settings-content {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius) !important;
+  padding: 20px 24px !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+
+/* 设置页面内部卡片 */
+.settings-content [style*="background:var(--surface)"] {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius-sm) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* 设置页面输入框 */
+.settings-content input,
+.settings-content textarea,
+.settings-content select {
+  background: rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--glass-text) !important;
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+  font-family: inherit !important;
+  transition: all var(--transition) !important;
+  width: 100% !important;
+}
+.settings-content input:focus,
+.settings-content textarea:focus,
+.settings-content select:focus {
+  outline: none !important;
+  background: rgba(255, 255, 255, 0.25) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
+}
+.settings-content input::placeholder,
+.settings-content textarea::placeholder {
+  color: var(--glass-text-light) !important;
+}
+
+/* 设置页面按钮 */
+.settings-content .btn-secondary {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--glass-text-secondary) !important;
+}
+.settings-content .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: var(--glass-text) !important;
+}
+
+.settings-content .btn-primary {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--glass-text) !important;
+}
+.settings-content .btn-primary:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* 设置页面头像边框 */
+.settings-content img[style*="border-radius:50%"] {
+  border-color: var(--glass-border) !important;
+}
+
+/* 暗色模式适配 */
+[data-theme="dark"] .settings-sidebar {
+  background: var(--glass-bg) !important;
+  border-color: var(--glass-border) !important;
+}
+[data-theme="dark"] .settings-nav-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+[data-theme="dark"] .settings-nav-item.active {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: var(--primary) !important;
+}
+[data-theme="dark"] .settings-nav-item .nav-icon svg {
+  stroke: var(--glass-text-secondary) !important;
+}
+[data-theme="dark"] .settings-nav-item.active .nav-icon svg {
+  stroke: var(--primary) !important;
+}
+[data-theme="dark"] .settings-content {
+  background: var(--glass-bg) !important;
+  border-color: var(--glass-border) !important;
+}
+[data-theme="dark"] .settings-content input,
+[data-theme="dark"] .settings-content textarea,
+[data-theme="dark"] .settings-content select {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--glass-text) !important;
+  border-color: var(--glass-border) !important;
+}
+[data-theme="dark"] .settings-content input:focus,
+[data-theme="dark"] .settings-content textarea:focus,
+[data-theme="dark"] .settings-content select:focus {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--primary) !important;
+}
+[data-theme="dark"] .settings-content [style*="background:var(--surface)"] {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: var(--glass-border) !important;
+}
