@@ -38,6 +38,13 @@ export default function AppProvider({ children }) {
     document.documentElement.setAttribute('data-theme', t);
   }, []);
 
+  // 论坛名变化时同步浏览器标题（覆盖初始化/数据库加载/改名三条路径）
+  useEffect(() => {
+    document.title = forumName;
+    const titleEl = document.querySelector('title');
+    if (titleEl) titleEl.textContent = forumName;
+  }, [forumName]);
+
   const toggleTheme = useCallback(() => {
     setThemeState((prev) => {
       const next = prev === 'light' ? 'dark' : 'light';
@@ -195,10 +202,6 @@ export default function AppProvider({ children }) {
   const updateForumName = useCallback((name) => {
     setForumName(name);
     localStorage.setItem('forumlify-forum-name', name);
-    document.title = name;
-    // 同步更新 <title> 元素（防止 Next.js metadata 覆盖）
-    const titleEl = document.querySelector('title');
-    if (titleEl) titleEl.textContent = name;
   }, []);
 
   const value = {
