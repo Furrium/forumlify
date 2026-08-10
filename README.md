@@ -99,6 +99,41 @@ npm start
 mkdir -p uploads && chmod 755 uploads
 ```
 
+## ☁️ Serverless 部署（Vercel / Cloudflare Pages）
+
+Forumlify 的 Next.js 版本天然支持 serverless 部署。与传统部署相比需要处理三件事：
+
+1. **数据库**：使用外部 PostgreSQL（Neon / Supabase / RDS 等），设置 `DATABASE_URL` 环境变量。连接池会自动适配 serverless（单连接 + 定期轮换）。
+2. **文件上传**：serverless 无持久磁盘，需要 S3 兼容对象存储（Cloudflare R2 / AWS S3 / MinIO）。设置以下环境变量后，上传自动切换到对象存储：
+   - `S3_ENDPOINT` — 如 `https://xxx.r2.cloudflarestorage.com`
+   - `S3_BUCKET` — 存储桶名
+   - `S3_REGION` — 区域（R2 用 `auto`）
+   - `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY`
+   - `S3_PUBLIC_URL` — 公开访问前缀，如 `https://cdn.example.com`（图片 URL 将指向这里）
+3. **密码哈希**：已使用 `bcryptjs`（纯 JS），无原生编译依赖，各平台均可直接构建。
+
+### Vercel 部署
+
+```bash
+# 本地预览
+vercel dev
+
+# 部署（首次会要求登录并配置环境变量）
+vercel
+```
+
+在 Vercel 项目设置中配置环境变量：`DATABASE_URL`、`JWT_SECRET`，以及（可选）`S3_*`。
+
+### Cloudflare Pages 部署
+
+```bash
+# 构建命令：npm run build
+# 输出目录：.vercel/output（需安装 @cloudflare/next-on-pages）
+npx @cloudflare/next-on-pages
+```
+
+> 提示：`next.config.js` 中的 `output: 'standalone'` 仅在设置了 `DOCKER=1` 环境变量时启用，serverless 平台会自动跳过。
+
 ## 🏗️ 项目结构
 
 ```
