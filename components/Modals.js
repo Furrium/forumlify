@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { API, generateCaptcha } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
+import CaptchaImage from './CaptchaImage';
 
 export default function Modals({ modal, onClose, reportPostId }) {
   const { login, register, currentUser, refresh } = useApp();
@@ -106,11 +107,13 @@ export default function Modals({ modal, onClose, reportPostId }) {
             <input type="text" placeholder="用户名" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} />
             <input type="email" placeholder="邮箱" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
             <input type="password" placeholder="密码（至少6位）" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} />
-            <div className="captcha-row">
-              <span onClick={() => setRegCaptcha(generateCaptcha())} style={{ cursor: 'pointer' }}>
-                {regCaptcha ? regCaptcha.question : ''}
-              </span>
-              <input type="text" placeholder="答案" style={{ width: 80 }} value={regCaptchaInput} onChange={(e) => setRegCaptchaInput(e.target.value)} />
+            <div className="captcha-row" style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '12px 0' }}>
+              {regCaptcha ? (
+                <CaptchaImage captcha={regCaptcha} onRefresh={() => { setRegCaptcha(generateCaptcha()); setRegCaptchaInput(''); }} />
+              ) : (
+                <span style={{ color: 'var(--text-light)' }}>验证码加载中...</span>
+              )}
+              <input type="text" placeholder="答案" style={{ width: 80, background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)', padding: '8px 12px', borderRadius: 4 }} value={regCaptchaInput} onChange={(e) => setRegCaptchaInput(e.target.value)} />
             </div>
             <button className="btn-primary" style={{ width: '100%' }} onClick={handleRegister}>注册</button>
           </div>

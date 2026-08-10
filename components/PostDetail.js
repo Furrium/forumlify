@@ -50,7 +50,8 @@ export default function PostDetail({ postId }) {
   }
 
   const time = post.created_at ? new Date(post.created_at).toLocaleString('zh-CN') : '';
-  const canDelete = currentUser && currentUser.id === post.user_id;
+  // 作者本人 或 管理员 可删除/编辑
+  const canDelete = currentUser && (currentUser.id === post.user_id || currentUser.role === 'admin');
   const canEdit = currentUser && currentUser.id === post.user_id;
 
   const handleDelete = async () => {

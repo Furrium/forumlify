@@ -1,6 +1,6 @@
 // PUT /api/users/[id]  (更新资料), PUT /api/users/[id]/role (改角色)
 import pool from '@/lib/db';
-import { getUser, requireAdmin } from '@/lib/auth';
+import { getUser, requireAdmin, isFirstUser } from '@/lib/auth';
 
 export async function PUT(req, { params }) {
   const { id } = params;
@@ -21,6 +21,10 @@ export async function PUT(req, { params }) {
     }
     if (id === user.id) {
       return Response.json({ error: '不能修改自己的角色' }, { status: 400 });
+    }
+    // 超级管理员（第一个用户）不能被降级
+    if (role !== 'admin' && await isFirstUser(id)) {
+      return Response.json({ error: '不能降级超级管理员' }, { status: 403 });
     }
     try {
       await pool.query('UPDATE users SET role = $1 WHERE id = $2', [role, id]);

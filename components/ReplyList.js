@@ -6,6 +6,7 @@ import { API, generateCaptcha } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
 import { renderMarkdown } from '@/lib/markdown';
+import CaptchaImage from './CaptchaImage';
 
 function avatar(username) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || '匿名用户') +
@@ -84,7 +85,7 @@ export default function ReplyList({ postId, onRefresh }) {
                     {r.username || '匿名用户'}
                   </span>
                   <span className="reply-time">{rTime}</span>
-                  {currentUser && currentUser.id === r.user_id && (
+                  {currentUser && (currentUser.id === r.user_id || currentUser.role === 'admin') && (
                     <button className="btn-sm btn-danger reply-delete-btn" onClick={() => handleDelete(r.id)}>
                       <Icon name="trash" size={12} /> 删除
                     </button>
@@ -107,10 +108,12 @@ export default function ReplyList({ postId, onRefresh }) {
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSubmit(); }}
         />
-        <div className="captcha-row" style={{ margin: '10px 0' }}>
-          <span onClick={() => setCaptcha(generateCaptcha())} style={{ cursor: 'pointer' }}>
-            {captcha ? captcha.question : ''}
-          </span>
+        <div className="captcha-row" style={{ margin: '10px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
+          {captcha ? (
+            <CaptchaImage captcha={captcha} onRefresh={() => { setCaptcha(generateCaptcha()); setCaptchaInput(''); }} />
+          ) : (
+            <span style={{ color: 'var(--text-light)' }}>验证码加载中...</span>
+          )}
           <input
             type="text"
             placeholder="答案"
