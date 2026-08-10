@@ -38,7 +38,7 @@ function renderFeed() {
       if (p.images && p.images.length > 0) {
         imagesHtml = '<div class="post-images">';
         p.images.forEach(img => {
-          imagesHtml += '<img src="' + img + '" class="post-image" />';
+          imagesHtml += '<img src="' + img + '" class="post-image" onclick="openImageViewer(this.src)" style="cursor:pointer;" />';
         });
         imagesHtml += '</div>';
       }
