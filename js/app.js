@@ -962,7 +962,7 @@ function openImageViewer(imageUrl) {
 async function init() {
   applyTheme();
 
-  document.getElementById('forumName').textContent = '加载中……';
+  document.getElementById('forumName').textContent = 'Forumlify';
 
   refreshCaptcha('reg');
   refreshCaptcha('post');
