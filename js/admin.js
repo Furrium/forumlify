@@ -597,23 +597,32 @@ function loadCustomCSS() {
 }
 
 // ============================================================
-//  管理后台Tab切换
+//  管理后台Tab切换（侧边栏适配）
 // ============================================================
 
-document.querySelectorAll('.admin-tab').forEach(tab => {
-  tab.addEventListener('click', function() {
-    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-    this.classList.add('active');
-    const tabMap = {
-      reports: renderAdminReports,
-      users: renderAdminUsers,
-      logs: renderAdminLogs,
-      links: renderAdminLinks,
-      settings: renderAdminSettings,
-      custom: renderAdminCustomPages
-    };
-    if (tabMap[this.dataset.tab]) tabMap[this.dataset.tab]();
-  });
+// 使用事件委托监听 .admin-nav 下的点击
+document.querySelector('.admin-nav')?.addEventListener('click', function(e) {
+  const tabLink = e.target.closest('.admin-nav-item');
+  if (!tabLink) return;
+
+  e.preventDefault();
+  const tab = tabLink.dataset.tab;
+  if (!tab) return;
+
+  // 切换高亮
+  document.querySelectorAll('.admin-nav-item').forEach(el => el.classList.remove('active'));
+  tabLink.classList.add('active');
+
+  // 渲染对应内容
+  const tabMap = {
+    reports: renderAdminReports,
+    users: renderAdminUsers,
+    logs: renderAdminLogs,
+    links: renderAdminLinks,
+    settings: renderAdminSettings,
+    custom: renderAdminCustomPages
+  };
+  if (tabMap[tab]) tabMap[tab]();
 });
 
 // 页面加载时尝试加载自定义 CSS
