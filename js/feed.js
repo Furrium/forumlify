@@ -197,7 +197,7 @@ function renderStats() {
     document.getElementById('statTopics').textContent = stats.topics || 0;
     document.getElementById('statPosts').textContent = stats.posts || 0;
     document.getElementById('statUsers').textContent = stats.users || 0;
-    document.getElementById('statOnline').textContent = stats.online || 0;
+    // 在线人数已移除
   }).catch(() => {});
 }
 
