@@ -18,7 +18,7 @@ import Modals from '@/components/Modals';
 import LoadingScreen from '@/components/LoadingScreen';
 
 function HomeInner() {
-  const { view, currentPostId, currentUsername, currentPageName, ready, forumName } = useApp();
+  const { view, currentPostId, currentUsername, currentPageName, ready } = useApp();
   const [modal, setModal] = useState(null); // null | login | register | report
   const [reportPostId, setReportPostId] = useState(null);
 
@@ -27,7 +27,7 @@ function HomeInner() {
 
   // 初始化未完成：显示全屏加载页，避免未加载完的界面闪烁
   if (!ready) {
-    return <LoadingScreen forumName={forumName} />;
+    return <LoadingScreen />;
   }
 
   return (
