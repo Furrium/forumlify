@@ -902,6 +902,57 @@ function showRecoveryCodesModal(codes) {
 }
 
 // ============================================================
+//  🖼️ 图片查看器
+// ============================================================
+
+function openImageViewer(imageUrl) {
+  const existing = document.getElementById('imageViewerModal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'imageViewerModal';
+  modal.style.cssText = `
+    position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;animation:fadeIn 0.2s ease-out;
+  `;
+
+  const img = document.createElement('img');
+  img.src = imageUrl;
+  img.style.cssText = `
+    max-width:90vw;max-height:90vh;object-fit:contain;
+    border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.5);
+    cursor:default;user-select:none;
+  `;
+
+  modal.addEventListener('click', function(e) {
+    if (e.target === this) {
+      this.remove();
+    }
+  });
+
+  modal.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') this.remove();
+  });
+
+  modal.appendChild(img);
+  document.body.appendChild(modal);
+  modal.focus();
+}
+
+// 添加淡入动画
+(function() {
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
+// ============================================================
 //  🚀 初始化
 // ============================================================
 async function init() {
