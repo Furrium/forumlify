@@ -154,8 +154,6 @@ npx @cloudflare/next-on-pages
 
 两个分支使用**完全相同的 `schema.sql`**，共用同一个数据库实例（已验证：main 的 Express 代码与 next 的 Next.js 代码可同时连接同一 PostgreSQL 库，表结构、数据互不冲突）。
 
-> 注意：上游 main 的 `server.js` 引用了 `is_pinned` / `signature` 等列，但这些列在上游仓库的 `schema.sql` 中缺失（未同步）。本分支的 `schema.sql` 是完整超集，已包含全部列，可直接用于两个分支。
-
 ## 🏗️ 项目结构
 
 ```

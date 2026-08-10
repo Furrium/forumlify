@@ -35,7 +35,7 @@ export async function PUT(req, { params }) {
     return Response.json({ error: '无权限修改他人资料' }, { status: 403 });
   }
   try {
-    await pool.query('UPDATE users SET username = $1, bio = $2 WHERE id = $3', [username, bio || '', id]);
+    await pool.query('UPDATE users SET username = $1, bio = $2, signature = $3 WHERE id = $4', [username, bio || '', signature || '', id]);
     return Response.json({ success: true });
   } catch (err) {
     if (err.code === '23505') {
