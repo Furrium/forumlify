@@ -128,12 +128,12 @@ const API = {
   },
 
   // ============================================================
-  //  用户管理
+  //  用户管理（支持分页和搜索）
   // ============================================================
-  async getUsers() {
-    const data = await apiFetch('/users');
+  async getUsers(page = 1, limit = 20, search = '') {
+    const data = await apiFetch('/users?page=' + page + '&limit=' + limit + '&search=' + encodeURIComponent(search));
     if (data.error) throw new Error(data.error);
-    return data || [];
+    return data;
   },
 
   async updateUserRole(userId, role) {
