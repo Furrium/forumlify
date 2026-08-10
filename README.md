@@ -24,7 +24,7 @@ docker-compose up -d
 应用默认运行在 `http://localhost:3003`。
 
 ---
-目前本应用已支持部署在Cloudflare Pages/Vercel，请在/next这个分支拉取
+目前本应用已支持部署在Cloudflare Pages/Vercel，请在[/next这个分支](https://github.com/Furrium/forumlify/tree/next)拉取
 
 ---
 以下内容添加自NodeLoc @Lezi-fun的PR
