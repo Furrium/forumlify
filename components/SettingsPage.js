@@ -12,6 +12,7 @@ export default function SettingsPage() {
   const { currentUser, setCurrentUser } = useApp();
   const [username, setUsername] = useState(currentUser?.username || '');
   const [bio, setBio] = useState(currentUser?.bio || '');
+  const [signature, setSignature] = useState(currentUser?.signature || '');
   const [avatarUrl, setAvatarUrl] = useState(currentUser?.avatar_url || '');
   const [avatarStatus, setAvatarStatus] = useState(null);
   const avatarInputRef = useRef(null);
@@ -35,9 +36,9 @@ export default function SettingsPage() {
     if (!currentUser) { alert('请先登录'); return; }
     if (!username.trim()) { alert('用户名不能为空'); return; }
     try {
-      const data = await API.updateProfile(currentUser.id, username.trim(), bio.trim());
+      const data = await API.updateProfile(currentUser.id, username.trim(), bio.trim(), signature.trim());
       if (data.error) throw new Error(data.error);
-      setCurrentUser({ ...currentUser, username: username.trim(), bio: bio.trim() });
+      setCurrentUser({ ...currentUser, username: username.trim(), bio: bio.trim(), signature: signature.trim() });
       alert('保存成功！');
     } catch (err) {
       alert('保存失败：' + err.message);
@@ -81,6 +82,10 @@ export default function SettingsPage() {
           <div style={{ marginBottom: 16 }}>
             <label style={{ fontWeight: 600, fontSize: 14, display: 'block', marginBottom: 4 }}>个人简介</label>
             <textarea rows={3} value={bio} style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 14, background: 'var(--bg)', color: 'var(--text)', resize: 'vertical' }} onChange={(e) => setBio(e.target.value)} />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontWeight: 600, fontSize: 14, display: 'block', marginBottom: 4 }}>个性签名 <span style={{ color: 'var(--text-light)', fontWeight: 400 }}>（显示在每篇帖子底部，支持 Markdown）</span></label>
+            <textarea rows={2} value={signature} placeholder="签名..." style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 14, background: 'var(--bg)', color: 'var(--text)', resize: 'vertical', fontFamily: 'inherit' }} onChange={(e) => setSignature(e.target.value)} />
           </div>
           <button className="btn-primary" style={{ width: '100%', padding: 10 }} onClick={handleSave}>保存设置</button>
         </div>

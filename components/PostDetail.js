@@ -140,6 +140,11 @@ export default function PostDetail({ postId }) {
               ))}
             </div>
           )}
+          {post.signature && (
+            <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid var(--border-light)', fontSize: 12, color: 'var(--text-secondary)' }}>
+              {post.signature}
+            </div>
+          )}
         </div>
         <ReplyList postId={postId} onRefresh={load} />
       </div>

@@ -9,7 +9,7 @@ export async function GET(req) {
   }
   try {
     const r = await pool.query(
-      'SELECT id, username, avatar_url, bio, role, created_at FROM users WHERE id = $1',
+      'SELECT id, username, avatar_url, bio, signature, role, created_at FROM users WHERE id = $1',
       [user.id]
     );
     if (!r.rows[0]) {
