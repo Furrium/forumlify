@@ -44,11 +44,11 @@ function renderFeed() {
       }
       const replyCount = p.reply_count || 0;
 
-      // Markdown 渲染
       const renderedContent = marked ? marked.parse(p.content || '') : (p.content || '').replace(/\n/g, '<br>');
 
       html += `
         <div class="post-card" data-postid="${p.id}" style="cursor:pointer;">
+          ${p.is_pinned ? '<div style="font-size:12px;color:var(--primary);font-weight:600;margin-bottom:4px;">📌 置顶</div>' : ''}
           <div class="post-header">
             <img src="${avatar}" class="post-avatar" />
             <span class="post-username" style="cursor:pointer;color:var(--primary);" onclick="event.stopPropagation();switchPage('user','${username}')">${username}</span>
