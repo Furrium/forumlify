@@ -130,16 +130,40 @@ function renderAdminUsers() {
   });
 }
 
-function renderAdminLogs() {
+// ============================================================
+//  事件日志 —— 支持分页
+// ============================================================
+
+let currentLogsPage = 1;
+let logsTotalPages = 1;
+
+function renderAdminLogs(page = 1) {
   const container = document.getElementById('adminContent');
   container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px 0;">加载中...</div>';
-  API.getEventLogs().then(logs => {
+  
+  currentLogsPage = page;
+
+  API.getEventLogs(page, 20).then(result => {
+    const logs = result.data || [];
+    const pagination = result.pagination || { total: 0, totalPages: 1, page: 1 };
+    logsTotalPages = pagination.totalPages || 1;
+
     if (!logs || logs.length === 0) {
       container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">暂无日志</div>';
       return;
     }
-    let html =
-      '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="text-align:left;border-bottom:1px solid #e2e8f0;"><th>时间</th><th>用户</th><th>操作</th></tr></thead><tbody>';
+
+    let html = `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="text-align:left;border-bottom:1px solid #e2e8f0;">
+            <th>时间</th>
+            <th>用户</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
     logs.forEach(l => {
       html += `
         <tr style="border-bottom:1px solid #f1f5f9;">
@@ -150,7 +174,67 @@ function renderAdminLogs() {
       `;
     });
     html += '</tbody></table>';
+
+    // 分页控件
+    if (logsTotalPages > 1) {
+      html += `
+        <div style="display:flex;justify-content:center;align-items:center;gap:6px;padding:16px 0;margin-top:8px;border-top:1px solid var(--border);flex-wrap:wrap;">
+          <button class="logs-page-btn" data-page="${page - 1}" ${page <= 1 ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}
+                  style="padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">
+            &laquo;
+          </button>
+      `;
+
+      let startPage = Math.max(1, page - 4);
+      let endPage = Math.min(logsTotalPages, page + 4);
+
+      if (page <= 4) endPage = Math.min(logsTotalPages, 9);
+      if (page > logsTotalPages - 4) startPage = Math.max(1, logsTotalPages - 8);
+
+      if (startPage > 1) {
+        html += `<button class="logs-page-btn" data-page="1" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">1</button>`;
+        if (startPage > 2) html += `<span style="color:var(--text-light);padding:0 4px;">…</span>`;
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        const isActive = i === page;
+        html += `
+          <button class="logs-page-btn" data-page="${i}" ${isActive ? 'disabled style="background:var(--primary);color:#fff;cursor:default;border-color:var(--primary);"' : ''}
+                  style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:${isActive ? 'var(--primary)' : 'var(--surface)'};color:${isActive ? '#fff' : 'var(--text)'};cursor:${isActive ? 'default' : 'pointer'};font-size:13px;min-width:32px;text-align:center;">
+            ${i}
+          </button>
+        `;
+      }
+
+      if (endPage < logsTotalPages) {
+        if (endPage < logsTotalPages - 1) html += `<span style="color:var(--text-light);padding:0 4px;">…</span>`;
+        html += `<button class="logs-page-btn" data-page="${logsTotalPages}" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">${logsTotalPages}</button>`;
+      }
+
+      html += `
+          <button class="logs-page-btn" data-page="${page + 1}" ${page >= logsTotalPages ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}
+                  style="padding:6px 12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;">
+            &raquo;
+          </button>
+          <span style="font-size:13px;color:var(--text-light);margin-left:8px;">
+            ${pagination.total} 条日志
+          </span>
+        </div>
+      `;
+    }
+
     container.innerHTML = html;
+
+    // 绑定分页按钮事件
+    container.querySelectorAll('.logs-page-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const newPage = parseInt(this.dataset.page);
+        if (newPage >= 1 && newPage <= logsTotalPages) {
+          renderAdminLogs(newPage);
+        }
+      });
+    });
+
   }).catch(() => {
     container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载失败</div>';
   });
