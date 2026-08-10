@@ -1,7 +1,7 @@
 node_modules/
 .next/
 out/
-uploads/
+/uploads/
 *.log
 .DS_Store
 
@@ -9,3 +9,4 @@ uploads/
 # 仅忽略本地覆盖文件
 .env.local
 .env.*.local
+.vercel
