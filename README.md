@@ -106,25 +106,41 @@ mkdir -p uploads && chmod 755 uploads
 Forumlify 的 Next.js 版本天然支持 serverless 部署。与传统部署相比需要处理三件事：
 
 1. **数据库**：使用外部 PostgreSQL（Neon / Supabase / RDS 等），设置 `DATABASE_URL` 环境变量。连接池会自动适配 serverless（单连接 + 定期轮换）。
-2. **文件上传**：serverless 无持久磁盘，需要 S3 兼容对象存储（Cloudflare R2 / AWS S3 / MinIO）。设置以下环境变量后，上传自动切换到对象存储：
-   - `S3_ENDPOINT` — 如 `https://xxx.r2.cloudflarestorage.com`
-   - `S3_BUCKET` — 存储桶名
-   - `S3_REGION` — 区域（R2 用 `auto`）
-   - `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY`
-   - `S3_PUBLIC_URL` — 公开访问前缀，如 `https://cdn.example.com`（图片 URL 将指向这里）
+2. **文件上传**：serverless 无持久磁盘，需要 S3 兼容对象存储（Cloudflare R2 / AWS S3 / MinIO）。设置 `S3_*` 环境变量后，上传自动切换到对象存储。
 3. **密码哈希**：已使用 `bcryptjs`（纯 JS），无原生编译依赖，各平台均可直接构建。
 
-### Vercel 部署
+### 环境变量说明
+
+| 变量 | 必填 | 说明 |
+|------|------|------|
+| `DATABASE_URL` | ✅ 必须 | PostgreSQL 连接串，如 `postgresql://user:pass@host:5432/dbname`（可用 [Neon](https://neon.tech) / [Supabase](https://supabase.com) 免费实例） |
+| `JWT_SECRET` | ✅ 必须 | JWT 签名密钥，任意长随机字符串（生产环境务必修改） |
+| `S3_ENDPOINT` | 上传图片时 | S3 兼容端点，如 R2 的 `https://<account_id>.r2.cloudflarestorage.com` |
+| `S3_BUCKET` | 上传图片时 | 存储桶名 |
+| `S3_REGION` | 上传图片时 | 区域（R2 用 `auto`，AWS 用 `us-east-1` 等） |
+| `S3_ACCESS_KEY_ID` | 上传图片时 | 对象存储 Access Key |
+| `S3_SECRET_ACCESS_KEY` | 上传图片时 | 对象存储 Secret Key |
+| `S3_PUBLIC_URL` | 上传图片时 | 公开访问前缀，如 `https://cdn.example.com`（图片 URL 将指向这里） |
+
+> 只搭一个纯文字论坛、不上传图片的话，只需配置 `DATABASE_URL` 和 `JWT_SECRET` 两个变量。
+
+### Vercel 部署（一键）
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ffurrium%2Fforumlify&env=DATABASE_URL,JWT_SECRET,S3_ENDPOINT,S3_BUCKET,S3_REGION,S3_ACCESS_KEY_ID,S3_SECRET_ACCESS_KEY,S3_PUBLIC_URL)
+
+点击上方按钮，Vercel 会自动：
+1. Fork 仓库并创建项目（部署 `next` 分支）
+2. 提示你填写环境变量（见上方表格，前两个必填，其余可跳过）
+3. 自动完成构建并部署，完成后会给你一个 `https://xxx.vercel.app` 地址
+
+也可以用 CLI 手动部署：
 
 ```bash
-# 本地预览
-vercel dev
-
-# 部署（首次会要求登录并配置环境变量）
-vercel
+npm i -g vercel
+vercel        # 首次会要求登录并配置环境变量
 ```
 
-在 Vercel 项目设置中配置环境变量：`DATABASE_URL`、`JWT_SECRET`，以及（可选）`S3_*`。
+> 注意：不传图片的话 S3 变量可以留空；后续要传图时再到 Vercel 项目设置 → Environment Variables 补上即可，无需重新部署。
 
 ### Cloudflare Pages 部署
 
@@ -133,6 +149,11 @@ vercel
 # 输出目录：.vercel/output（需安装 @cloudflare/next-on-pages）
 npx @cloudflare/next-on-pages
 ```
+
+在 Cloudflare Pages 控制台创建项目时选择 **Direct Upload** 或连接 Git 仓库，然后：
+
+1. **构建设置**：Build command 填 `npm run build`，Build output directory 填 `.vercel/output/static`
+2. **环境变量**：在 Settings → Environment variables 中配置上表的 `DATABASE_URL`、`JWT_SECRET`（和可选的 `S3_*`）
 
 > 提示：`next.config.js` 中的 `output: 'standalone'` 仅在设置了 `DOCKER=1` 环境变量时启用，serverless 平台会自动跳过。
 
