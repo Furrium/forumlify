@@ -1,97 +1,48 @@
 'use client';
 
-// 个人设置页：头像 + 基本资料 + 账户安全 + 恢复码
-import { useState, useRef } from 'react';
-import { API, uploadImage } from '@/lib/api';
-import { useApp } from './AppProvider';
+// 个人设置页：侧边栏布局（个人资料 / 安全设置 / 恢复码）
+import { useState } from 'react';
 import { Icon } from './Icons';
+import SettingsProfile from './SettingsProfile';
 import AccountSecurity from './AccountSecurity';
 import RecoveryCodes from './RecoveryCodes';
 
+const NAV = [
+  { key: 'profile', label: '个人资料', icon: 'user' },
+  { key: 'security', label: '安全设置', icon: 'shieldAlert' },
+  { key: 'recovery', label: '恢复码', icon: 'lock' },
+];
+
 export default function SettingsPage() {
-  const { currentUser, setCurrentUser } = useApp();
-  const [username, setUsername] = useState(currentUser?.username || '');
-  const [bio, setBio] = useState(currentUser?.bio || '');
-  const [signature, setSignature] = useState(currentUser?.signature || '');
-  const [avatarUrl, setAvatarUrl] = useState(currentUser?.avatar_url || '');
-  const [avatarStatus, setAvatarStatus] = useState(null);
-  const avatarInputRef = useRef(null);
-
-  const handleAvatar = async (file) => {
-    if (!file) return;
-    if (!file.type.startsWith('image/')) { setAvatarStatus({ ok: false, msg: '❌ 请选择图片文件' }); return; }
-    if (file.size > 5 * 1024 * 1024) { setAvatarStatus({ ok: false, msg: '❌ 图片不能超过 5MB' }); return; }
-    try {
-      const url = await uploadImage(file);
-      await API.updateAvatar(currentUser.id, url);
-      setAvatarUrl(url);
-      setCurrentUser({ ...currentUser, avatar_url: url });
-      setAvatarStatus({ ok: true, msg: '✅ 头像已更新' });
-    } catch (err) {
-      setAvatarStatus({ ok: false, msg: '❌ ' + err.message });
-    }
-  };
-
-  const handleSave = async () => {
-    if (!currentUser) { alert('请先登录'); return; }
-    if (!username.trim()) { alert('用户名不能为空'); return; }
-    try {
-      const data = await API.updateProfile(currentUser.id, username.trim(), bio.trim(), signature.trim());
-      if (data.error) throw new Error(data.error);
-      setCurrentUser({ ...currentUser, username: username.trim(), bio: bio.trim(), signature: signature.trim() });
-      alert('保存成功！');
-    } catch (err) {
-      alert('保存失败：' + err.message);
-    }
-  };
-
-  const avatarSrc = avatarUrl ||
-    'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentUser?.username || 'U') + '&background=6366f1&color=fff&size=128';
+  const [tab, setTab] = useState('profile');
 
   return (
     <div className="page-slide active">
-      <div className="page-header" style={{ maxWidth: 500, margin: '0 auto', width: '100%' }}>
+      <div className="page-header" style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
         <h2><Icon name="settings" size={20} /> 设置</h2>
       </div>
-      <div style={{ maxWidth: 500, margin: '0 auto', width: '100%', padding: '20px 0' }}>
-        {/* 头像 */}
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ position: 'relative', display: 'inline-block' }}>
-            <img src={avatarSrc} style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }} alt="" />
-            <button
-              style={{ position: 'absolute', bottom: 0, right: 0, background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(99,102,241,0.4)' }}
-              onClick={() => avatarInputRef.current?.click()}
-            >
-              📷
-            </button>
-          </div>
-          <input type="file" ref={avatarInputRef} accept="image/*" style={{ display: 'none' }} onChange={(e) => { if (e.target.files?.[0]) handleAvatar(e.target.files[0]); }} />
-          <h2 style={{ margin: '12px 0 4px' }}>{currentUser?.username}</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{bio || '这个人很懒，什么都没写'}</p>
-          {avatarStatus && (
-            <div style={{ fontSize: 13, marginTop: 8, color: avatarStatus.ok ? '#22c55e' : '#ef4444' }}>{avatarStatus.msg}</div>
-          )}
-        </div>
-
-        {/* 基本资料 */}
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 20 }}>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ fontWeight: 600, fontSize: 14, display: 'block', marginBottom: 4 }}>用户名</label>
-            <input type="text" value={username} style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 14, background: 'var(--bg)', color: 'var(--text)' }} onChange={(e) => setUsername(e.target.value)} />
-          </div>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ fontWeight: 600, fontSize: 14, display: 'block', marginBottom: 4 }}>个人简介</label>
-            <textarea rows={3} value={bio} style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 14, background: 'var(--bg)', color: 'var(--text)', resize: 'vertical' }} onChange={(e) => setBio(e.target.value)} />
-          </div>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ fontWeight: 600, fontSize: 14, display: 'block', marginBottom: 4 }}>个性签名 <span style={{ color: 'var(--text-light)', fontWeight: 400 }}>（显示在每篇帖子底部，支持 Markdown）</span></label>
-            <textarea rows={2} value={signature} placeholder="签名..." style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 14, background: 'var(--bg)', color: 'var(--text)', resize: 'vertical', fontFamily: 'inherit' }} onChange={(e) => setSignature(e.target.value)} />
-          </div>
-          <button className="btn-primary" style={{ width: '100%', padding: 10 }} onClick={handleSave}>保存设置</button>
-        </div>
-
-        <AccountSecurity />
-        <RecoveryCodes />
+      <div className="settings-layout" style={{ maxWidth: 1200, margin: '0 auto', width: '100%', display: 'flex', gap: 28, alignItems: 'flex-start' }}>
+        <aside className="settings-sidebar" style={{ width: 200, flexShrink: 0 }}>
+          <nav className="settings-nav">
+            {NAV.map((n) => (
+              <a
+                key={n.key}
+                href="#"
+                className={'settings-nav-item' + (tab === n.key ? ' active' : '')}
+                data-settings-tab={n.key}
+                onClick={(e) => { e.preventDefault(); setTab(n.key); }}
+              >
+                <span className="nav-icon"><Icon name={n.icon} size={18} /></span>
+                {n.label}
+              </a>
+            ))}
+          </nav>
+        </aside>
+        <main className="settings-content" id="settingsContent">
+          {tab === 'profile' && <SettingsProfile />}
+          {tab === 'security' && <AccountSecurity />}
+          {tab === 'recovery' && <RecoveryCodes />}
+        </main>
       </div>
     </div>
   );
