@@ -49,7 +49,7 @@ async function renderPostDetail(postId) {
     if (post.images && post.images.length > 0) {
       imagesHtml = '<div class="post-images">';
       post.images.forEach(img => {
-        imagesHtml += '<img src="' + img + '" class="post-image" />';
+        imagesHtml += '<img src="' + img + '" class="post-image" onclick="openImageViewer(this.src)" style="cursor:pointer;" />';
       });
       imagesHtml += '</div>';
     }
