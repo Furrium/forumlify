@@ -9,6 +9,7 @@ import AdminLogs from './admin/AdminLogs';
 import AdminLinks from './admin/AdminLinks';
 import AdminForumSettings from './admin/AdminForumSettings';
 import AdminCustomPages from './admin/AdminCustomPages';
+import AdminCustomCss from './admin/AdminCustomCss';
 
 const TABS = [
   { key: 'reports', label: '举报', icon: 'shieldAlert' },
@@ -16,6 +17,7 @@ const TABS = [
   { key: 'logs', label: '日志', icon: 'file' },
   { key: 'links', label: '友链', icon: 'link' },
   { key: 'custom', label: '自定义页面', icon: 'file' },
+  { key: 'css', label: '自定义CSS', icon: 'file' },
   { key: 'settings', label: '论坛设置', icon: 'settings' },
 ];
 
@@ -44,6 +46,7 @@ export default function AdminPage() {
         {tab === 'logs' && <AdminLogs />}
         {tab === 'links' && <AdminLinks />}
         {tab === 'custom' && <AdminCustomPages />}
+        {tab === 'css' && <AdminCustomCss />}
         {tab === 'settings' && <AdminForumSettings />}
       </div>
     </div>

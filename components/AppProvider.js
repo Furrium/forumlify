@@ -12,7 +12,13 @@ export function useApp() {
 
 export default function AppProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
-  const [forumName, setForumName] = useState('Forumlify');
+  // 初始化时先用 localStorage 缓存的论坛名，避免闪烁（默认名 → 正确名）
+  const [forumName, setForumName] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('forumlify-forum-name') || 'Forumlify';
+    }
+    return 'Forumlify';
+  });
   const [theme, setThemeState] = useState('light');
   const [view, setView] = useState('feed'); // feed | post | new | admin | settings | messages | user | custom
   const [currentPostId, setCurrentPostId] = useState(null);
@@ -58,7 +64,10 @@ export default function AppProvider({ children }) {
       }
       try {
         const s = await API.getSettings();
-        if (s.forum_name) setForumName(s.forum_name);
+        if (s.forum_name) {
+          setForumName(s.forum_name);
+          localStorage.setItem('forumlify-forum-name', s.forum_name);
+        }
       } catch { /* 用默认名 */ }
     }
     init();
@@ -182,7 +191,11 @@ export default function AppProvider({ children }) {
 
   const updateForumName = useCallback((name) => {
     setForumName(name);
+    localStorage.setItem('forumlify-forum-name', name);
     document.title = name;
+    // 同步更新 <title> 元素（防止 Next.js metadata 覆盖）
+    const titleEl = document.querySelector('title');
+    if (titleEl) titleEl.textContent = name;
   }, []);
 
   const value = {

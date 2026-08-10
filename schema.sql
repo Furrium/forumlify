@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS posts (
   title VARCHAR(200) NOT NULL,
   content TEXT NOT NULL,
   images TEXT[] DEFAULT '{}',
+  is_pinned BOOLEAN DEFAULT false,
+  pinned_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
   edited_at TIMESTAMPTZ

@@ -78,6 +78,9 @@ export default function Feed({ onOpenModal, onReport }) {
             return (
               <div key={p.id} className="post-card" style={{ cursor: 'pointer' }}
                 onClick={() => openPost(p.id)}>
+                {p.is_pinned && (
+                  <div style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600, marginBottom: 4 }}>📌 置顶</div>
+                )}
                 <div className="post-header">
                   <img src={avatar(p.username)} className="post-avatar" alt="" />
                   <span
@@ -88,6 +91,9 @@ export default function Feed({ onOpenModal, onReport }) {
                     {p.username || '匿名用户'}
                   </span>
                   <span className="post-time">{time}</span>
+                  {p.edited_at && (
+                    <span style={{ fontSize: 11, color: 'var(--text-light)', marginLeft: 6 }}>（已编辑）</span>
+                  )}
                 </div>
                 <div className="post-title">{p.title || '无标题'}</div>
                 <div className="post-content">{(p.content || '').split('\n').map((l, i) => <span key={i}>{l}<br /></span>)}</div>
