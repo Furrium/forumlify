@@ -2146,4 +2146,29 @@ a.btn-secondary {
 #settingsResult {
   margin-left: 4px !important;
 }
+/* ============================================================
+   全屏加载动画 —— 强制覆盖
+   ============================================================ */
 
+#loadingOverlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: #f6f8fc !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 999999 !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  opacity: 1 !important;
+  pointer-events: all !important;
+}
+
+#loadingOverlay.hidden {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
