@@ -167,3 +167,10 @@ CREATE TABLE IF NOT EXISTS recovery_codes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_recovery_codes_user_id ON recovery_codes(user_id);
+
+-- 帖子表添加置顶字段
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT false;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS pinned_at TIMESTAMPTZ;
+
+-- 创建索引
+CREATE INDEX IF NOT EXISTS idx_posts_is_pinned ON posts(is_pinned);
