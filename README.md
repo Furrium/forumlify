@@ -16,7 +16,8 @@
 ### Docker 部署（推荐）
 
 ```bash
-git clone https://github.com/furrium/forumlify.git
+# 本分支（next，Next.js 版）；如要部署 Express 版请 clone main 分支
+git clone -b next https://github.com/furrium/forumlify.git
 cd forumlify
 docker-compose up -d
 ```
@@ -43,7 +44,8 @@ docker-compose up -d
 1. **克隆并安装依赖**
 
 ```bash
-git clone https://github.com/furrium/forumlify.git
+# 克隆 next 分支（Next.js 版）；main 分支是 Express 版
+git clone -b next https://github.com/furrium/forumlify.git
 cd forumlify
 npm install
 ```

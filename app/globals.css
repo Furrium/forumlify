@@ -788,81 +788,165 @@ svg {
   background: var(--surface);
 }
 
-/* ===== 管理后台 ===== */
-.admin-tabs {
+/* ===== 管理后台 - 侧边栏布局 ===== */
+.admin-layout {
   display: flex;
-  gap: 6px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 14px;
-  flex-wrap: wrap;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: flex-start;
+  padding-top: 12px;
 }
-.admin-tab {
-  padding: 6px 18px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+
+.admin-sidebar {
+  width: 200px;
+  flex-shrink: 0;
   background: var(--surface);
-  cursor: pointer;
-  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 0;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 84px;
+}
+
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
   font-weight: 500;
   transition: all var(--transition);
+  border-left: 3px solid transparent;
+  cursor: pointer;
 }
-.admin-tab:hover {
+.admin-nav-item:hover {
   background: var(--bg);
-  border-color: #d1d9e6;
+  color: var(--text);
 }
-.admin-tab.active {
-  background: var(--primary);
-  color: #fff;
-  border-color: var(--primary);
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+.admin-nav-item.active {
+  background: var(--primary-bg);
+  color: var(--primary);
+  border-left-color: var(--primary);
 }
-.admin-tab svg {
-  margin-right: 6px;
+.admin-nav-item .nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  flex-shrink: 0;
+}
+.admin-nav-item .nav-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
 }
 
-.report-item {
+.admin-content {
+  flex: 1;
+  min-width: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px 20px;
-  margin-bottom: 10px;
+  padding: 20px 24px;
   box-shadow: var(--shadow);
-  transition: box-shadow var(--transition);
-}
-.report-item:hover {
-  box-shadow: var(--shadow-hover);
-}
-.report-item .report-actions {
-  margin-top: 10px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
-#adminContent table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  background: var(--surface);
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: var(--shadow);
+/* 移动端适配：底部导航栏 */
+@media (max-width: 768px) {
+  .admin-layout {
+    flex-direction: column;
+    padding-bottom: 70px;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 4px 0 env(safe-area-inset-bottom, 8px) 0;
+    z-index: 60;
+    display: flex;
+    flex-direction: row !important;
+    justify-content: space-around;
+    flex-wrap: nowrap;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
+    border: none;
+    border-radius: 0;
+    top: auto;
+    position: fixed;
+  }
+
+  .admin-nav {
+    display: flex;
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .admin-nav-item {
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 8px;
+    font-size: 10px;
+    border: none !important;
+    background: transparent !important;
+    color: var(--text-secondary);
+    border-radius: 0;
+    align-items: center;
+    text-align: center;
+    flex: 1;
+    border-left: none !important;
+  }
+
+  .admin-nav-item .nav-icon {
+    font-size: 20px;
+    width: auto;
+    display: flex;
+    justify-content: center;
+  }
+
+  .admin-nav-item .nav-icon svg {
+    width: 22px;
+    height: 22px;
+    stroke: var(--text-secondary);
+    transition: stroke 0.2s;
+  }
+
+  .admin-nav-item.active {
+    color: var(--primary);
+    background: transparent !important;
+    border-bottom: none !important;
+    border-left: none !important;
+  }
+
+  .admin-nav-item.active .nav-icon svg {
+    stroke: var(--primary);
+  }
+
+  .admin-content {
+    padding: 16px 16px 80px 16px;
+  }
+
+  .admin-sidebar .admin-nav-item {
+    border: none !important;
+  }
 }
-#adminContent th {
-  text-align: left;
-  padding: 12px 16px;
-  background: var(--bg);
-  font-weight: 600;
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--border);
-}
-#adminContent td {
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border-light);
-}
-#adminContent tr:last-child td {
-  border-bottom: none;
+
+@media (max-width: 480px) {
+  .admin-nav-item {
+    font-size: 9px;
+    padding: 4px 4px;
+  }
+  .admin-nav-item .nav-icon svg {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 /* ===== 暗色模式修复 ===== */
@@ -1010,6 +1094,30 @@ svg {
 }
 [data-theme="dark"] .modal-content .close:hover svg {
   stroke: var(--text);
+}
+[data-theme="dark"] .admin-sidebar {
+  background: var(--surface);
+  border-color: var(--border);
+}
+[data-theme="dark"] .admin-nav-item:hover {
+  background: var(--border-light);
+}
+[data-theme="dark"] .admin-nav-item.active {
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+[data-theme="dark"] .admin-content {
+  background: var(--surface);
+  border-color: var(--border);
+}
+[data-theme="dark"] .admin-sidebar {
+  border: 1px solid var(--border);
+}
+[data-theme="dark"] .admin-nav-item .nav-icon svg {
+  stroke: var(--text-secondary);
+}
+[data-theme="dark"] .admin-nav-item.active .nav-icon svg {
+  stroke: var(--primary);
 }
 
 /* ===== 响应式 ===== */
