@@ -15,17 +15,23 @@ import CustomPage from '@/components/CustomPage';
 import MessagesPage from '@/components/MessagesPage';
 import ChatManager from '@/components/chat/ChatManager';
 import Modals from '@/components/Modals';
+import LoadingScreen from '@/components/LoadingScreen';
 
 function HomeInner() {
-  const { view, currentPostId, currentUsername, currentPageName } = useApp();
+  const { view, currentPostId, currentUsername, currentPageName, ready, forumName } = useApp();
   const [modal, setModal] = useState(null); // null | login | register | report
   const [reportPostId, setReportPostId] = useState(null);
 
   const openModal = (m) => setModal(m);
   const openReport = (postId) => { setReportPostId(postId); setModal('report'); };
 
+  // 初始化未完成：显示全屏加载页，避免未加载完的界面闪烁
+  if (!ready) {
+    return <LoadingScreen forumName={forumName} />;
+  }
+
   return (
-    <>
+    <div className="app-fade-in">
       <Navbar onOpenModal={openModal} />
       <ChatManager />
 
@@ -46,7 +52,7 @@ function HomeInner() {
       </div>
 
       <Modals modal={modal} onClose={() => setModal(null)} reportPostId={reportPostId} />
-    </>
+    </div>
   );
 }
 

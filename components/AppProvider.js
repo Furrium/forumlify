@@ -26,6 +26,7 @@ export default function AppProvider({ children }) {
   const [currentPageName, setCurrentPageName] = useState(null);
   const [sort, setSort] = useState('latest');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [ready, setReady] = useState(false); // 初始加载完成标记（控制加载页/淡入）
   const loadedRef = useRef(false);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
@@ -69,6 +70,8 @@ export default function AppProvider({ children }) {
           localStorage.setItem('forumlify-forum-name', s.forum_name);
         }
       } catch { /* 用默认名 */ }
+      // 无论成功失败，初始化完成即标记 ready（结束加载页，淡入页面）
+      setReady(true);
     }
     init();
   }, []);
@@ -208,6 +211,7 @@ export default function AppProvider({ children }) {
     currentPageName, openCustomPage,
     sort, setSort,
     refreshKey, refresh,
+    ready,
     login, register, logout,
   };
 
