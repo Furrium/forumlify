@@ -219,23 +219,52 @@ app.get('/api/auth/me', auth, async (req, res) => {
 });
 
 // ============================================================
-//  用户管理
+//  用户管理（支持分页和搜索）
 // ============================================================
 
-// 获取用户信息（支持按用户名查询）
+// 获取用户列表（支持分页和按用户名搜索）
 app.get('/api/users', auth, admin, async (req, res) => {
   try {
-    let query = 'SELECT id, username, avatar_url, bio, role, signature, created_at FROM users';
-    const params = [];
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+    const search = req.query.search || '';
 
-    if (req.query.username) {
-      query += ' WHERE username = $1';
-      params.push(req.query.username);
+    let whereClause = '';
+    const params = [];
+    let paramIndex = 1;
+
+    if (search.trim()) {
+      whereClause = ' WHERE username ILIKE $' + paramIndex;
+      params.push('%' + search.trim() + '%');
+      paramIndex++;
     }
 
-    query += ' ORDER BY created_at DESC';
+    // 查询总数
+    const countQuery = 'SELECT COUNT(*) FROM users' + whereClause;
+    const countResult = await pool.query(countQuery, params);
+    const total = parseInt(countResult.rows[0].count);
+
+    const query = `
+      SELECT id, username, avatar_url, bio, role, signature, created_at
+      FROM users
+      ${whereClause}
+      ORDER BY created_at DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+    params.push(limit, offset);
+
     const r = await pool.query(query, params);
-    res.json(r.rows);
+
+    res.json({
+      data: r.rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: '服务器错误' });
   }
