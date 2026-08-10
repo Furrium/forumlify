@@ -379,10 +379,10 @@ app.put('/api/users/:id/email', auth, async (req, res) => {
 });
 
 // ============================================================
-//  帖子接口（含分页）
+//  帖子接口（含分页和置顶）
 // ============================================================
 
-// 获取帖子列表（支持分页和用户筛选）
+// 获取帖子列表（支持分页和用户筛选，置顶优先）
 app.get('/api/posts', async (req, res) => {
   const sort = req.query.sort === 'hot' ? 'updated_at' : 'created_at';
   const page = parseInt(req.query.page) || 1;
@@ -415,7 +415,8 @@ app.get('/api/posts', async (req, res) => {
     const countResult = await pool.query(countQuery, req.query.user_id ? [req.query.user_id] : []);
     const total = parseInt(countResult.rows[0]?.total || 0);
 
-    query += ` ORDER BY ${sort} DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    // 置顶优先排序
+    query += ` ORDER BY p.is_pinned DESC, p.pinned_at DESC NULLS LAST, ${sort} DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
 
     const r = await pool.query(query, params);
@@ -530,6 +531,38 @@ app.delete('/api/posts/:id', auth, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: '删除失败，请稍后重试' });
+  }
+});
+
+// 置顶/取消置顶帖子（管理员）
+app.put('/api/posts/:id/pin', auth, admin, async (req, res) => {
+  const postId = req.params.id;
+
+  try {
+    const post = await pool.query('SELECT id, user_id FROM posts WHERE id = $1', [postId]);
+    if (post.rows.length === 0) {
+      return res.status(404).json({ error: '帖子不存在' });
+    }
+
+    const check = await pool.query('SELECT is_pinned FROM posts WHERE id = $1', [postId]);
+    const isPinned = check.rows[0].is_pinned;
+
+    const r = await pool.query(
+      `UPDATE posts SET is_pinned = $1, pinned_at = $2 WHERE id = $3 RETURNING *`,
+      [!isPinned, !isPinned ? new Date().toISOString() : null, postId]
+    );
+
+    await createNotification(
+      post.rows[0].user_id,
+      'system',
+      isPinned ? '你的帖子已被取消置顶' : '你的帖子已被置顶',
+      isPinned ? '管理员取消了你的帖子置顶' : '管理员把你的帖子置顶了',
+      '/?post=' + postId
+    );
+
+    res.json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: '操作失败，请稍后重试' });
   }
 });
 
