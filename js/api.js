@@ -396,5 +396,17 @@ const API = {
     });
     if (data.error) throw new Error(data.error);
     return data;
+  },
+
+  // ============================================================
+  //  更新用户资料（含签名）
+  // ============================================================
+  async updateProfile(userId, username, bio, signature) {
+    const data = await apiFetch('/users/' + userId, {
+      method: 'PUT',
+      body: JSON.stringify({ username, bio, signature })
+    });
+    if (data.error) throw new Error(data.error);
+    return data;
   }
 };
