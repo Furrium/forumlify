@@ -1885,3 +1885,283 @@ a.btn-secondary {
   max-height: none;
   line-height: 1.7;
 }
+
+/* ============================================================
+   友链输入框 + 验证码输入框 —— 玻璃风格
+   ============================================================ */
+
+/* 友情链接管理页面的输入框 */
+#adminContent #newLinkTitle,
+#adminContent #newLinkUrl {
+  background: rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--glass-text) !important;
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+  font-family: inherit !important;
+  transition: all var(--transition) !important;
+}
+#adminContent #newLinkTitle:focus,
+#adminContent #newLinkUrl:focus {
+  outline: none !important;
+  background: rgba(255, 255, 255, 0.25) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
+}
+#adminContent #newLinkTitle::placeholder,
+#adminContent #newLinkUrl::placeholder {
+  color: var(--glass-text-light) !important;
+}
+
+/* 所有验证码输入框（注册、发帖、回复） */
+.captcha-row input {
+  background: rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--glass-text) !important;
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+  font-family: inherit !important;
+  transition: all var(--transition) !important;
+  width: 80px !important;
+}
+.captcha-row input:focus {
+  outline: none !important;
+  background: rgba(255, 255, 255, 0.25) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
+}
+.captcha-row input::placeholder {
+  color: var(--glass-text-light) !important;
+}
+
+/* 暗色模式适配 */
+[data-theme="dark"] #adminContent #newLinkTitle,
+[data-theme="dark"] #adminContent #newLinkUrl,
+[data-theme="dark"] .captcha-row input {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--glass-text) !important;
+  border-color: var(--glass-border) !important;
+}
+[data-theme="dark"] #adminContent #newLinkTitle:focus,
+[data-theme="dark"] #adminContent #newLinkUrl:focus,
+[data-theme="dark"] .captcha-row input:focus {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--primary) !important;
+}
+
+/* ============================================================
+   友链删除按钮 + 论坛名称输入框 —— 玻璃风格
+   ============================================================ */
+
+/* 友链删除按钮（和帖子删除按钮统一） */
+#adminContent [data-linkid] {
+  background: rgba(239, 68, 68, 0.08) !important;
+  border: 1.5px solid #ef4444 !important;
+  color: #1a1a2e !important;
+  padding: 2px 10px !important;
+  border-radius: var(--radius-sm) !important;
+  transition: all 0.2s ease !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+}
+#adminContent [data-linkid]:hover {
+  background: #ef4444 !important;
+  color: #fff !important;
+}
+
+/* 暗色模式友链删除按钮 */
+[data-theme="dark"] #adminContent [data-linkid] {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #e8e8f0 !important;
+}
+[data-theme="dark"] #adminContent [data-linkid]:hover {
+  background: #ef4444 !important;
+  color: #fff !important;
+}
+
+/* ============================================================
+   论坛名称输入框（设置页面）
+   ============================================================ */
+
+#settingsForumName {
+  background: rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--glass-text) !important;
+  padding: 10px 14px !important;
+  font-size: 15px !important;
+  font-family: inherit !important;
+  transition: all var(--transition) !important;
+  width: 100% !important;
+}
+#settingsForumName:focus {
+  outline: none !important;
+  background: rgba(255, 255, 255, 0.25) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
+}
+#settingsForumName::placeholder {
+  color: var(--glass-text-light) !important;
+}
+
+/* 暗色模式论坛名称输入框 */
+[data-theme="dark"] #settingsForumName {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--glass-text) !important;
+  border-color: var(--glass-border) !important;
+}
+[data-theme="dark"] #settingsForumName:focus {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--primary) !important;
+}
+
+/* ============================================================
+   上传虚线框 —— 恢复
+   ============================================================ */
+
+/* 发帖页面的上传框 */
+#dropZone {
+  border: 2px dashed var(--glass-border) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 24px !important;
+  text-align: center !important;
+  cursor: pointer !important;
+  transition: all var(--transition) !important;
+}
+#dropZone:hover {
+  border-color: var(--primary) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* 自定义 CSS 上传框 */
+#customCssDropZone {
+  border: 2px dashed var(--glass-border) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 32px !important;
+  text-align: center !important;
+  cursor: pointer !important;
+  transition: all var(--transition) !important;
+}
+#customCssDropZone:hover {
+  border-color: var(--primary) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* 暗色模式 */
+[data-theme="dark"] #dropZone,
+[data-theme="dark"] #customCssDropZone {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+[data-theme="dark"] #dropZone:hover,
+[data-theme="dark"] #customCssDropZone:hover {
+  border-color: var(--primary) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ============================================================
+   论坛设置页面 —— 对齐修复
+   ============================================================ */
+
+/* CSS 上传区域居中 */
+#adminContent > div:last-child {
+  max-width: 500px !important;
+  margin: 0 auto !important;
+}
+
+/* 论坛名称输入框保持居中（已经是了） */
+#settingsForumName {
+  max-width: 400px !important;
+  margin: 0 auto !important;
+  display: block !important;
+}
+/* ============================================================
+   论坛设置页面 —— 标题与内容对齐
+   ============================================================ */
+
+/* 所有标题居中 */
+#adminContent h3 {
+  text-align: center !important;
+}
+
+/* 标题后面的描述文字居中 */
+#adminContent h3 + p {
+  text-align: center !important;
+}
+
+/* CSS 上传区域居中（如果还没加） */
+#adminContent > div:last-child {
+  max-width: 500px !important;
+  margin: 0 auto !important;
+}
+
+/* 论坛名称输入框居中 */
+#settingsForumName {
+  display: block !important;
+  margin: 0 auto !important;
+  max-width: 400px !important;
+}
+
+/* ============================================================
+   论坛设置 —— 名称输入框 + 保存按钮同行
+   ============================================================ */
+
+/* 论坛名称区域的容器（假设是 div 包着 input + button） */
+#adminContent > div:first-of-type {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  max-width: 500px !important;
+  margin: 0 auto !important;
+  flex-wrap: wrap !important;
+}
+
+/* 输入框 flex: 1 占满剩余空间 */
+#settingsForumName {
+  flex: 1 !important;
+  min-width: 200px !important;
+  margin: 0 !important;
+}
+
+/* 保存按钮不需要全宽 */
+#settingsForumSave {
+  width: auto !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+}
+
+/* 状态提示文字紧跟按钮 */
+#settingsResult {
+  margin-left: 4px !important;
+}
+
+/* ============================================================
+   管理后台 —— 宽度修复
+   ============================================================ */
+
+/* 让管理后台内容撑满 */
+.admin-layout {
+  max-width: 100% !important;
+  padding: 0 24px !important;
+}
+
+.admin-content {
+  max-width: 100% !important;
+}
+
+/* 表格和卡片占满 */
+#adminContent table {
+  width: 100% !important;
+}
