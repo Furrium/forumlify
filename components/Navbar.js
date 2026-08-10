@@ -39,8 +39,8 @@ export default function Navbar({ onOpenModal }) {
   const openMessages = (e) => {
     e.preventDefault();
     setMenuOpen(false);
-    // 打开私信列表（ChatManager 监听）
-    window.dispatchEvent(new CustomEvent('forumlify-open-messages'));
+    // 消息页 = 通知列表（与原版一致），私信走导航栏 ✉️ 按钮
+    navigate('messages');
   };
 
   return (
