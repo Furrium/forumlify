@@ -360,6 +360,14 @@
   <!-- ⚙️ 引用 JS -->
   <!-- ========================================================== -->
   <script src="config.js"></script>
+  <script>
+  // config.js 已加载，立即设置默认标题
+  var defaultName = CONFIG.FORUM_NAME || 'Forumlify';
+  document.getElementById('forumName').textContent = defaultName;
+  document.title = defaultName;
+  var titleEl = document.getElementById('pageTitle');
+  if (titleEl) titleEl.textContent = defaultName;
+</script>
   <script src="js/api.js"></script>
   <script src="js/theme.js"></script>
   <script src="js/captcha.js"></script>
