@@ -12,7 +12,7 @@ export async function GET(req, { params }) {
   if (!UUID_RE.test(params.id)) return invalidId();
   try {
     const r = await pool.query(
-      `SELECT p.*, u.username, u.avatar_url
+      `SELECT p.*, u.username, u.avatar_url, u.signature
        FROM posts p
        JOIN users u ON p.user_id = u.id
        WHERE p.id = $1`,

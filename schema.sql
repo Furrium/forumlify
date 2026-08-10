@@ -5,15 +5,16 @@
 -- 用户表
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email VARCHAR(255) UNIQUE NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  username VARCHAR(20) UNIQUE NOT NULL,
+  username VARCHAR(50) NOT NULL UNIQUE,
   avatar_url TEXT,
   bio TEXT DEFAULT '',
-  role VARCHAR(10) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
-  created_at TIMESTAMPTZ DEFAULT now()
+  signature TEXT DEFAULT '',
+  role VARCHAR(20) DEFAULT 'user',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
-
 -- 帖子表
 CREATE TABLE IF NOT EXISTS posts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
