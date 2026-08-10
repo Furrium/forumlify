@@ -2040,3 +2040,27 @@ a.btn-secondary {
   border-top: 1px solid var(--glass-border);
   margin: 14px 0;
 }
+
+/* ============================================================
+   管理后台 —— 表格撑满（同步上游）
+   ============================================================ */
+#adminContent {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+#adminContent table {
+  width: 100% !important;
+  min-width: 100% !important;
+  table-layout: auto !important;
+}
+
+#adminContent th,
+#adminContent td {
+  white-space: nowrap !important;
+}
+
+#adminContent td:first-child,
+#adminContent td:nth-child(2) {
+  white-space: normal !important;
+}
