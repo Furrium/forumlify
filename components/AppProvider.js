@@ -37,6 +37,19 @@ export default function AppProvider({ children }) {
     const t = getTheme();
     setThemeState(t);
     document.documentElement.setAttribute('data-theme', t);
+    // 系统主题变化时跟随（仅当用户未手动设置过）
+    const mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+    if (mq && mq.addEventListener) {
+      const onSysChange = () => {
+        if (!localStorage.getItem('forumlify-theme')) {
+          const next = mq.matches ? 'dark' : 'light';
+          setThemeState(next);
+          document.documentElement.setAttribute('data-theme', next);
+        }
+      };
+      mq.addEventListener('change', onSysChange);
+      return () => mq.removeEventListener('change', onSysChange);
+    }
   }, []);
 
   const toggleTheme = useCallback(() => {
