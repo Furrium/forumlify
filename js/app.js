@@ -124,7 +124,7 @@ function switchPage(page, param) {
       renderAdminReports();
     }
     if (page === 'settings') {
-      renderSettingsPage();
+      renderSettingsPage('profile');
     }
     if (page === 'messages') {
       renderMessagesPage();
@@ -512,12 +512,19 @@ async function renderMessagesPage() {
 }
 
 // ============================================================
-//  ⚙️ 设置页面（含头像上传、恢复码、修改密码和邮箱、签名）
+//  ⚙️ 设置页面（含侧边栏）
 // ============================================================
 
-async function renderSettingsPage() {
+let currentSettingsTab = 'profile';
+
+async function renderSettingsPage(tab = 'profile') {
   const container = document.getElementById('settingsContent');
   if (!container) return;
+
+  // 更新侧边栏高亮
+  document.querySelectorAll('.settings-nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.settings-nav-item[data-settings-tab="${tab}"]`)?.classList.add('active');
+  currentSettingsTab = tab;
 
   if (!currentUser) {
     container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">请先登录</div>';
@@ -536,8 +543,10 @@ async function renderSettingsPage() {
       recoveryCount = countData.count || 0;
     } catch (e) {}
 
-    container.innerHTML = `
-      <div style="max-width:500px;margin:0 auto;padding:20px 0;">
+    if (tab === 'profile') {
+      container.innerHTML = `
+        <h3 style="margin-bottom:16px;text-align:center;">👤 个人资料</h3>
+
         <!-- 头像 -->
         <div style="text-align:center;margin-bottom:24px;">
           <div style="position:relative;display:inline-block;">
@@ -575,12 +584,94 @@ async function renderSettingsPage() {
           </div>
           <button id="settingsSaveBtn" class="btn-primary" style="width:100%;padding:10px;">保存设置</button>
         </div>
+      `;
 
-        <!-- 账户安全 - 修改密码和邮箱 -->
-        <div style="margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
-          <h3 style="font-size:16px;margin-bottom:12px;">🔒 账户安全</h3>
+      // ===== 头像上传 =====
+      const avatarBtn = document.getElementById('avatarUploadBtn');
+      const avatarInput = document.getElementById('avatarFileInput');
+      const avatarPreview = document.getElementById('avatarPreview');
+      const statusEl = document.getElementById('avatarUploadStatus');
 
-          <!-- 修改密码 -->
+      if (avatarBtn && avatarInput) {
+        avatarBtn.addEventListener('click', function() {
+          avatarInput.click();
+        });
+
+        avatarInput.addEventListener('change', async function() {
+          const file = this.files[0];
+          if (!file) return;
+          if (!file.type.startsWith('image/')) {
+            statusEl.textContent = '❌ 请选择图片文件';
+            statusEl.style.color = '#ef4444';
+            return;
+          }
+          if (file.size > 5 * 1024 * 1024) {
+            statusEl.textContent = '❌ 图片不能超过 5MB';
+            statusEl.style.color = '#ef4444';
+            return;
+          }
+
+          statusEl.textContent = '⏳ 上传中...';
+          statusEl.style.color = 'var(--text-secondary)';
+
+          try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const uploadRes = await fetch(CONFIG.API_BASE_URL + '/upload', {
+              method: 'POST',
+              headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('forumlify-token')
+              },
+              body: formData
+            });
+            const uploadData = await uploadRes.json();
+            if (uploadData.error) throw new Error(uploadData.error);
+
+            const avatarUrl = uploadData.url;
+
+            const updateRes = await API.updateAvatar(user.id, avatarUrl);
+            if (updateRes.error) throw new Error(updateRes.error);
+
+            currentUser.avatar_url = avatarUrl;
+            avatarPreview.src = avatarUrl;
+            statusEl.textContent = '✅ 头像更新成功！';
+            statusEl.style.color = '#22c55e';
+            renderNav();
+
+          } catch (err) {
+            statusEl.textContent = '❌ ' + err.message;
+            statusEl.style.color = '#ef4444';
+          }
+        });
+      }
+
+      // ===== 保存设置（含签名） =====
+      document.getElementById('settingsSaveBtn').addEventListener('click', async function() {
+        const username = document.getElementById('settingsUsername').value.trim();
+        const bio = document.getElementById('settingsBio').value.trim();
+        const signature = document.getElementById('settingsSignature').value.trim();
+        if (!username) { alert('用户名不能为空'); return; }
+        try {
+          await API.updateProfile(user.id, username, bio, signature);
+          currentUser.username = username;
+          currentUser.bio = bio;
+          currentUser.signature = signature;
+          alert('保存成功！');
+          renderNav();
+          renderSettingsPage('profile');
+        } catch (err) {
+          alert('保存失败：' + err.message);
+        }
+      });
+    }
+
+    else if (tab === 'security') {
+      container.innerHTML = `
+        <h3 style="margin-bottom:16px;text-align:center;">🔒 安全设置</h3>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
+          <h4 style="font-size:14px;margin-bottom:12px;">修改密码</h4>
           <div style="margin-bottom:12px;">
             <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">当前密码</label>
             <input type="password" id="changeOldPassword" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
@@ -594,7 +685,7 @@ async function renderSettingsPage() {
 
           <div style="border-top:1px solid var(--border);margin:16px 0;"></div>
 
-          <!-- 修改邮箱 -->
+          <h4 style="font-size:14px;margin-bottom:12px;">修改邮箱</h4>
           <div style="margin-bottom:12px;">
             <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">当前密码（验证身份）</label>
             <input type="password" id="changeEmailPassword" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
@@ -606,73 +697,56 @@ async function renderSettingsPage() {
           <button id="changeEmailBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">修改邮箱</button>
           <div id="emailChangeStatus" style="font-size:13px;margin-top:6px;color:var(--text-light);"></div>
         </div>
+      `;
 
-        <!-- 恢复码管理 -->
-        <div style="margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
-          <h3 style="font-size:16px;margin-bottom:8px;">🔑 恢复码</h3>
-          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">用于忘记密码时重置账户。每个恢复码只能使用一次。</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button id="viewRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">📋 查看恢复码</button>
-            <button id="regenerateRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">🔄 重新生成</button>
-          </div>
-          <div id="recoveryCodesStatus" style="font-size:13px;color:var(--text-light);margin-top:8px;">剩余 ${recoveryCount} 个可用恢复码</div>
-        </div>
-      </div>
-    `;
+      // ===== 修改密码 =====
+      document.getElementById('changePasswordBtn').addEventListener('click', async function() {
+        const oldPassword = document.getElementById('changeOldPassword').value;
+        const newPassword = document.getElementById('changeNewPassword').value;
+        const statusEl = document.getElementById('passwordChangeStatus');
 
-    // ===== 头像上传 =====
-    const avatarBtn = document.getElementById('avatarUploadBtn');
-    const avatarInput = document.getElementById('avatarFileInput');
-    const avatarPreview = document.getElementById('avatarPreview');
-    const statusEl = document.getElementById('avatarUploadStatus');
-
-    if (avatarBtn && avatarInput) {
-      avatarBtn.addEventListener('click', function() {
-        avatarInput.click();
-      });
-
-      avatarInput.addEventListener('change', async function() {
-        const file = this.files[0];
-        if (!file) return;
-        if (!file.type.startsWith('image/')) {
-          statusEl.textContent = '❌ 请选择图片文件';
+        if (!oldPassword || !newPassword) {
+          statusEl.textContent = '请填写完整信息';
           statusEl.style.color = '#ef4444';
           return;
         }
-        if (file.size > 5 * 1024 * 1024) {
-          statusEl.textContent = '❌ 图片不能超过 5MB';
+        if (newPassword.length < 6) {
+          statusEl.textContent = '新密码至少6位';
           statusEl.style.color = '#ef4444';
           return;
         }
-
-        statusEl.textContent = '⏳ 上传中...';
-        statusEl.style.color = 'var(--text-secondary)';
 
         try {
-          const formData = new FormData();
-          formData.append('file', file);
-
-          const uploadRes = await fetch(CONFIG.API_BASE_URL + '/upload', {
-            method: 'POST',
-            headers: {
-              'Authorization': 'Bearer ' + localStorage.getItem('forumlify-token')
-            },
-            body: formData
-          });
-          const uploadData = await uploadRes.json();
-          if (uploadData.error) throw new Error(uploadData.error);
-
-          const avatarUrl = uploadData.url;
-
-          const updateRes = await API.updateAvatar(user.id, avatarUrl);
-          if (updateRes.error) throw new Error(updateRes.error);
-
-          currentUser.avatar_url = avatarUrl;
-          avatarPreview.src = avatarUrl;
-          statusEl.textContent = '✅ 头像更新成功！';
+          await API.changePassword(oldPassword, newPassword);
+          document.getElementById('changeOldPassword').value = '';
+          document.getElementById('changeNewPassword').value = '';
+          statusEl.textContent = '✅ 密码修改成功！';
           statusEl.style.color = '#22c55e';
-          renderNav();
+        } catch (err) {
+          statusEl.textContent = '❌ ' + err.message;
+          statusEl.style.color = '#ef4444';
+        }
+      });
 
+      // ===== 修改邮箱 =====
+      document.getElementById('changeEmailBtn').addEventListener('click', async function() {
+        const password = document.getElementById('changeEmailPassword').value;
+        const newEmail = document.getElementById('changeNewEmail').value;
+        const statusEl = document.getElementById('emailChangeStatus');
+
+        if (!password || !newEmail) {
+          statusEl.textContent = '请填写完整信息';
+          statusEl.style.color = '#ef4444';
+          return;
+        }
+
+        try {
+          await API.changeEmail(password, newEmail);
+          document.getElementById('changeEmailPassword').value = '';
+          document.getElementById('changeNewEmail').value = '';
+          currentUser.email = newEmail;
+          statusEl.textContent = '✅ 邮箱修改成功！';
+          statusEl.style.color = '#22c55e';
         } catch (err) {
           statusEl.textContent = '❌ ' + err.message;
           statusEl.style.color = '#ef4444';
@@ -680,109 +754,51 @@ async function renderSettingsPage() {
       });
     }
 
-    // ===== 保存设置（含签名） =====
-    document.getElementById('settingsSaveBtn').addEventListener('click', async function() {
-      const username = document.getElementById('settingsUsername').value.trim();
-      const bio = document.getElementById('settingsBio').value.trim();
-      const signature = document.getElementById('settingsSignature').value.trim();
-      if (!username) { alert('用户名不能为空'); return; }
-      try {
-        await API.updateProfile(user.id, username, bio, signature);
-        currentUser.username = username;
-        currentUser.bio = bio;
-        currentUser.signature = signature;
-        alert('保存成功！');
-        renderNav();
-        renderSettingsPage();
-      } catch (err) {
-        alert('保存失败：' + err.message);
-      }
-    });
+    else if (tab === 'recovery') {
+      container.innerHTML = `
+        <h3 style="margin-bottom:16px;text-align:center;">🔑 恢复码</h3>
 
-    // ===== 修改密码 =====
-    document.getElementById('changePasswordBtn').addEventListener('click', async function() {
-      const oldPassword = document.getElementById('changeOldPassword').value;
-      const newPassword = document.getElementById('changeNewPassword').value;
-      const statusEl = document.getElementById('passwordChangeStatus');
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
+          <p style="font-size:14px;color:var(--text-secondary);margin-bottom:12px;">用于忘记密码时重置账户。每个恢复码只能使用一次。</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button id="viewRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">📋 查看恢复码</button>
+            <button id="regenerateRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">🔄 重新生成</button>
+          </div>
+          <div id="recoveryCodesStatus" style="font-size:13px;color:var(--text-light);margin-top:8px;">剩余 ${recoveryCount} 个可用恢复码</div>
+        </div>
+      `;
 
-      if (!oldPassword || !newPassword) {
-        statusEl.textContent = '请填写完整信息';
-        statusEl.style.color = '#ef4444';
-        return;
-      }
-      if (newPassword.length < 6) {
-        statusEl.textContent = '新密码至少6位';
-        statusEl.style.color = '#ef4444';
-        return;
+      // ===== 恢复码管理 =====
+      const viewBtn = document.getElementById('viewRecoveryCodesBtn');
+      const regenBtn = document.getElementById('regenerateRecoveryCodesBtn');
+      const recoveryStatus = document.getElementById('recoveryCodesStatus');
+
+      if (viewBtn) {
+        viewBtn.addEventListener('click', async function() {
+          try {
+            const data = await API.generateRecoveryCodes();
+            showRecoveryCodesModal(data.codes);
+            const countData = await API.getRecoveryCodesCount();
+            if (recoveryStatus) recoveryStatus.textContent = '剩余 ' + (countData.count || 0) + ' 个可用恢复码';
+          } catch (err) {
+            alert('获取恢复码失败：' + err.message);
+          }
+        });
       }
 
-      try {
-        await API.changePassword(oldPassword, newPassword);
-        document.getElementById('changeOldPassword').value = '';
-        document.getElementById('changeNewPassword').value = '';
-        statusEl.textContent = '✅ 密码修改成功！';
-        statusEl.style.color = '#22c55e';
-      } catch (err) {
-        statusEl.textContent = '❌ ' + err.message;
-        statusEl.style.color = '#ef4444';
+      if (regenBtn) {
+        regenBtn.addEventListener('click', async function() {
+          if (!confirm('重新生成将替换所有旧的恢复码，确定继续吗？')) return;
+          try {
+            const data = await API.generateRecoveryCodes();
+            showRecoveryCodesModal(data.codes);
+            const countData = await API.getRecoveryCodesCount();
+            if (recoveryStatus) recoveryStatus.textContent = '剩余 ' + (countData.count || 0) + ' 个可用恢复码';
+          } catch (err) {
+            alert('重新生成失败：' + err.message);
+          }
+        });
       }
-    });
-
-    // ===== 修改邮箱 =====
-    document.getElementById('changeEmailBtn').addEventListener('click', async function() {
-      const password = document.getElementById('changeEmailPassword').value;
-      const newEmail = document.getElementById('changeNewEmail').value;
-      const statusEl = document.getElementById('emailChangeStatus');
-
-      if (!password || !newEmail) {
-        statusEl.textContent = '请填写完整信息';
-        statusEl.style.color = '#ef4444';
-        return;
-      }
-
-      try {
-        await API.changeEmail(password, newEmail);
-        document.getElementById('changeEmailPassword').value = '';
-        document.getElementById('changeNewEmail').value = '';
-        currentUser.email = newEmail;
-        statusEl.textContent = '✅ 邮箱修改成功！';
-        statusEl.style.color = '#22c55e';
-      } catch (err) {
-        statusEl.textContent = '❌ ' + err.message;
-        statusEl.style.color = '#ef4444';
-      }
-    });
-
-    // ===== 恢复码管理 =====
-    const viewBtn = document.getElementById('viewRecoveryCodesBtn');
-    const regenBtn = document.getElementById('regenerateRecoveryCodesBtn');
-    const recoveryStatus = document.getElementById('recoveryCodesStatus');
-
-    if (viewBtn) {
-      viewBtn.addEventListener('click', async function() {
-        try {
-          const data = await API.generateRecoveryCodes();
-          showRecoveryCodesModal(data.codes);
-          const countData = await API.getRecoveryCodesCount();
-          if (recoveryStatus) recoveryStatus.textContent = '剩余 ' + (countData.count || 0) + ' 个可用恢复码';
-        } catch (err) {
-          alert('获取恢复码失败：' + err.message);
-        }
-      });
-    }
-
-    if (regenBtn) {
-      regenBtn.addEventListener('click', async function() {
-        if (!confirm('重新生成将替换所有旧的恢复码，确定继续吗？')) return;
-        try {
-          const data = await API.generateRecoveryCodes();
-          showRecoveryCodesModal(data.codes);
-          const countData = await API.getRecoveryCodesCount();
-          if (recoveryStatus) recoveryStatus.textContent = '剩余 ' + (countData.count || 0) + ' 个可用恢复码';
-        } catch (err) {
-          alert('重新生成失败：' + err.message);
-        }
-      });
     }
 
   } catch (err) {
@@ -954,6 +970,19 @@ function openImageViewer(imageUrl) {
   `;
   document.head.appendChild(style);
 })();
+
+// ============================================================
+//  设置页面侧边栏切换
+// ============================================================
+
+document.querySelector('.settings-nav')?.addEventListener('click', function(e) {
+  const tabLink = e.target.closest('.settings-nav-item');
+  if (!tabLink) return;
+  e.preventDefault();
+  const tab = tabLink.dataset.settingsTab;
+  if (!tab) return;
+  renderSettingsPage(tab);
+});
 
 // ============================================================
 //  🚀 初始化
