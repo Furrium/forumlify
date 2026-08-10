@@ -25,13 +25,14 @@ function renderNav() {
 async function loadForumName() {
   try {
     const data = await API.getSettings();
-    const name = data.forum_name || CONFIG.FORUM_NAME || 'Forumlify';
+    // 数据库有值就用数据库的，否则用 'Forumlify'
+    const name = data.forum_name || 'Forumlify';
     document.getElementById('forumName').textContent = name;
     document.title = name;
     const titleEl = document.getElementById('pageTitle');
     if (titleEl) titleEl.textContent = name;
   } catch (e) {
-    const name = CONFIG.FORUM_NAME || 'Forumlify';
+    const name = 'Forumlify';
     document.getElementById('forumName').textContent = name;
     document.title = name;
     const titleEl = document.getElementById('pageTitle');
@@ -961,7 +962,7 @@ function openImageViewer(imageUrl) {
 async function init() {
   applyTheme();
 
-  document.getElementById('forumName').textContent = CONFIG.FORUM_NAME || 'Forumlify';
+  document.getElementById('forumName').textContent = '加载中……';
 
   refreshCaptcha('reg');
   refreshCaptcha('post');
