@@ -793,7 +793,6 @@ app.get('/api/stats', async (req, res) => {
       posts: parseInt(postsRes.rows[0].count) || 0,
       users: parseInt(usersRes.rows[0].count) || 0,
       topics: parseInt(postsRes.rows[0].count) || 0,
-      online: Math.floor(Math.random() * 20) + 5,
     });
   } catch (err) {
     res.status(500).json({ error: '服务器错误' });
@@ -862,6 +861,67 @@ app.post('/api/upload', auth, upload.single('file'), (req, res) => {
     return res.status(400).json({ error: '请选择图片' });
   }
   res.json({ url: '/uploads/' + req.file.filename });
+});
+
+// ============================================================
+//  自定义 CSS
+// ============================================================
+
+const CUSTOM_CSS_DIR = path.join(__dirname, 'uploads/custom');
+
+// 确保目录存在
+if (!fs.existsSync(CUSTOM_CSS_DIR)) fs.mkdirSync(CUSTOM_CSS_DIR, { recursive: true });
+
+// 保存自定义 CSS（管理员）
+const cssUpload = multer({ dest: 'uploads/temp/' });
+app.post('/api/admin/custom-css', auth, admin, cssUpload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: '请选择文件' });
+  }
+
+  if (req.file.originalname !== 'style.css') {
+    fs.unlinkSync(req.file.path);
+    return res.status(400).json({ error: '文件名必须是 style.css' });
+  }
+
+  // 移动到最终位置
+  const targetPath = path.join(CUSTOM_CSS_DIR, 'style.css');
+  if (fs.existsSync(targetPath)) fs.unlinkSync(targetPath);
+  fs.renameSync(req.file.path, targetPath);
+
+  // 记录到设置表
+  await pool.query(
+    `INSERT INTO settings (key, value) VALUES ($1, $2)
+     ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()`,
+    ['custom_css_enabled', 'true']
+  );
+
+  res.json({ success: true });
+});
+
+// 获取自定义 CSS（公开）
+app.get('/api/custom-css', async (req, res) => {
+  const cssPath = path.join(CUSTOM_CSS_DIR, 'style.css');
+  if (fs.existsSync(cssPath)) {
+    res.setHeader('Content-Type', 'text/css');
+    res.sendFile(cssPath);
+  } else {
+    res.status(404).send('');
+  }
+});
+
+// 删除自定义 CSS（管理员）
+app.delete('/api/admin/custom-css', auth, admin, async (req, res) => {
+  const cssPath = path.join(CUSTOM_CSS_DIR, 'style.css');
+  if (fs.existsSync(cssPath)) {
+    fs.unlinkSync(cssPath);
+    await pool.query(
+      `INSERT INTO settings (key, value) VALUES ($1, $2)
+       ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()`,
+      ['custom_css_enabled', 'false']
+    );
+  }
+  res.json({ success: true });
 });
 
 // ============================================================
