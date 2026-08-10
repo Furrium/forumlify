@@ -800,20 +800,38 @@ app.get('/api/stats', async (req, res) => {
 });
 
 // ============================================================
-//  事件日志
+//  事件日志（支持分页）
 // ============================================================
 
-// 获取事件日志（管理员）
+// 获取事件日志（管理员）—— 支持分页
 app.get('/api/event-logs', auth, admin, async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    // 查询总数
+    const countResult = await pool.query('SELECT COUNT(*) FROM event_logs');
+    const total = parseInt(countResult.rows[0].count);
+
     const r = await pool.query(
       `SELECT el.*, u.username
        FROM event_logs el
        LEFT JOIN users u ON el.user_id = u.id
        ORDER BY el.created_at DESC
-       LIMIT 100`
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
     );
-    res.json(r.rows);
+
+    res.json({
+      data: r.rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: '服务器错误' });
   }
