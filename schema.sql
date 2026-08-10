@@ -174,3 +174,5 @@ ALTER TABLE posts ADD COLUMN IF NOT EXISTS pinned_at TIMESTAMPTZ;
 
 -- 创建索引
 CREATE INDEX IF NOT EXISTS idx_posts_is_pinned ON posts(is_pinned);
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS signature TEXT DEFAULT '';
