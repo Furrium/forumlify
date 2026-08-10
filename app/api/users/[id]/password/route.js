@@ -1,5 +1,5 @@
 // PUT /api/users/[id]/password — 修改密码
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import pool from '@/lib/db';
 import { getUser } from '@/lib/auth';
 

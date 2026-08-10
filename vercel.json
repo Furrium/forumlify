@@ -1,0 +1,9 @@
+{
+  "framework": "nextjs",
+  "regions": ["hkg1"],
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
+  "env": {
+    "NODE_ENV": "production"
+  }
+}

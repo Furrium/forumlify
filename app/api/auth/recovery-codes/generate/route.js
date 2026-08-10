@@ -1,5 +1,5 @@
 // POST /api/auth/recovery-codes/generate — 生成 10 个恢复码
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import pool from '@/lib/db';
 import { getUser } from '@/lib/auth';
 

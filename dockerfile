@@ -5,6 +5,7 @@
 # ---- 构建阶段 ----
 FROM node:18-alpine AS builder
 WORKDIR /app
+ENV DOCKER=1
 
 # 先装依赖（利用缓存）
 COPY package.json package-lock.json* bun.lock* ./

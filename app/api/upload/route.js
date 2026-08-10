@@ -1,7 +1,7 @@
 // POST /api/upload — 图片上传 (multipart/form-data)
-import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { getUser } from '@/lib/auth';
+import { saveObject } from '@/lib/storage';
 
 const ALLOWED = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const MAX_SIZE = 5 * 1024 * 1024;
@@ -29,11 +29,9 @@ export async function POST(req) {
   try {
     const ext = path.extname(file.name) || '.png';
     const name = Date.now() + '-' + Math.round(Math.random() * 10000) + ext;
-    const dir = path.join(process.cwd(), 'uploads');
-    await mkdir(dir, { recursive: true });
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(dir, name), buffer);
-    return Response.json({ url: '/uploads/' + name });
+    const { url } = await saveObject(name, buffer, file.type);
+    return Response.json({ url });
   } catch {
     return Response.json({ error: '上传失败，请稍后重试' }, { status: 500 });
   }

@@ -1,5 +1,5 @@
 // PUT /api/users/[id]/email — 修改邮箱（需密码验证）
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import pool from '@/lib/db';
 import { getUser } from '@/lib/auth';
 

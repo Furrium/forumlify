@@ -1,5 +1,5 @@
 // POST /api/auth/login
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from '@/lib/db';
 import { JWT_SECRET } from '@/lib/auth';

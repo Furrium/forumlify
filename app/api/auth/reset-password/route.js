@@ -1,5 +1,5 @@
 // POST /api/auth/reset-password — 用恢复码重置密码（公开）
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import pool from '@/lib/db';
 
 export async function POST(req) {

@@ -53,12 +53,12 @@ export default function ChatWindow({ conversationId, otherUserId, otherUsername,
 
   return (
     <div className="modal active" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal-content" style={{ display: 'flex', flexDirection: 'column', maxHeight: '70vh', padding: 0, overflow: 'hidden' }}>
+      <div className="modal-content" style={{ display: 'flex', flexDirection: 'column', height: '70vh', maxHeight: '70vh', padding: 0, overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
           <span id="chatTitle" style={{ fontWeight: 600, fontSize: 16 }}>{otherUsername}</span>
           <span className="close" onClick={onClose} style={{ fontSize: 24, cursor: 'pointer', color: 'var(--text-light)', lineHeight: 1 }}>&times;</span>
         </div>
-        <div id="chatMessages" ref={containerRef} style={{ flex: 1, overflowY: 'auto', padding: 16, minHeight: 300, maxHeight: 400 }}>
+        <div id="chatMessages" ref={containerRef} style={{ flex: 1, overflowY: 'auto', padding: 16, minHeight: 0 }}>
           {messages === null ? (
             <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}>加载中...</div>
           ) : messages.length === 0 ? (
@@ -91,7 +91,7 @@ export default function ChatWindow({ conversationId, otherUserId, otherUsername,
             })
           )}
         </div>
-        <div style={{ display: 'flex', gap: 8, padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', gap: 8, padding: '12px 16px', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
           <input
             type="text"
             id="chatInput"
