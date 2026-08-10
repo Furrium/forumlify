@@ -1873,14 +1873,15 @@ a.btn-secondary {
 }
 
 /* ============================================================
-   帖子列表 —— 内容截断（保留换行）
+   帖子列表 —— 内容截断（纯 CSS）
    ============================================================ */
 
 #feed .post-content {
-  max-height: 4.5em; /* 3 行 × 1.5em 行高 */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.5em;
-  word-break: break-word;
-  white-space: normal;
+  max-height: none;
+  line-height: 1.7;
 }
