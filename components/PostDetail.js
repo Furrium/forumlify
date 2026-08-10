@@ -6,6 +6,7 @@ import { API } from '@/lib/api';
 import { useApp } from './AppProvider';
 import ReplyList from './ReplyList';
 import { Icon } from './Icons';
+import ImageViewer from './ImageViewer';
 
 function avatar(username) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || '匿名用户') +
@@ -16,6 +17,10 @@ export default function PostDetail({ postId }) {
   const { currentUser, navigate, openUser, refreshKey } = useApp();
   const [post, setPost] = useState(null);
   const [error, setError] = useState(null);
+  const [viewerSrc, setViewerSrc] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
 
   const load = useCallback(async () => {
     setError(null);
@@ -64,10 +69,6 @@ export default function PostDetail({ postId }) {
       alert('操作失败：' + err.message);
     }
   };
-
-  const [editing, setEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState('');
-  const [editContent, setEditContent] = useState('');
 
   const handleEdit = () => {
     setEditTitle(post.title || '');
@@ -134,7 +135,9 @@ export default function PostDetail({ postId }) {
           </div>
           {post.images && post.images.length > 0 && (
             <div className="post-images">
-              {post.images.map((img, i) => <img key={i} src={img} className="post-image" alt="" />)}
+              {post.images.map((img, i) => (
+                <img key={i} src={img} className="post-image" alt="" style={{ cursor: 'pointer' }} onClick={() => setViewerSrc(img)} />
+              ))}
             </div>
           )}
         </div>
@@ -165,6 +168,9 @@ export default function PostDetail({ postId }) {
           </div>
         </div>
       )}
+
+      {/* 图片查看器 */}
+      {viewerSrc && <ImageViewer src={viewerSrc} onClose={() => setViewerSrc(null)} />}
     </div>
   );
 }

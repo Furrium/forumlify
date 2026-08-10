@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { API } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
+import ImageViewer from './ImageViewer';
 
 function avatar(username) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || '匿名用户') +
@@ -15,8 +16,10 @@ export default function Feed({ onOpenModal, onReport }) {
   const { currentUser, sort, setSort, openPost, openUser, navigate, refreshKey } = useApp();
   const [posts, setPosts] = useState(null);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [viewerSrc, setViewerSrc] = useState(null);
   const PAGE_SIZE = 20;
 
   const load = useCallback(async (targetPage) => {
@@ -99,7 +102,9 @@ export default function Feed({ onOpenModal, onReport }) {
                 <div className="post-content">{(p.content || '').split('\n').map((l, i) => <span key={i}>{l}<br /></span>)}</div>
                 {p.images && p.images.length > 0 && (
                   <div className="post-images">
-                    {p.images.map((img, i) => <img key={i} src={img} className="post-image" alt="" />)}
+                    {p.images.map((img, i) => (
+                      <img key={i} src={img} className="post-image" alt="" style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setViewerSrc(img); }} />
+                    ))}
                   </div>
                 )}
                 <div className="post-actions">
@@ -161,9 +166,10 @@ export default function Feed({ onOpenModal, onReport }) {
             style={{ padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 4, background: 'var(--surface)', color: 'var(--text)', cursor: page >= totalPages ? 'not-allowed' : 'pointer', fontSize: 13, opacity: page >= totalPages ? 0.4 : 1 }}
           >
             &raquo;
-          </button>
-        </div>
-      )}
-    </main>
-  );
-}
+            </button>
+            </div>
+            )}
+            {viewerSrc && <ImageViewer src={viewerSrc} onClose={() => setViewerSrc(null)} />}
+            </main>
+            );
+            }
