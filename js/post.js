@@ -65,6 +65,17 @@ async function renderPostDetail(postId) {
       renderedContent = renderedContent.replace(/\n/g, '<br>');
     }
 
+    // 签名渲染
+    let signatureHtml = '';
+    if (post.signature) {
+      const sigContent = marked ? marked.parse(post.signature) : post.signature;
+      signatureHtml = `
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border-light);font-size:12px;color:var(--text-secondary);">
+          ${sigContent}
+        </div>
+      `;
+    }
+
     let html = `
       <div class="post-detail-card">
         <div class="post-header">
@@ -88,6 +99,7 @@ async function renderPostDetail(postId) {
         </div>
         <div class="post-content" style="font-size:16px;line-height:1.8;">${renderedContent}</div>
         ${imagesHtml}
+        ${signatureHtml}
       </div>
       <div style="margin-top:20px;font-size:14px;color:#64748b;">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
