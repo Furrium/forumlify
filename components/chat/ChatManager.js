@@ -24,6 +24,8 @@ export function DMButton() {
     return () => clearInterval(t);
   }, [currentUser]);
 
+  if (!currentUser) return null; // 未登录不显示私信按钮
+
   return (
     <button
       className="nav-icon-btn"
