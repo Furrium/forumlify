@@ -25,15 +25,17 @@ function renderNav() {
 async function loadForumName() {
   try {
     const data = await API.getSettings();
-    if (data.forum_name && data.forum_name.trim()) {
-      const name = data.forum_name.trim();
-      document.getElementById('forumName').textContent = name;
-      document.title = name;
-      const titleEl = document.getElementById('pageTitle');
-      if (titleEl) titleEl.textContent = name;
-    }
+    const name = data.forum_name || CONFIG.FORUM_NAME || 'Forumlify';
+    document.getElementById('forumName').textContent = name;
+    document.title = name;
+    const titleEl = document.getElementById('pageTitle');
+    if (titleEl) titleEl.textContent = name;
   } catch (e) {
-    // 保留 config.js 的默认值，什么都不做
+    const name = CONFIG.FORUM_NAME || 'Forumlify';
+    document.getElementById('forumName').textContent = name;
+    document.title = name;
+    const titleEl = document.getElementById('pageTitle');
+    if (titleEl) titleEl.textContent = name;
   }
 }
 
@@ -958,6 +960,8 @@ function openImageViewer(imageUrl) {
 // ============================================================
 async function init() {
   applyTheme();
+
+  document.getElementById('forumName').textContent = CONFIG.FORUM_NAME || 'Forumlify';
 
   refreshCaptcha('reg');
   refreshCaptcha('post');
