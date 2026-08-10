@@ -2,6 +2,7 @@
 
 // 恢复码管理：查看 + 重新生成
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { API } from '@/lib/api';
 
 export default function RecoveryCodes() {
@@ -45,7 +46,7 @@ export default function RecoveryCodes() {
       </div>
       <div id="recoveryCodesStatus" style={{ fontSize: 13, color: 'var(--text-light)', marginTop: 8 }}>剩余 {count} 个可用恢复码</div>
 
-      {modal && (
+      {modal && typeof document !== 'undefined' && createPortal(
         <div className="modal active" style={{ display: 'flex' }} onClick={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
           <div className="modal-content" style={{ maxWidth: 480, position: 'relative' }}>
             <span className="close" style={{ position: 'absolute', top: 12, right: 16, fontSize: 24, cursor: 'pointer', color: 'var(--text-light)' }} onClick={() => setModal(null)}>&times;</span>
@@ -58,7 +59,8 @@ export default function RecoveryCodes() {
             </div>
             <button className="btn-primary" style={{ width: '100%', padding: 10, marginTop: 16 }} onClick={() => setModal(null)}>我已保存</button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
