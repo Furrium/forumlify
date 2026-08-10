@@ -76,6 +76,26 @@ export default function AppProvider({ children }) {
     init();
   }, []);
 
+  // 页面标题：初始化中轮换 Loading. → Loading.. → Loading...，完成后显示论坛名
+  useEffect(() => {
+    if (!ready) {
+      const seq = ['Loading.', 'Loading..', 'Loading...'];
+      let i = 0;
+      document.title = seq[0];
+      const t = setInterval(() => {
+        i = (i + 1) % seq.length;
+        document.title = seq[i];
+      }, 1000);
+      return () => {
+        clearInterval(t);
+      };
+    }
+    // 初始化完成：标题恢复为论坛名
+    document.title = forumName;
+    const titleEl = document.querySelector('title');
+    if (titleEl) titleEl.textContent = forumName;
+  }, [ready, forumName]);
+
   // 按 URL 参数初始化视图
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

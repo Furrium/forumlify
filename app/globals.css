@@ -1218,6 +1218,17 @@ svg {
   gap: 16px;
 }
 
+.loading-logo {
+  font-size: 44px;
+  line-height: 1;
+  animation: float 2.4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
 .loading-spinner {
   width: 44px;
   height: 44px;

@@ -3,7 +3,8 @@ import './globals.css';
 import CustomCssLoader from '@/components/CustomCssLoader';
 
 export const metadata = {
-  title: 'Forumlify',
+  // 初始标题由客户端 AppProvider 接管（加载时轮换 Loading.，完成后显示论坛名）
+  title: 'Loading...',
   description: 'Forumlify - 简洁优雅的现代社区系统',
 };
 
