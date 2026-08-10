@@ -134,6 +134,28 @@ npx @cloudflare/next-on-pages
 
 > 提示：`next.config.js` 中的 `output: 'standalone'` 仅在设置了 `DOCKER=1` 环境变量时启用，serverless 平台会自动跳过。
 
+## 🔄 与 main 分支（Express 版）的对比
+
+本分支（`next`）基于上游 `main` 的 Express 单文件架构全面重构为 Next.js 14（App Router）。两者功能一致，实现方式不同：
+
+| 维度 | main 分支（Express） | next 分支（Next.js 14） |
+|------|---------------------|------------------------|
+| **前端** | 单个 1488 行 `index.html` + `js/` 原生 JS 模块（手写 DOM 操作） | React 18 组件（`components/`），状态由 `AppProvider` 管理 |
+| **后端** | 单个 1000+ 行 `server.js`（Express 路由） | 36 个 Route Handlers（`app/api/**/route.js`），每个接口独立文件 |
+| **模板渲染** | `innerHTML` 字符串拼接 + `onclick` 事件绑定 | JSX 声明式渲染 + React 事件 |
+| **图片上传** | multer + `uploads/` 本地目录 | 存储抽象层（`lib/storage.js`）：本地磁盘 或 S3 兼容对象存储（serverless） |
+| **密码哈希** | `bcrypt`（原生编译） | `bcryptjs`（纯 JS，serverless 友好） |
+| **数据库** | 共享同一套 PostgreSQL schema | **同一 `schema.sql`，与 main 完全兼容**（已实测互操作） |
+| **部署** | Docker 或裸机 `node server.js` | Docker / 裸机 / **Vercel / Cloudflare Pages（serverless）** |
+| **性能** | Express 同步渲染 | Next.js 增量静态生成 + 流式渲染 |
+| **API 路径** | `/api/*` | `/api/*`（路径一致，前端兼容） |
+
+### 数据库兼容性
+
+两个分支使用**完全相同的 `schema.sql`**，共用同一个数据库实例（已验证：main 的 Express 代码与 next 的 Next.js 代码可同时连接同一 PostgreSQL 库，表结构、数据互不冲突）。
+
+> 注意：上游 main 的 `server.js` 引用了 `is_pinned` / `signature` 等列，但这些列在上游仓库的 `schema.sql` 中缺失（未同步）。本分支的 `schema.sql` 是完整超集，已包含全部列，可直接用于两个分支。
+
 ## 🏗️ 项目结构
 
 ```

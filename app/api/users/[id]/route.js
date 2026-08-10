@@ -10,7 +10,7 @@ export async function PUT(req, { params }) {
   }
 
   const body = await req.json();
-  const { username, bio, role } = body;
+  const { username, bio, signature, role } = body;
 
   // 改角色：仅管理员
   if (role !== undefined) {

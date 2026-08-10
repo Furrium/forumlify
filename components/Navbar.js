@@ -16,9 +16,15 @@ export default function Navbar({ onOpenModal }) {
     API.getCustomPages().then(setCustomPages).catch(() => {});
   }, []);
 
-  // 点击菜单外部关闭下拉（与原版行为一致）
+  // 点击菜单外部关闭下拉（检查目标是否在菜单/头像内，避免 React 合成事件与原生监听冲突）
   useEffect(() => {
-    const closeMenu = () => setMenuOpen(false);
+    const closeMenu = (e) => {
+      const menu = document.getElementById('userDropdown');
+      const avatarEl = document.getElementById('userDropdown')?.querySelector('.avatar');
+      if (menu && menu.contains(e.target)) return;
+      if (avatarEl && avatarEl.contains(e.target)) return;
+      setMenuOpen(false);
+    };
     document.addEventListener('click', closeMenu);
     return () => document.removeEventListener('click', closeMenu);
   }, []);
