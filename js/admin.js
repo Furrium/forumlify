@@ -60,6 +60,10 @@ function renderAdminReports() {
   });
 }
 
+// ============================================================
+//  👥 用户列表（支持分页 + 搜索）
+// ============================================================
+
 let currentUsersPage = 1;
 let usersTotalPages = 1;
 let usersSearchKeyword = '';
@@ -244,6 +248,10 @@ function renderAdminUsers(page = 1, search = '') {
   });
 }
 
+// ============================================================
+//  📜 操作日志（支持分页）
+// ============================================================
+
 function renderAdminLogs(page = 1) {
   const container = document.getElementById('adminContent');
   container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px 0;">加载中...</div>';
@@ -345,6 +353,10 @@ function renderAdminLogs(page = 1) {
   });
 }
 
+// ============================================================
+//  🔗 友情链接管理
+// ============================================================
+
 function renderAdminLinks() {
   const container = document.getElementById('adminContent');
   container.innerHTML = `
@@ -368,7 +380,7 @@ function renderAdminLinks() {
         html += `
           <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;">
             <span><a href="${l.url}" target="_blank" style="color:#6366f1;text-decoration:none;">${l.title}</a></span>
-            <button class="btn-sm btn-danger" data-linkid="${l.id}">
+            <button class="btn-sm btn-danger" data-linkid="${l.id}" style="background:rgba(239,68,68,0.08);border:1.5px solid #ef4444;color:#1a1a2e;padding:2px 10px;border-radius:6px;transition:all 0.2s;cursor:pointer;font-size:12px;font-weight:500;">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               删除
             </button>
@@ -400,52 +412,26 @@ function renderAdminLinks() {
 }
 
 // ============================================================
-//  ⚙️ 论坛设置（含自定义 CSS）
+//  ⚙️ 论坛设置（只改名称）
 // ============================================================
 
 function renderAdminSettings() {
   const container = document.getElementById('adminContent');
   container.innerHTML = `
-    <h3 style="margin-bottom:16px;">⚙️ 论坛设置</h3>
+    <h3 style="margin-bottom:16px;text-align:center;">⚙️ 论坛名称</h3>
 
-    <!-- 论坛名称 -->
-    <div style="max-width:400px;margin:0 auto;width:100%;margin-bottom:24px;">
+    <div style="max-width:400px;margin:0 auto;width:100%;">
       <label style="font-weight:600;font-size:14px;display:block;margin-bottom:6px;">论坛名称</label>
       <input type="text" id="settingsForumName" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:15px;margin-bottom:12px;font-family:inherit;background:var(--bg);color:var(--text);" />
       <button id="settingsForumSave" class="btn-primary" style="padding:10px 24px;">保存</button>
       <span id="settingsResult" style="margin-left:12px;font-size:14px;"></span>
     </div>
-
-    <hr style="border:none;border-top:1px solid var(--border);margin:24px 0;" />
-
-    <!-- 自定义 CSS -->
-    <h3 style="margin-bottom:8px;">🎨 自定义 CSS</h3>
-    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">上传 style.css 覆盖默认样式，自定义论坛外观。</p>
-
-    <div style="max-width:500px;">
-      <div id="customCssDropZone" style="border:2px dashed var(--border);border-radius:8px;padding:32px;text-align:center;cursor:pointer;transition:all 0.3s;background:var(--bg);">
-        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 8px;color:var(--text-secondary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        <p style="color:var(--text-secondary);font-size:14px;margin:0;">
-          <span id="customCssDropText">点击或拖拽上传 style.css</span>
-        </p>
-        <p style="color:var(--text-light);font-size:12px;margin:4px 0 0;">只能上传 style.css 文件</p>
-        <input type="file" id="customCssInput" accept=".css" style="display:none;" />
-      </div>
-      <div id="customCssStatus" style="font-size:13px;margin-top:8px;color:var(--text-light);"></div>
-
-      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-        <button id="customCssSaveBtn" class="btn-primary" style="padding:8px 20px;">💾 保存 CSS</button>
-        <button id="customCssDeleteBtn" class="btn-secondary" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">🗑️ 删除自定义 CSS</button>
-      </div>
-    </div>
   `;
 
-  // 加载当前论坛名称
   API.getSettings().then(data => {
     document.getElementById('settingsForumName').value = data.forum_name || 'Forumlify';
   }).catch(() => {});
 
-  // 保存论坛名称
   document.getElementById('settingsForumSave').addEventListener('click', async () => {
     const name = document.getElementById('settingsForumName').value.trim();
     if (!name) { alert('请输入论坛名称'); return; }
@@ -462,8 +448,37 @@ function renderAdminSettings() {
       document.getElementById('settingsResult').style.color = '#ef4444';
     }
   });
+}
 
-  // 自定义 CSS 上传
+// ============================================================
+//  🎨 自定义 CSS（独立标签页）
+// ============================================================
+
+function renderAdminCustomCSS() {
+  const container = document.getElementById('adminContent');
+  container.innerHTML = `
+    <h3 style="margin-bottom:8px;text-align:center;">🎨 自定义 CSS</h3>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;text-align:center;">上传 style.css 覆盖默认样式，自定义论坛外观。</p>
+
+    <div style="max-width:500px;margin:0 auto;">
+      <div id="customCssDropZone" style="border:2px dashed var(--border);border-radius:8px;padding:32px;text-align:center;cursor:pointer;transition:all 0.3s;background:var(--bg);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 8px;color:var(--text-secondary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <p style="color:var(--text-secondary);font-size:14px;margin:0;">
+          <span id="customCssDropText">点击或拖拽上传 style.css</span>
+        </p>
+        <p style="color:var(--text-light);font-size:12px;margin:4px 0 0;">只能上传 style.css 文件</p>
+        <input type="file" id="customCssInput" accept=".css" style="display:none;" />
+      </div>
+      <div id="customCssStatus" style="font-size:13px;margin-top:8px;color:var(--text-light);"></div>
+
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center;">
+        <button id="customCssSaveBtn" class="btn-primary" style="padding:8px 20px;">💾 保存 CSS</button>
+        <button id="customCssDeleteBtn" class="btn-secondary" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">🗑️ 删除自定义 CSS</button>
+      </div>
+    </div>
+  `;
+
+  // 自定义 CSS 上传逻辑
   const dropZone = document.getElementById('customCssDropZone');
   const fileInput = document.getElementById('customCssInput');
   const dropText = document.getElementById('customCssDropText');
@@ -527,7 +542,6 @@ function renderAdminSettings() {
     statusEl.style.color = '#22c55e';
   }
 
-  // 保存 CSS
   document.getElementById('customCssSaveBtn').addEventListener('click', function() {
     if (!selectedFile) {
       statusEl.textContent = '⚠️ 请先选择 style.css 文件';
@@ -551,7 +565,6 @@ function renderAdminSettings() {
     });
   });
 
-  // 删除 CSS
   document.getElementById('customCssDeleteBtn').addEventListener('click', async function() {
     if (!confirm('确定要删除自定义 CSS 吗？将恢复默认样式。')) return;
     try {
@@ -808,6 +821,7 @@ document.querySelector('.admin-nav')?.addEventListener('click', function(e) {
     users: renderAdminUsers,
     logs: renderAdminLogs,
     links: renderAdminLinks,
+    'custom-css': renderAdminCustomCSS,
     settings: renderAdminSettings,
     custom: renderAdminCustomPages
   };
