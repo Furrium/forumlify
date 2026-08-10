@@ -115,7 +115,7 @@ export default function ReplyList({ postId, onRefresh }) {
           <input
             type="text"
             placeholder="答案"
-            style={{ width: 80, padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 4 }}
+            style={{ width: 80, padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 4, background: 'var(--bg)', color: 'var(--text)', outline: 'none' }}
             value={captchaInput}
             onChange={(e) => setCaptchaInput(e.target.value)}
           />

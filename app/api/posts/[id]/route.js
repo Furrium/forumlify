@@ -33,19 +33,20 @@ export async function PUT(req, { params }) {
   if (!user) {
     return Response.json({ error: '请先登录' }, { status: 401 });
   }
-  const { title, content } = await req.json();
+  const { title, content, images } = await req.json();
   if (!content || content.trim().length === 0) {
     return Response.json({ error: '请填写内容' }, { status: 400 });
   }
   try {
-    const post = await pool.query('SELECT user_id FROM posts WHERE id = $1', [params.id]);
+    const post = await pool.query('SELECT user_id, images FROM posts WHERE id = $1', [params.id]);
     if (post.rows.length === 0) return invalidId();
     if (post.rows[0].user_id !== user.id) {
       return Response.json({ error: '无权限编辑此帖子' }, { status: 403 });
     }
+    // images: 可选，传入完整图片 URL 数组（编辑时替换全部图片）；不传则保留原图
     const r = await pool.query(
-      `UPDATE posts SET title = $1, content = $2, edited_at = NOW() WHERE id = $3 RETURNING *`,
-      [title || '无标题', content, params.id]
+      `UPDATE posts SET title = $1, content = $2, images = $3, edited_at = NOW() WHERE id = $4 RETURNING *`,
+      [title || '无标题', content, Array.isArray(images) ? images : post.rows[0].images || [], params.id]
     );
     return Response.json(r.rows[0]);
   } catch {
