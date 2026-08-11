@@ -19,7 +19,7 @@ function showToast(message, type = 'success', duration = 3000) {
 
   toast.innerHTML = `
     <span class="toast-icon">${icons[type] || icons.success}</span>
-    ${message}
+    ${escapeHTML(message)}
   `;
 
   document.body.appendChild(toast);
@@ -224,25 +224,30 @@ async function renderMessageList() {
       const unread = c.unread_count || 0;
       const lastMsg = c.last_message || '暂无消息';
       const time = c.last_message_time ? new Date(c.last_message_time).toLocaleString('zh-CN') : '';
+      const avatar = c.other_avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.other_username) + '&background=6366f1&color=fff&size=64';
       html += `
-        <div class="message-list-item" style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s;" 
-             onclick="openChat('${c.id}', '${c.other_user_id}', '${c.other_username}')">
-          <img src="${c.other_avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.other_username) + '&background=6366f1&color=fff&size=64'}" 
+        <div class="message-list-item" data-conversation-id="${escapeHTML(c.id)}" data-user-id="${escapeHTML(c.other_user_id)}" data-username="${escapeHTML(c.other_username)}" style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s;">
+          <img src="${escapeHTML(safeURL(avatar, { image: true }))}"
                style="width:40px;height:40px;border-radius:50%;object-fit:cover;" />
           <div style="flex:1;min-width:0;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
-              <span style="font-weight:600;">${c.other_username}</span>
+              <span style="font-weight:600;">${escapeHTML(c.other_username)}</span>
               <span style="font-size:12px;color:var(--text-light);">${time}</span>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;">
-              <span style="font-size:13px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${lastMsg}</span>
+              <span style="font-size:13px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${escapeHTML(lastMsg)}</span>
               ${unread > 0 ? `<span style="background:#ef4444;color:#fff;border-radius:50%;padding:2px 8px;font-size:11px;font-weight:600;">${unread}</span>` : ''}
             </div>
           </div>
         </div>
       `;
     });
-    container.innerHTML = html;
+    container.innerHTML = sanitizeHTML(html);
+    container.querySelectorAll('.message-list-item').forEach(item => {
+      item.addEventListener('click', function() {
+        openChat(this.dataset.conversationId, this.dataset.userId, this.dataset.username);
+      });
+    });
   } catch (err) {
     container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
   }
@@ -294,12 +299,13 @@ async function renderMessages(conversationId, silent = false) {
     messages.forEach(m => {
       const isMine = m.sender_id === currentUser.id;
       const time = m.created_at ? new Date(m.created_at).toLocaleString('zh-CN') : '';
+      const avatar = m.sender_avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(m.sender_username) + '&background=6366f1&color=fff&size=64';
       html += `
         <div style="display:flex;${isMine ? 'justify-content:flex-end;' : 'justify-content:flex-start;'} margin-bottom:12px;">
-          ${!isMine ? `<img src="${m.sender_avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(m.sender_username) + '&background=6366f1&color=fff&size=64'}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:8px;flex-shrink:0;" />` : ''}
+          ${!isMine ? `<img src="${escapeHTML(safeURL(avatar, { image: true }))}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:8px;flex-shrink:0;" />` : ''}
           <div style="max-width:70%;">
             <div style="background:${isMine ? 'var(--primary)' : 'var(--surface)'};color:${isMine ? '#fff' : 'var(--text)'};padding:10px 14px;border-radius:12px;border:${isMine ? 'none' : '1px solid var(--border)'};word-break:break-word;">
-              ${m.content}
+              ${renderPlainText(m.content)}
             </div>
             <div style="font-size:11px;color:var(--text-light);margin-top:4px;${isMine ? 'text-align:right;' : ''}">
               ${time} ${isMine ? (m.is_read ? '✓✓' : '✓') : ''}
@@ -308,7 +314,7 @@ async function renderMessages(conversationId, silent = false) {
         </div>
       `;
     });
-    container.innerHTML = html;
+    container.innerHTML = sanitizeHTML(html);
     container.scrollTop = container.scrollHeight;
   } catch (err) {
     if (!silent) {
@@ -452,7 +458,7 @@ function showCustomPage(pageName) {
   API.getCustomPage(pageName).then(page => {
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'width:100%;min-height:70vh;border:none;border-radius:8px;background:var(--surface);';
-    iframe.sandbox = 'allow-scripts allow-modals allow-same-origin';
+    iframe.sandbox = 'allow-scripts allow-modals';
     iframe.srcdoc = `
       <!DOCTYPE html>
       <html>
@@ -483,7 +489,7 @@ function showCustomPage(pageName) {
       el.style.color = el.dataset.custom === pageName ? 'var(--primary)' : 'var(--text-secondary)';
     });
   }).catch(err => {
-    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px 0;">页面加载失败：' + err.message + '</div>';
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px 0;">页面加载失败：' + escapeHTML(err.message) + '</div>';
   });
 }
 
@@ -527,15 +533,15 @@ async function renderMessagesPage() {
         <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border-light);background:var(--surface);border-radius:6px;margin-bottom:6px;">
           <span style="font-size:20px;display:inline-flex;align-items:center;">${icon}</span>
           <div style="flex:1;min-width:0;">
-            <div style="font-weight:600;font-size:14px;">${n.title}</div>
-            <div style="color:var(--text-secondary);font-size:13px;margin-top:2px;">${n.content}</div>
-            ${n.link ? `<a href="${n.link}" style="color:var(--primary);font-size:13px;text-decoration:none;margin-top:4px;display:inline-block;">查看详情 →</a>` : ''}
+            <div style="font-weight:600;font-size:14px;">${escapeHTML(n.title)}</div>
+            <div style="color:var(--text-secondary);font-size:13px;margin-top:2px;">${escapeHTML(n.content)}</div>
+            ${n.link ? `<a href="${escapeHTML(safeURL(n.link))}" style="color:var(--primary);font-size:13px;text-decoration:none;margin-top:4px;display:inline-block;">查看详情 →</a>` : ''}
             <div style="font-size:12px;color:var(--text-light);margin-top:4px;">${time}</div>
           </div>
         </div>
       `;
     });
-    container.innerHTML = html;
+    container.innerHTML = sanitizeHTML(html);
   } catch (err) {
     container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
   }
@@ -579,9 +585,9 @@ function renderLinks() {
       } else {
         let html = '';
         links.forEach(l => {
-          html += '<li><a href="' + l.url + '" target="_blank">' + l.title + '</a></li>';
+          html += '<li><a href="' + escapeHTML(safeURL(l.url, { allowRelative: false })) + '" target="_blank" rel="noopener noreferrer">' + escapeHTML(l.title) + '</a></li>';
         });
-        ul.innerHTML = html;
+        ul.innerHTML = sanitizeHTML(html);
       }
     }
 
@@ -593,9 +599,9 @@ function renderLinks() {
       } else {
         let html = '';
         links.forEach(l => {
-          html += '<li><a href="' + l.url + '" target="_blank">' + l.title + '</a></li>';
+          html += '<li><a href="' + escapeHTML(safeURL(l.url, { allowRelative: false })) + '" target="_blank" rel="noopener noreferrer">' + escapeHTML(l.title) + '</a></li>';
         });
-        ul2.innerHTML = html;
+        ul2.innerHTML = sanitizeHTML(html);
       }
     }
   }).catch(() => {});
@@ -640,15 +646,15 @@ async function renderSettingsPage(tab = 'profile') {
         <!-- 头像 -->
         <div style="text-align:center;margin-bottom:24px;">
           <div style="position:relative;display:inline-block;">
-            <img id="avatarPreview" src="${user.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.username) + '&background=6366f1&color=fff&size=128'}" 
+            <img id="avatarPreview" src="${escapeHTML(safeURL(user.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.username) + '&background=6366f1&color=fff&size=128', { image: true }))}"
                  style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);" />
             <button id="avatarUploadBtn" style="position:absolute;bottom:0;right:0;background:var(--primary);color:#fff;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(99,102,241,0.4);">
               ${getIcon('camera')}
             </button>
           </div>
           <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" />
-          <h2 style="margin:12px 0 4px;">${user.username}</h2>
-          <p style="color:var(--text-secondary);font-size:14px;">${user.bio || '这个人很懒，什么都没写'}</p>
+          <h2 style="margin:12px 0 4px;">${escapeHTML(user.username)}</h2>
+          <p style="color:var(--text-secondary);font-size:14px;">${escapeHTML(user.bio || '这个人很懒，什么都没写')}</p>
           <div style="display:flex;justify-content:center;gap:16px;margin-top:8px;font-size:13px;color:var(--text-secondary);flex-wrap:wrap;">
             <span>${getIcon('calendar')} 加入 ${user.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '未知'}</span>
             <span>${getIcon('file')} ${postCount} 帖</span>
@@ -661,15 +667,15 @@ async function renderSettingsPage(tab = 'profile') {
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
           <div style="margin-bottom:16px;">
             <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">用户名</label>
-            <input type="text" id="settingsUsername" value="${user.username}" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
+            <input type="text" id="settingsUsername" value="${escapeHTML(user.username)}" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
           </div>
           <div style="margin-bottom:16px;">
             <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">个人简介</label>
-            <textarea id="settingsBio" rows="3" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);resize:vertical;">${user.bio || ''}</textarea>
+            <textarea id="settingsBio" rows="3" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);resize:vertical;">${escapeHTML(user.bio || '')}</textarea>
           </div>
           <div style="margin-bottom:16px;">
             <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">帖子签名</label>
-            <textarea id="settingsSignature" rows="2" placeholder="显示在每篇帖子底部，支持 Markdown" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:13px;background:var(--bg);color:var(--text);resize:vertical;font-family:inherit;">${user.signature || ''}</textarea>
+            <textarea id="settingsSignature" rows="2" placeholder="显示在每篇帖子底部，支持 Markdown" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:13px;background:var(--bg);color:var(--text);resize:vertical;font-family:inherit;">${escapeHTML(user.signature || '')}</textarea>
             <div style="font-size:12px;color:var(--text-light);margin-top:2px;">用 --- 分隔，支持 Markdown</div>
           </div>
           <button id="settingsSaveBtn" class="btn-primary" style="width:100%;padding:10px;">保存设置</button>
@@ -916,8 +922,8 @@ function openEditModal(postId, currentTitle, currentContent) {
     <div class="modal-content" style="max-width:600px;">
       <span class="close" style="position:absolute;top:12px;right:16px;font-size:24px;cursor:pointer;color:var(--text-light);">&times;</span>
       <h2 style="margin-bottom:16px;">${getIcon('edit')} 编辑帖子</h2>
-      <input type="text" id="editPostTitle" value="${currentTitle || ''}" placeholder="标题" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:6px;font-size:15px;font-weight:600;margin-bottom:12px;font-family:inherit;background:var(--bg);color:var(--text);" />
-      <textarea id="editPostContent" rows="6" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:6px;font-size:15px;font-family:inherit;resize:vertical;background:var(--bg);color:var(--text);">${currentContent || ''}</textarea>
+      <input type="text" id="editPostTitle" value="${escapeHTML(currentTitle || '')}" placeholder="标题" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:6px;font-size:15px;font-weight:600;margin-bottom:12px;font-family:inherit;background:var(--bg);color:var(--text);" />
+      <textarea id="editPostContent" rows="6" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:6px;font-size:15px;font-family:inherit;resize:vertical;background:var(--bg);color:var(--text);">${escapeHTML(currentContent || '')}</textarea>
       <button id="editPostSaveBtn" class="btn-primary" style="padding:10px 24px;margin-top:12px;width:100%;">保存修改</button>
     </div>
   `;
