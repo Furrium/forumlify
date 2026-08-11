@@ -22,6 +22,7 @@ const TRANSLATIONS = {
     '自定义 CSS': '自定义 CSS',
     '论坛设置': '论坛设置',
     '自定义页面': '自定义页面',
+    '✉️ 私信': '✉️ 私信',
 
     // ===== 帖子 =====
     '最新发布': '最新发布',
@@ -99,8 +100,17 @@ const TRANSLATIONS = {
 
     // ===== 恢复码 =====
     '用于忘记密码时重置账户。每个恢复码只能使用一次。': '用于忘记密码时重置账户。每个恢复码只能使用一次。',
-    '剩余': '剩余',
-    '个可用恢复码': '个可用恢复码',
+    '剩余 0 个可用恢复码': '剩余 0 个可用恢复码',
+    '剩余 1 个可用恢复码': '剩余 1 个可用恢复码',
+    '剩余 2 个可用恢复码': '剩余 2 个可用恢复码',
+    '剩余 3 个可用恢复码': '剩余 3 个可用恢复码',
+    '剩余 4 个可用恢复码': '剩余 4 个可用恢复码',
+    '剩余 5 个可用恢复码': '剩余 5 个可用恢复码',
+    '剩余 6 个可用恢复码': '剩余 6 个可用恢复码',
+    '剩余 7 个可用恢复码': '剩余 7 个可用恢复码',
+    '剩余 8 个可用恢复码': '剩余 8 个可用恢复码',
+    '剩余 9 个可用恢复码': '剩余 9 个可用恢复码',
+    '剩余 10 个可用恢复码': '剩余 10 个可用恢复码',
     '复制全部': '复制全部',
     '我已保存': '我已保存',
 
@@ -108,6 +118,7 @@ const TRANSLATIONS = {
     '添加页面': '添加页面',
     '页面名称': '页面名称',
     '导航栏显示名称': '导航栏显示名称',
+    '关于我们': '关于我们',
     '状态': '状态',
     '启用': '启用',
     '禁用': '禁用',
@@ -139,6 +150,10 @@ const TRANSLATIONS = {
     '链接名称': '链接名称',
     '链接地址': '链接地址',
     '添加': '添加',
+
+    // ===== 消息/通知 =====
+    '有人回复了你的帖子': '有人回复了你的帖子',
+    '查看详情 →': '查看详情 →',
 
     // ===== 提示 =====
     '保存成功！': '保存成功！',
@@ -267,6 +282,7 @@ const TRANSLATIONS = {
     '自定义 CSS': 'Custom CSS',
     '论坛设置': 'Forum Settings',
     '自定义页面': 'Custom Pages',
+    '✉️ 私信': '✉️ Messages',
 
     // ===== 帖子 =====
     '最新发布': 'Latest',
@@ -344,8 +360,17 @@ const TRANSLATIONS = {
 
     // ===== 恢复码 =====
     '用于忘记密码时重置账户。每个恢复码只能使用一次。': 'Used to reset your password if you forget it. Each recovery code can only be used once.',
-    '剩余': '',
-    '个可用恢复码': ' recovery codes available',
+    '剩余 0 个可用恢复码': '0 recovery codes available',
+    '剩余 1 个可用恢复码': '1 recovery code available',
+    '剩余 2 个可用恢复码': '2 recovery codes available',
+    '剩余 3 个可用恢复码': '3 recovery codes available',
+    '剩余 4 个可用恢复码': '4 recovery codes available',
+    '剩余 5 个可用恢复码': '5 recovery codes available',
+    '剩余 6 个可用恢复码': '6 recovery codes available',
+    '剩余 7 个可用恢复码': '7 recovery codes available',
+    '剩余 8 个可用恢复码': '8 recovery codes available',
+    '剩余 9 个可用恢复码': '9 recovery codes available',
+    '剩余 10 个可用恢复码': '10 recovery codes available',
     '复制全部': 'Copy All',
     '我已保存': 'Saved',
 
@@ -353,6 +378,7 @@ const TRANSLATIONS = {
     '添加页面': 'Add Page',
     '页面名称': 'Page Name',
     '导航栏显示名称': 'Display Name',
+    '关于我们': 'About Us',
     '状态': 'Status',
     '启用': 'Enabled',
     '禁用': 'Disabled',
@@ -384,6 +410,10 @@ const TRANSLATIONS = {
     '链接名称': 'Link Name',
     '链接地址': 'Link URL',
     '添加': 'Add',
+
+    // ===== 消息/通知 =====
+    '有人回复了你的帖子': 'Someone replied to your post',
+    '查看详情 →': 'View details →',
 
     // ===== 提示 =====
     '保存成功！': 'Saved!',
