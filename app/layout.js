@@ -24,6 +24,11 @@ export default function RootLayout({ children }) {
                 }
                 document.documentElement.setAttribute('data-theme', t);
               } catch (e) {}
+              // 论坛名：有缓存立即写入 <title>（第二次访问首帧即显示），无缓存保持 Loading...
+              try {
+                var n = localStorage.getItem('forumlify-forum-name');
+                if (n) document.title = n;
+              } catch (e) {}
             })();`,
           }}
         />
