@@ -2360,6 +2360,7 @@ html.home-view-transition.returning-home::view-transition-new(post-body) {
   font-size: 12px !important;
   font-weight: 500 !important;
   cursor: pointer !important;
+  white-space: nowrap !important;
 }
 .reply-delete-btn:hover {
   background: #ef4444 !important;
