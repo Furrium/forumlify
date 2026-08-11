@@ -1,19 +1,15 @@
 'use client';
 
 // 全屏加载页：初始化未完成时显示转圈，加载完成后淡出
-// - 名字容器总是渲染（空）：layout.js 内联脚本会在 DOMContentLoaded（早于
-//   React hydrate）时把缓存的论坛名填入，实现二次访问首帧即显示名字
-// - 首次访问无缓存：由 React 在收到服务器论坛名后淡入显示
-export default function LoadingScreen({ forumName, forumNameLoaded }) {
+// - 名字容器用 dangerouslySetInnerHTML（空）：React 完全不管理其文本内容，
+//   内联脚本（body 首个子元素，DOMContentLoaded）填入缓存名后不会被 React
+//   检测/重写 → 无 hydration mismatch，加载圈不会重启，名字不会二次出现
+export default function LoadingScreen() {
   return (
     <div className="loading-screen">
       <div className="loading-inner">
         <div className="loading-spinner" />
-        {/* suppressHydrationWarning: 内联脚本会在 hydrate 前填入缓存名，
-            避免 React 检测到文本不匹配而重写 DOM（名字二次出现/转圈重启） */}
-        <div className="loading-title loading-title-appear" id="loadingTitle" suppressHydrationWarning>
-          {forumNameLoaded && forumName}
-        </div>
+        <div className="loading-title loading-title-appear" id="loadingTitle" dangerouslySetInnerHTML={{ __html: '' }} />
         <div className="loading-sub">加载中...</div>
       </div>
     </div>

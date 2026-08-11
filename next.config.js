@@ -8,13 +8,20 @@ const nextConfig = {
       { source: '/uploads/:name', destination: '/api/uploads/:name' },
     ];
   },
-  // 论坛是动态内容：HTML 页面不缓存，避免 CDN/浏览器拿到旧版本
+  // 缓存策略：动态页面/API no-cache（浏览器每次验证 → 304）；
+  // 静态资源（_next/static）immutable 长缓存（Next.js 默认，但需在 no-cache 之后覆盖）
   async headers() {
     return [
       {
         source: '/:path*',
         headers: [
-          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Cache-Control', value: 'no-cache, must-revalidate' },
+        ],
+      },
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
     ];

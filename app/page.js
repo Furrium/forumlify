@@ -27,7 +27,7 @@ function HomeInner() {
 
   // 初始化未完成：显示全屏加载页，避免未加载完的界面闪烁
   if (!ready) {
-    return <LoadingScreen forumName={forumName} forumNameLoaded={forumNameLoaded} />;
+    return <LoadingScreen />;
   }
 
   return (
