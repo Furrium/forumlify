@@ -36,7 +36,7 @@ export async function GET(req) {
       FROM posts p
       JOIN users u ON p.user_id = u.id
       ${where}
-      ORDER BY ${sort} DESC
+      ORDER BY is_pinned DESC, pinned_at DESC NULLS LAST, ${sort} DESC
       LIMIT $${(await params).length + 1} OFFSET $${(await params).length + 2}
     `, [...params, limit, offset]);
 
