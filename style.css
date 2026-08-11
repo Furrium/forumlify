@@ -2522,3 +2522,15 @@ a.btn-secondary {
   -webkit-backdrop-filter: blur(32px) !important;
   border: 1px solid var(--glass-border) !important;
 }
+/* ============================================================
+   🌍 国际化加载前隐藏
+   ============================================================ */
+
+body:not(.i18n-ready) {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+body.i18n-ready {
+  opacity: 1;
+}
