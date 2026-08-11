@@ -80,6 +80,19 @@ const API = {
     return data;
   },
 
+  async uploadImage(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch(CONFIG.API_BASE_URL + '/upload', {
+      method: 'POST',
+      headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+      body: formData
+    });
+    const data = await response.json().catch(() => ({ error: '上传响应无效' }));
+    if (!response.ok || data.error) throw new Error(data.error || '图片上传失败');
+    return data;
+  },
+
   async updatePost(postId, title, content) {
     const data = await apiFetch('/posts/' + postId, {
       method: 'PUT',
