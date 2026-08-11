@@ -3100,30 +3100,6 @@ a.btn-secondary {
   .reply-btn { opacity: 0.8; }
 }
 
-/* ===== 回复指示器（Discourse 风格：↩ 正在回复 @xxx） ===== */
-.reply-to-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 4px;
-  margin-left: 8px;
-  padding: 2px 8px 2px 4px;
-  font-size: 12px;
-  color: var(--text-light);
-  cursor: pointer;
-  transition: color 0.15s;
-  border-left: 2px solid var(--border);
-}
-.reply-to-indicator:hover {
-  color: var(--primary);
-  border-left-color: var(--primary);
-}
-.reply-to-indicator strong {
-  color: var(--primary);
-  font-weight: 600;
-  margin-left: 2px;
-}
-
 /* ===== 回复框预览横条（简洁无背景） ===== */
 .reply-preview-bar {
   display: flex;
@@ -3153,17 +3129,6 @@ a.btn-secondary {
 .reply-preview-cancel:hover {
   border-color: var(--primary);
   color: var(--primary);
-}
-
-/* ===== 回复层次缩进（Discourse 嵌套风格） ===== */
-/* 有回复目标的回复：左侧缩进 + 保留圆角 */
-.reply-item[data-username]:has(.reply-to-indicator) {
-  margin-left: 16px;
-  padding-left: 12px;
-  border-left: 2px solid var(--border);
-}
-.reply-item[data-username]:has(.reply-to-indicator):hover {
-  border-left-color: var(--primary);
 }
 
 /* ===== 帖子详情卡片 ===== */

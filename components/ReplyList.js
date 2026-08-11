@@ -94,10 +94,13 @@ export default function ReplyList({ postId, onRefresh }) {
   // 正在回复的目标回复对象（用于显示 @用户名）
   const replyToObj = replyTo ? replies.find((x) => x.id === replyTo) : null;
 
-  // 回复折叠：默认只显示最近 5 条，更多则显示"继续此消息串"
-  const SHOW_N = 5;
+  // 回复折叠：根据视口高度动态调整可见条数（至少 3 条）
+  const [showCount, setShowCount] = useState(3);
   const [showAllReplies, setShowAllReplies] = useState(false);
-  const visibleReplies = showAllReplies ? replies : replies.slice(-SHOW_N);
+  useEffect(() => {
+    setShowCount(Math.max(3, Math.floor(window.innerHeight / 200)));
+  }, []);
+  const visibleReplies = showAllReplies ? replies : replies.slice(-showCount);
   const hiddenCount = replies.length - visibleReplies.length;
 
   return (
@@ -134,17 +137,6 @@ export default function ReplyList({ postId, onRefresh }) {
                   )}
                 </div>
                 <div className="reply-content" dangerouslySetInnerHTML={{ __html: renderMarkdown(r.content) }} />
-                {r.reply_to_username && (
-                  <div
-                    className="reply-to-indicator"
-                    onClick={() => {
-                      const target = document.querySelector(`.reply-item[data-reply-id="${r.reply_to_id}"]`);
-                      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }}
-                  >
-                    <Icon name="reply" size={11} /> 正在回复 <strong>@{r.reply_to_username}</strong>
-                  </div>
-                )}
               </div>
             );
           })
