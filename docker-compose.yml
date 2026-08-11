@@ -1,0 +1,27 @@
+version: '3'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: forumlify
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: forumlify
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app:
+    build: .
+    ports:
+      - "3003:3000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://forumlify:123456@db:5432/forumlify
+    volumes:
+      - ./uploads:/app/uploads
+
+volumes:
+  db_data:
