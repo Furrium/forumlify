@@ -7,13 +7,16 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 ENV DOCKER=1
 
+# 用 bun 装依赖（bun.lock 最新；npm 会读旧的 package-lock.json → react 18 → 构建失败）
+RUN npm i -g bun
+
 # 先装依赖（利用缓存）
-COPY package.json package-lock.json* bun.lock* ./
-RUN npm install
+COPY package.json bun.lock* package-lock.json* ./
+RUN bun install
 
 # 复制源码并构建
 COPY . .
-RUN npm run build
+RUN bun run build
 
 # ---- 运行阶段 ----
 FROM node:20-alpine AS runner

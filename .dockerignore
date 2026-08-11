@@ -1,0 +1,9 @@
+node_modules
+.next
+uploads
+.git
+*.log
+.DS_Store
+.vercel
+.wrangler
+.open-next
