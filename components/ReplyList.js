@@ -76,6 +76,21 @@ export default function ReplyList({ postId, onRefresh }) {
     }
   };
 
+  // 计算每条回复的嵌套深度（按 reply_to_username 追踪回复链）
+  const replyDepths = (() => {
+    const map = {};
+    const getDepth = (r) => {
+      if (map[r.id] !== undefined) return map[r.id];
+      if (!r.reply_to_username) { map[r.id] = 0; return 0; }
+      const parent = replies.find((x) => x.username === r.reply_to_username);
+      const d = parent ? getDepth(parent) + 1 : 0;
+      map[r.id] = d;
+      return d;
+    };
+    replies.forEach((r) => getDepth(r));
+    return map;
+  })();
+
   return (
     <>
       <div className="post-reply-count" style={{ marginTop: 20, fontSize: 14, color: '#64748b' }}>
@@ -87,8 +102,9 @@ export default function ReplyList({ postId, onRefresh }) {
         ) : (
           replies.map((r) => {
             const rTime = r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '';
+            const nestDepth = Math.min(replyDepths[r.id] || 0, 5);
             return (
-              <div key={r.id} className="reply-item" data-username={r.username}>
+              <div key={r.id} className="reply-item" data-username={r.username} style={{ marginLeft: nestDepth ? nestDepth * 18 : 0 }}>
                 <div className="reply-header">
                   <img src={r.avatar_url || avatar(r.username)} className="reply-avatar" alt="" />
                   <span

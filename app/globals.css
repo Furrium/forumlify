@@ -3165,3 +3165,8 @@ a.btn-secondary {
 .reply-item[data-username]:has(.reply-to-indicator):hover {
   border-left-color: var(--primary);
 }
+
+/* ===== 帖子详情卡片 ===== */
+.post-detail-card {
+  border-radius: var(--radius);
+}
