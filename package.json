@@ -16,12 +16,14 @@
   "dependencies": {
     "aws4fetch": "^1.0.20",
     "bcryptjs": "^3.0.3",
+    "i18next": "^26.3.6",
     "jsonwebtoken": "^9.0.2",
     "marked": "^18.0.9",
     "next": "16",
     "pg": "^8.11.3",
     "react": "19",
-    "react-dom": "19"
+    "react-dom": "19",
+    "react-i18next": "^17.0.11"
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.20.2",

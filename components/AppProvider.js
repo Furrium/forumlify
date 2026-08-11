@@ -10,11 +10,10 @@ export function useApp() {
   return useContext(AppContext);
 }
 
-export default function AppProvider({ children }) {
+export default function AppProvider({ children, cachedName = '' }) {
   const [currentUser, setCurrentUser] = useState(null);
-  // 固定初始值（SSR/客户端一致，避免 hydration mismatch 导致加载圈重启）；
-  // 缓存论坛名由 useEffect 读取，首帧显示靠内联脚本（body 首个子元素）
-  const [forumName, setForumName] = useState('Forumlify');
+  // 论坛名初始值来自 cookie（SSR 首帧即输出，SSR/客户端一致 → 无 hydration mismatch）
+  const [forumName, setForumName] = useState(cachedName || 'Forumlify');
   const [theme, setThemeState] = useState('light');
   const [view, setView] = useState('feed'); // feed | post | new | admin | settings | messages | user | custom
   const [currentPostId, setCurrentPostId] = useState(null);
@@ -23,11 +22,18 @@ export default function AppProvider({ children }) {
   const [sort, setSort] = useState('latest');
   const [refreshKey, setRefreshKey] = useState(0);
   const [ready, setReady] = useState(false); // 初始加载完成标记（控制加载页/淡入）
-  // 固定 false（避免 hydration mismatch）；有缓存时由 useEffect 立即置 true
-  const [forumNameLoaded, setForumNameLoaded] = useState(false);
+  // 有 cookie 缓存名即视为已加载（SSR/客户端一致）
+  const [forumNameLoaded, setForumNameLoaded] = useState(!!cachedName);
   const loadedRef = useRef(false);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+
+  // 论坛名写 cookie（SSR 可读 → 首帧输出，无需内联脚本注入 DOM）
+  const syncForumNameCookie = useCallback((name) => {
+    try {
+      document.cookie = 'forumlify-name=' + encodeURIComponent(name) + '; path=/; max-age=31536000';
+    } catch (e) {}
+  }, []);
 
   // 主题
   useEffect(() => {
@@ -60,12 +66,13 @@ export default function AppProvider({ children }) {
 
   // 初始化：读取缓存论坛名（立即显示），恢复登录、加载服务器论坛名
   useEffect(() => {
-    // 缓存论坛名（hydrate 后立即生效，首帧显示由内联脚本完成）
+    // 缓存论坛名（hydrate 后立即生效；SSR 首帧已由 cookie 输出）
     try {
       const cached = localStorage.getItem('forumlify-forum-name');
       if (cached) {
         setForumName(cached);
         setForumNameLoaded(true);
+        syncForumNameCookie(cached);
       }
     } catch (e) {}
 
@@ -88,6 +95,7 @@ export default function AppProvider({ children }) {
         if (s.forum_name) {
           setForumName(s.forum_name);
           localStorage.setItem('forumlify-forum-name', s.forum_name);
+          syncForumNameCookie(s.forum_name);
         }
         // 先标记论坛名已收到（加载页原地淡入名字），稍后切换主页
         setForumNameLoaded(true);
@@ -243,7 +251,8 @@ export default function AppProvider({ children }) {
     // 同步更新 <title> 元素（防止 Next.js metadata 覆盖）
     const titleEl = document.querySelector('title');
     if (titleEl) titleEl.textContent = name;
-  }, []);
+    syncForumNameCookie(name);
+  }, [syncForumNameCookie]);
 
   const value = {
     currentUser, setCurrentUser,

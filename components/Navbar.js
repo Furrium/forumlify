@@ -2,6 +2,7 @@
 
 // 导航栏：论坛名、自定义页面链接、登录/注册、私信、用户菜单、主题切换
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
 import { API } from '@/lib/api';
@@ -9,6 +10,7 @@ import { DMButton } from './chat/ChatManager';
 
 export default function Navbar({ onOpenModal }) {
   const { currentUser, forumName, theme, toggleTheme, navigate, openCustomPage, logout } = useApp();
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [customPages, setCustomPages] = useState([]);
 
@@ -77,8 +79,8 @@ export default function Navbar({ onOpenModal }) {
         <div id="userMenu">
           {!currentUser ? (
             <div id="authButtons">
-              <button className="btn-ghost" onClick={() => onOpenModal('login')}>登录</button>
-              <button className="btn-primary" onClick={() => onOpenModal('register')}>注册</button>
+              <button className="btn-ghost" onClick={() => onOpenModal('login')}>{t('nav.login')}</button>
+              <button className="btn-primary" onClick={() => onOpenModal('register')}>{t('nav.register')}</button>
             </div>
           ) : (
             <div id="userDropdown" style={{ display: 'block' }}>
@@ -91,14 +93,14 @@ export default function Navbar({ onOpenModal }) {
               {menuOpen && (
                 <div className="dropdown-menu show" onClick={(e) => e.stopPropagation()}>
                   <a href="#" onClick={openMessages}>
-                    <Icon name="message" /> 消息
+                    <Icon name="message" /> {t('nav.messages')}
                   </a>
                   <a href="#" onClick={(e) => { e.preventDefault(); goPage('settings'); }}>
-                    <Icon name="settings" /> 设置
+                    <Icon name="settings" /> {t('nav.settings')}
                   </a>
                   {currentUser.role === 'admin' && (
                     <a href="#" onClick={(e) => { e.preventDefault(); goPage('admin'); }}>
-                      <Icon name="shieldAlert" /> 管理后台
+                      <Icon name="shieldAlert" /> {t('nav.admin')}
                     </a>
                   )}
                   <hr />
@@ -110,20 +112,20 @@ export default function Navbar({ onOpenModal }) {
                       setMenuOpen(false);
                     }}
                   >
-                    <Icon name={theme === 'dark' ? 'sun' : 'moon'} /> {theme === 'dark' ? '亮色模式' : '暗色模式'}
+                    <Icon name={theme === 'dark' ? 'sun' : 'moon'} /> {theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode')}
                   </a>
                   <hr />
                   <a
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      if (confirm('确定要退出吗？')) {
+                      if (confirm(t('nav.logoutConfirm'))) {
                         setMenuOpen(false);
                         logout();
                       }
                     }}
                   >
-                    <Icon name="logout" /> 退出
+                    <Icon name="logout" /> {t('nav.logout')}
                   </a>
                 </div>
               )}

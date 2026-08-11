@@ -1,7 +1,8 @@
 'use client';
 
-// 发布新帖页
+// 发帖页
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { API, generateCaptcha, uploadImage } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
@@ -10,6 +11,7 @@ import CaptchaImage from './CaptchaImage';
 
 export default function NewPost() {
   const { currentUser, navigate, refresh } = useApp();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -85,19 +87,19 @@ export default function NewPost() {
   return (
     <div className="page-slide active">
       <div className="page-header" style={{ maxWidth: 600, margin: '0 auto', width: '100%' }}>
-        <h2><Icon name="plus" size={20} /> 发布新帖</h2>
+        <h2><Icon name="plus" size={20} /> {t('newPost.title')}</h2>
       </div>
       <div style={{ maxWidth: 600, margin: '0 auto', width: '100%' }}>
         <input
           type="text"
-          placeholder="标题"
+          placeholder={t('newPost.title')}
           style={{ width: '100%', padding: '10px 14px', border: '1.5px solid var(--border)', borderRadius: 6, fontSize: 15, fontWeight: 600, marginBottom: 12, fontFamily: 'inherit', background: 'var(--bg)', color: 'var(--text)' }}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
         <textarea
           rows={6}
-          placeholder="说点什么..."
+          placeholder={t('newPost.content')}
           style={{ width: '100%', padding: 12, border: '1.5px solid var(--border)', borderRadius: 6, fontSize: 15, fontFamily: 'inherit', resize: 'vertical', background: 'var(--bg)', color: 'var(--text)' }}
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -116,7 +118,7 @@ export default function NewPost() {
           onDrop={(e) => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files) handleFiles(Array.from(e.dataTransfer.files)); }}
         >
           <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-            {uploading ? '上传中...' : (dragOver ? '松开上传' : '📷 点击或拖拽上传图片')}
+            {uploading ? t('newPost.uploading') : (dragOver ? t('newPost.drop') : '📷 ' + t('newPost.dropHint'))}
           </div>
         </div>
         <input
@@ -132,18 +134,18 @@ export default function NewPost() {
           {captcha ? (
             <CaptchaImage captcha={captcha} onRefresh={() => { setCaptcha(generateCaptcha()); setCaptchaInput(''); }} />
           ) : (
-            <span style={{ color: 'var(--text-light)' }}>验证码加载中...</span>
+            <span style={{ color: 'var(--text-light)' }}>{t('newPost.captchaLoading')}</span>
           )}
           <input
             type="text"
-            placeholder="答案"
-            style={{ width: 80, padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 4 }}
+            placeholder={t('newPost.answer')}
+            style={{ width: 80, padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 4, background: 'var(--bg)', color: 'var(--text)', outline: 'none' }}
             value={captchaInput}
             onChange={(e) => setCaptchaInput(e.target.value)}
           />
         </div>
         <button className="btn-primary" style={{ padding: '10px 32px', fontSize: 15 }} onClick={handleSubmit}>
-          {uploading ? '上传中...' : '发布帖子'}
+          {uploading ? t('newPost.uploading') : t('newPost.publish')}
         </button>
       </div>
     </div>

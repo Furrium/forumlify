@@ -3,6 +3,7 @@
 // 私信 - 会话列表
 import { useEffect, useState } from 'react';
 import { API } from '@/lib/api';
+import { Icon } from '../Icons';
 
 function avatar(username) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || 'U') +
@@ -24,7 +25,7 @@ export default function ConversationList({ onOpenChat, onClose }) {
     <div className="modal active" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal-content" style={{ display: 'flex', flexDirection: 'column', height: '70vh', maxHeight: '70vh', padding: 0, overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
-          <h2 style={{ fontSize: 18, margin: 0 }}>✉️ 私信</h2>
+          <h2 style={{ fontSize: 18, margin: 0 }}><Icon name="message" size={18} style={{ verticalAlign: -3, marginRight: 6 }} /> 私信</h2>
           <span className="close" onClick={onClose} style={{ fontSize: 24, cursor: 'pointer', color: 'var(--text-light)', lineHeight: 1 }}>&times;</span>
         </div>
         <div id="messageListContent" style={{ flex: 1, overflowY: 'auto', padding: 0 }}>

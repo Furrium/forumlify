@@ -4,18 +4,20 @@
 // - 三个面板纵向排列在滚动容器里，scroll-snap 每次滑动对齐一个面板
 // - 点侧边栏导航 → 平滑滚动到对应面板；滚动结束 → 自动更新导航高亮
 import { useState, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Icon } from './Icons';
 import SettingsProfile from './SettingsProfile';
 import AccountSecurity from './AccountSecurity';
 import RecoveryCodes from './RecoveryCodes';
 
 const NAV = [
-  { key: 'profile', label: '个人资料', icon: 'user' },
-  { key: 'security', label: '安全设置', icon: 'shieldAlert' },
-  { key: 'recovery', label: '恢复码', icon: 'lock' },
+  { key: 'profile', labelKey: 'settings.profile', icon: 'user' },
+  { key: 'security', labelKey: 'settings.security', icon: 'shieldAlert' },
+  { key: 'recovery', labelKey: 'settings.recovery', icon: 'lock' },
 ];
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState('profile');
   const scrollRef = useRef(null);
   const scrollTicking = useRef(false);
@@ -46,7 +48,7 @@ export default function SettingsPage() {
   return (
     <div className="page-slide active">
       <div className="page-header" style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
-        <h2><Icon name="settings" size={20} /> 设置</h2>
+        <h2><Icon name="settings" size={20} /> {t('settings.title')}</h2>
       </div>
       <div className="settings-layout" style={{ maxWidth: 1200, margin: '0 auto', width: '100%', display: 'flex', gap: 28, alignItems: 'flex-start' }}>
         <aside className="settings-sidebar" style={{ width: 200, flexShrink: 0 }}>
@@ -60,7 +62,7 @@ export default function SettingsPage() {
                 onClick={(e) => goTo(n.key, e)}
               >
                 <span className="nav-icon"><Icon name={n.icon} size={18} /></span>
-                {n.label}
+                {t(n.labelKey)}
               </a>
             ))}
           </nav>
