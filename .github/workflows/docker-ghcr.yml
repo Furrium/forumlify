@@ -77,24 +77,3 @@ jobs:
           cache-from: type=gha,scope=arm64
           cache-to: type=gha,mode=max,scope=arm64
 
-  win64:
-    runs-on: windows-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      # windows-latest runner 原生以 Windows 容器模式运行 Docker Engine
-      - name: Build Windows image (amd64)
-        shell: pwsh
-        run: |
-          docker build -f Dockerfile.windows -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:next-windows .
-      - name: Push Windows image
-        shell: pwsh
-        run: |
-          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:next-windows
