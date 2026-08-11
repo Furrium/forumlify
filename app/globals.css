@@ -3074,16 +3074,27 @@ a.btn-secondary {
   }
 }
 
-/* ===== 回复操作按钮：悬停显示 ===== */
+/* ===== 回复操作按钮（邮件回复风格） ===== */
 .reply-btn {
-  opacity: 0;
-  transition: opacity 0.15s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  color: var(--text-light);
+  opacity: 0.5;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
 }
-.reply-item:hover .reply-btn,
-.reply-item:focus-within .reply-btn {
+.reply-btn:hover {
   opacity: 1;
+  background: var(--glass-bg);
+  color: var(--primary);
 }
-/* 触屏设备（无 hover）：始终显示 */
+/* 触屏设备：始终全透明 */
 @media (hover: none) {
-  .reply-btn { opacity: 1; }
+  .reply-btn { opacity: 0.8; }
 }

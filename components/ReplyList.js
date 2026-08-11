@@ -99,8 +99,8 @@ export default function ReplyList({ postId, onRefresh }) {
                     {r.username || '匿名用户'}
                   </span>
                   <span className="reply-time">{rTime}</span>
-                  <button className="btn-sm btn-secondary reply-btn" onClick={() => startReply(r.username)}>
-                    <Icon name="reply" size={12} /> 回复
+                  <button className="reply-btn" onClick={() => startReply(r.username)} title="回复">
+                    <Icon name="reply" size={13} />
                   </button>
                   {currentUser && (currentUser.id === r.user_id || currentUser.role === 'admin') && (
                     <button className="btn-sm btn-danger reply-delete-btn" onClick={() => handleDelete(r.id)}>
