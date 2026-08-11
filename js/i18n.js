@@ -391,16 +391,6 @@ function applyTranslation() {
 // ============================================================
 //  初始化
 // ============================================================
-
 document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(function() {
-    // 先加载论坛名称
-    if (typeof loadForumName === 'function') {
-      loadForumName();
-    }
-    // 再翻译
-    applyTranslation();
-    // 显示页面
-    document.body.classList.add('i18n-ready');
-  }, 200);
+  setTimeout(applyTranslation, 200);
 });
