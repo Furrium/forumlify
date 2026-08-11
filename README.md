@@ -25,6 +25,12 @@ docker-compose up -d
 
 应用默认运行在 `http://localhost:3000`。
 
+Docker Compose 会等待 PostgreSQL 就绪后再启动应用。默认数据库密码仅适合本地开发；部署到共享或公网环境前，请设置一个新密码：
+
+```bash
+POSTGRES_PASSWORD='替换为安全密码' docker-compose up -d
+```
+
 ---
 
 > 如需部署 Next.js 版本，请前往 [forumlify/tree/next](https://github.com/furrium/forumlify/tree/next)。
@@ -62,7 +68,7 @@ psql -U forumlify -d forumlify -f schema.sql
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `DATABASE_URL` | `postgresql://forumlify:123456@localhost:5432/forumlify` | PostgreSQL 连接串 |
+| `DATABASE_URL` | `postgresql://forumlify:123456@localhost:5432/forumlify` | PostgreSQL 连接串，本地默认密码为 `123456` |
 | `PORT` | `3000` | HTTP 监听端口 |
 | `JWT_SECRET` | `forumlify-secret-key-change-me-in-production` | JWT 签名密钥，**生产环境务必修改** |
 
