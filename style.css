@@ -2399,3 +2399,74 @@ a.btn-secondary {
   background: rgba(255, 255, 255, 0.04) !important;
   border-color: var(--glass-border) !important;
 }
+/* ============================================================
+   💬 Toast 气泡提示
+   ============================================================ */
+
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 24px;
+  box-shadow: var(--glass-shadow);
+  color: var(--glass-text);
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 99999;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+  max-width: 90%;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast.success {
+  border-color: #22c55e;
+}
+.toast.success .toast-icon svg {
+  stroke: #22c55e;
+}
+
+.toast.error {
+  border-color: #ef4444;
+}
+.toast.error .toast-icon svg {
+  stroke: #ef4444;
+}
+
+.toast.warning {
+  border-color: #f59e0b;
+}
+.toast.warning .toast-icon svg {
+  stroke: #f59e0b;
+}
+
+.toast-icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.toast-icon svg {
+  display: block;
+}
+
+/* 暗色模式适配 */
+[data-theme="dark"] .toast {
+  background: rgba(30, 30, 50, 0.85);
+  border-color: var(--glass-border);
+}
