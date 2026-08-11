@@ -1466,6 +1466,7 @@ html.home-view-transition.returning-home::view-transition-new(post-body) {
   align-items: center;
   gap: 10px;
   margin-bottom: 6px;
+  flex-wrap: wrap;
 }
 .reply-avatar {
   width: 28px;
@@ -3171,20 +3172,4 @@ a.btn-secondary {
   border-radius: var(--radius);
 }
 
-/* ===== 窄屏：回复按钮紧凑排列（防溢出边框） ===== */
-@media (max-width: 480px) {
-  .reply-header {
-    flex-wrap: wrap;
-    row-gap: 4px;
-  }
-  .reply-delete-btn {
-    padding: 2px 6px !important;
-    font-size: 11px !important;
-  }
-  .reply-btn {
-    padding: 2px 4px !important;
-  }
-  .reply-time {
-    font-size: 11px;
-  }
-}
+
