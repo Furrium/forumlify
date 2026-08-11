@@ -22,7 +22,7 @@ Forumlify 提供了两个不同架构的分支版本，以满足不同部署环�
 
 你可以根据以下维度选择最适合你当前需求的版本：
 
-| 对比维度 | Forumlify (Lite 版 / `main`) | Forumlify-Next (Next.js 版 / `next`) | 选择建议 |
+| 对比维度 | Forumlify (Lite 版 / `lite`) | Forumlify-Next (Next.js 版 / `next`) | 选择建议 |
 | :--- | :--- | :--- | :--- |
 | **上手速度与部署** | **极快**（零编译步骤，直接 `node server.js` 或 Docker 启动） | **中等**（需要经过 `next build` 编译打包，或配置 OpenNext） | 希望 1 分钟快速跑起来选 `main` |
 | **VPS 最低配置要求** | **1 核 512MB RAM**（资源占用极低，适合低配小鸡） | **1 核 1GB RAM+**（主要在打包构建时需要较多内存） | 内存有限或低配 VPS 推荐 `main` |
