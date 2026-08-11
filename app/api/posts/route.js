@@ -19,7 +19,7 @@ export async function GET(req) {
     let where = '';
     if (userId) {
       where = ' WHERE p.user_id = $1';
-      params.push(userId);
+      (await params).push(userId);
     }
 
     const countResult = await pool.query(`SELECT COUNT(*) as total FROM posts p${where}`, params);
@@ -35,7 +35,7 @@ export async function GET(req) {
       JOIN users u ON p.user_id = u.id
       ${where}
       ORDER BY ${sort} DESC
-      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+      LIMIT $${(await params).length + 1} OFFSET $${(await params).length + 2}
     `, [...params, limit, offset]);
 
     return Response.json({

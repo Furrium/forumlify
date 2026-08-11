@@ -9,14 +9,14 @@ export async function PUT(req, { params }) {
   if (!user) {
     return Response.json({ error: '请先登录' }, { status: 401 });
   }
-  if (!UUID_RE.test(params.id)) {
+  if (!UUID_RE.test((await params).id)) {
     return Response.json({ error: '服务器错误' }, { status: 500 });
   }
   try {
     await pool.query(`
       UPDATE messages SET is_read = true
       WHERE id = $1 AND sender_id != $2
-    `, [params.id, user.id]);
+    `, [(await params).id, user.id]);
     return Response.json({ success: true });
   } catch {
     return Response.json({ error: '服务器错误' }, { status: 500 });

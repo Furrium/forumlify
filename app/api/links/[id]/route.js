@@ -10,7 +10,7 @@ export async function DELETE(req, { params }) {
   const forbidden = await requireAdmin(user);
   if (forbidden) return forbidden;
   try {
-    await pool.query('DELETE FROM friendly_links WHERE id = $1', [params.id]);
+    await pool.query('DELETE FROM friendly_links WHERE id = $1', [(await params).id]);
     return Response.json({ success: true });
   } catch {
     return Response.json({ error: '删除失败，请稍后重试' }, { status: 500 });

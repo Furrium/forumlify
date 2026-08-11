@@ -5,7 +5,7 @@ import { getUser, requireAdmin } from '@/lib/auth';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function PUT(req, { params }) {
-  if (!UUID_RE.test(params.id)) {
+  if (!UUID_RE.test((await params).id)) {
     return Response.json({ error: '操作失败，请稍后重试' }, { status: 404 });
   }
   const user = getUser(req);
@@ -24,7 +24,7 @@ export async function PUT(req, { params }) {
       `UPDATE reports
        SET status = $1, handled_at = NOW(), handler_id = $2, handler_note = $3
        WHERE id = $4`,
-      [status, user.id, note || '', params.id]
+      [status, user.id, note || '', (await params).id]
     );
     return Response.json({ success: true });
   } catch {

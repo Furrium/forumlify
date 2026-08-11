@@ -15,7 +15,7 @@ const MIME = {
 };
 
 export async function GET(req, { params }) {
-  const name = params.name;
+  const name = (await params).name;
   // 防止路径穿越
   if (!/^[\w-]+\.\w+$/.test(name)) {
     return new Response('Not Found', { status: 404 });

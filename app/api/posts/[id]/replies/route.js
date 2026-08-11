@@ -10,7 +10,7 @@ export async function GET(req, { params }) {
        JOIN users u ON r.user_id = u.id
        WHERE r.post_id = $1
        ORDER BY r.created_at ASC`,
-      [params.id]
+      [(await params).id]
     );
     return Response.json(r.rows);
   } catch {
@@ -32,9 +32,9 @@ export async function POST(req, { params }) {
       `INSERT INTO replies (post_id, user_id, content)
        VALUES ($1, $2, $3)
        RETURNING *`,
-      [params.id, user.id, content]
+      [(await params).id, user.id, content]
     );
-    await pool.query('UPDATE posts SET updated_at = NOW() WHERE id = $1', [params.id]);
+    await pool.query('UPDATE posts SET updated_at = NOW() WHERE id = $1', [(await params).id]);
     return Response.json(r.rows[0]);
   } catch {
     return Response.json({ error: '回复失败，请稍后重试' }, { status: 500 });
