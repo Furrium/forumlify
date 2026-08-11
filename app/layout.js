@@ -2,6 +2,7 @@
 import './globals.css';
 import CustomCssLoader from '@/components/CustomCssLoader';
 import { ToastProvider } from '@/components/Toast';
+import I18nInit from '@/components/I18nInit';
 
 export const metadata = {
   // 初始标题由客户端 AppProvider 接管（加载时轮换 Loading.，完成后显示论坛名）
@@ -24,17 +25,11 @@ export default function RootLayout({ children }) {
             document.documentElement.setAttribute('data-theme', t);
           } catch (e) {}
           try { var n = localStorage.getItem('forumlify-forum-name'); if (n) document.title = n; } catch (e) {}
-          document.addEventListener('DOMContentLoaded', function () {
-            try {
-              var n2 = localStorage.getItem('forumlify-forum-name');
-              if (n2) {
-                var el = document.getElementById('loadingTitle');
-                if (el && !el.textContent) { el.textContent = n2; document.title = n2; }
-              }
-            } catch (e) {}
-          });
+          // 加载页论坛名不再由脚本注入 DOM——由 Server Component 读 cookie 首帧输出，
+          // React 状态渲染，SSR/客户端一致，无 hydration mismatch
         })();` }} />
         <ToastProvider>
+          <I18nInit />
           <CustomCssLoader />
           {children}
         </ToastProvider>

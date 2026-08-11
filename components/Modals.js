@@ -2,6 +2,7 @@
 
 // 登录/注册/举报 模态框
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { API, generateCaptcha } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
@@ -9,6 +10,7 @@ import CaptchaImage from './CaptchaImage';
 
 export default function Modals({ modal, onClose, reportPostId }) {
   const { login, register, currentUser, refresh } = useApp();
+  const { t } = useTranslation();
 
   // 登录表单
   const [loginEmail, setLoginEmail] = useState('');
@@ -90,11 +92,11 @@ export default function Modals({ modal, onClose, reportPostId }) {
         <div className="modal active" onClick={close}>
           <div className="modal-content">
             <span className="close" onClick={onClose}><Icon name="close" size={20} /></span>
-            <h2 style={{ marginBottom: 16 }}>登录</h2>
-            <input type="email" placeholder="邮箱" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
-            <input type="password" placeholder="密码" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)}
+            <h2 style={{ marginBottom: 16 }}>{t('auth.login')}</h2>
+            <input type="email" placeholder={t('auth.email')} value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
+            <input type="password" placeholder={t('auth.password')} value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }} />
-            <button className="btn-primary" style={{ width: '100%' }} onClick={handleLogin}>登录</button>
+            <button className="btn-primary" style={{ width: '100%' }} onClick={handleLogin}>{t('auth.login')}</button>
           </div>
         </div>
       )}
@@ -103,19 +105,19 @@ export default function Modals({ modal, onClose, reportPostId }) {
         <div className="modal active" onClick={close}>
           <div className="modal-content">
             <span className="close" onClick={onClose}><Icon name="close" size={20} /></span>
-            <h2 style={{ marginBottom: 16 }}>注册</h2>
-            <input type="text" placeholder="用户名" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} />
-            <input type="email" placeholder="邮箱" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
-            <input type="password" placeholder="密码（至少6位）" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} />
+            <h2 style={{ marginBottom: 16 }}>{t('auth.register')}</h2>
+            <input type="text" placeholder={t('auth.username')} value={regUsername} onChange={(e) => setRegUsername(e.target.value)} />
+            <input type="email" placeholder={t('auth.email')} value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
+            <input type="password" placeholder={t('auth.passwordHint')} value={regPassword} onChange={(e) => setRegPassword(e.target.value)} />
             <div className="captcha-row" style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '12px 0' }}>
               {regCaptcha ? (
                 <CaptchaImage captcha={regCaptcha} onRefresh={() => { setRegCaptcha(generateCaptcha()); setRegCaptchaInput(''); }} />
               ) : (
-                <span style={{ color: 'var(--text-light)' }}>验证码加载中...</span>
+                <span style={{ color: 'var(--text-light)' }}>{t('newPost.captchaLoading')}</span>
               )}
               <input type="text" placeholder="答案" style={{ width: 80, background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)', padding: '8px 12px', borderRadius: 4 }} value={regCaptchaInput} onChange={(e) => setRegCaptchaInput(e.target.value)} />
             </div>
-            <button className="btn-primary" style={{ width: '100%' }} onClick={handleRegister}>注册</button>
+            <button className="btn-primary" style={{ width: '100%' }} onClick={handleRegister}>{t('auth.register')}</button>
           </div>
         </div>
       )}
@@ -124,20 +126,20 @@ export default function Modals({ modal, onClose, reportPostId }) {
         <div className="modal active" onClick={close}>
           <div className="modal-content">
             <span className="close" onClick={onClose}><Icon name="close" size={20} /></span>
-            <h2 style={{ marginBottom: 16 }}><Icon name="shieldAlert" size={20} /> 举报帖子</h2>
-            <p style={{ fontSize: 14, color: '#64748b', marginBottom: 12 }}>请选择举报原因：</p>
+            <h2 style={{ marginBottom: 16 }}><Icon name="shieldAlert" size={20} /> {t('post.reportTitle')}</h2>
+            <p style={{ fontSize: 14, color: '#64748b', marginBottom: 12 }}>{t('post.reportReason')}</p>
             <select
               style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 4, marginBottom: 16, background: 'var(--bg)', color: 'var(--text)' }}
               value={reportReason}
               onChange={(e) => setReportReason(e.target.value)}
             >
-              <option value="spam">垃圾广告</option>
-              <option value="abuse">人身攻击</option>
-              <option value="illegal">违法内容</option>
-              <option value="nsfw">不适当内容</option>
-              <option value="other">其他</option>
+              <option value="spam">{t('report.spam')}</option>
+              <option value="abuse">{t('report.abuse')}</option>
+              <option value="illegal">{t('report.illegal')}</option>
+              <option value="nsfw">{t('report.nsfw')}</option>
+              <option value="other">{t('report.other')}</option>
             </select>
-            <button className="btn-primary" style={{ width: '100%' }} onClick={handleReport}>提交举报</button>
+            <button className="btn-primary" style={{ width: '100%' }} onClick={handleReport}>{t('post.submitReport')}</button>
           </div>
         </div>
       )}

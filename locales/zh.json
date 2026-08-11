@@ -1,0 +1,151 @@
+{
+  "appName": "Forumlify",
+  "nav": {
+    "home": "首页",
+    "messages": "消息",
+    "settings": "设置",
+    "admin": "管理后台",
+    "login": "登录",
+    "register": "注册",
+    "logout": "退出",
+    "darkMode": "暗色模式",
+    "lightMode": "亮色模式",
+    "logoutConfirm": "确定要退出吗？"
+  },
+  "feed": {
+    "latest": "最新发布",
+    "hot": "最新回复",
+    "newPost": "发布新帖",
+    "loading": "加载中...",
+    "empty": "✨ 还没有帖子，快来发布第一条吧！",
+    "pinned": "📌 置顶",
+    "deleted": "（已编辑）",
+    "report": "举报",
+    "delete": "删除",
+    "confirmDelete": "确定要删除这条帖子吗？",
+    "deleteFailed": "删除失败：{{msg}}",
+    "noTitle": "无标题",
+    "anonymous": "匿名用户"
+  },
+  "post": {
+    "title": "帖子详情",
+    "back": "← 返回",
+    "edit": "编辑",
+    "save": "保存",
+    "cancel": "取消",
+    "editFailed": "加载失败：{{msg}}",
+    "contentRequired": "请填写内容",
+    "reply": "回复",
+    "replyCount": "{{count}} 条回复",
+    "reportReason": "举报原因",
+    "confirmDelete": "确定要删除这条帖子吗？",
+    "reportTitle": "举报帖子",
+    "submitReport": "提交举报"
+  },
+  "newPost": {
+    "title": "标题",
+    "content": "说点什么...",
+    "publish": "发布帖子",
+    "uploading": "上传中...",
+    "pleaseLogin": "请先登录",
+    "captchaError": "验证码错误，请重新计算",
+    "publishSuccess": "发布成功",
+    "publishFailed": "发布失败：{{msg}}",
+    "answer": "答案",
+    "captchaLoading": "验证码加载中...",
+    "drop": "松开上传",
+    "dropHint": "点击或拖拽上传图片"
+  },
+  "reply": {
+    "submit": "提交回复",
+    "placeholder": "写下你的回复...",
+    "empty": "还没有回复，快来抢沙发吧 🛋️",
+    "replyFailed": "回复失败：{{msg}}",
+    "delete": "删除",
+    "confirmDelete": "确定要删除这条回复吗？",
+    "deleteFailed": "删除失败：{{msg}}"
+  },
+  "auth": {
+    "email": "邮箱",
+    "password": "密码",
+    "username": "用户名",
+    "passwordHint": "密码（至少6位）",
+    "forgotPassword": "忘记密码？",
+    "captchaError": "验证码错误，请重新计算",
+    "registerSuccess": "🎉 注册成功",
+    "loginSuccess": "登录成功",
+    "logoutSuccess": "已退出登录",
+    "login": "登录",
+    "register": "注册"
+  },
+  "settings": {
+    "title": "设置",
+    "profile": "个人资料",
+    "security": "安全设置",
+    "recovery": "恢复码",
+    "username": "用户名",
+    "bio": "个人简介",
+    "signature": "个性签名",
+    "save": "保存设置",
+    "saved": "保存成功！",
+    "saveFailed": "保存失败：{{msg}}",
+    "usernameRequired": "用户名不能为空",
+    "pleaseLogin": "请先登录"
+  },
+  "user": {
+    "title": "用户主页",
+    "bioEmpty": "这个人很懒，什么都没写",
+    "sendMessage": "发私信",
+    "joined": "📅 加入于 {{date}}",
+    "posts": "📝 发了 {{count}} 个帖子",
+    "admin": "🛡️ 管理员",
+    "noPosts": "还没有发帖",
+    "notFound": "用户不存在",
+    "loading": "加载中..."
+  },
+  "stats": {
+    "topics": "主题",
+    "posts": "帖子",
+    "users": "用户",
+    "links": "友情链接"
+  },
+  "loading": "加载中...",
+  "common": {
+    "confirm": "确定",
+    "cancel": "取消",
+    "close": "关闭"
+  },
+  "report": {
+    "spam": "垃圾广告",
+    "abuse": "人身攻击",
+    "illegal": "违法内容",
+    "nsfw": "不适当内容",
+    "other": "其他"
+  },
+  "security": {
+    "title": "账户安全",
+    "currentPw": "当前密码",
+    "newPw": "新密码",
+    "changePw": "修改密码",
+    "currentPwVerify": "当前密码（验证身份）",
+    "newEmail": "新邮箱",
+    "changeEmail": "修改邮箱",
+    "fillAll": "请填写完整信息",
+    "pwMin": "新密码至少6位",
+    "pwChanged": "✅ 密码修改成功",
+    "emailChanged": "✅ 邮箱修改成功"
+  },
+  "recovery": {
+    "title": "恢复码",
+    "desc": "用于忘记密码时重置账户。每个恢复码只能使用一次。",
+    "view": "查看恢复码",
+    "regenerate": "重新生成",
+    "remaining": "剩余 {{count}} 个可用恢复码",
+    "confirmRegenerate": "重新生成将使所有旧恢复码失效，确定继续吗？",
+    "genFailed": "生成失败：{{msg}}",
+    "fetchFailed": "获取失败：{{msg}}",
+    "newCodes": "🆕 新恢复码",
+    "saveWarning": "⚠️ 请妥善保存这些恢复码，关闭窗口后无法再次查看。",
+    "saved": "我已保存"
+  }
+}

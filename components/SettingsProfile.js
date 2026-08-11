@@ -1,12 +1,15 @@
 'use client';
 
-// 设置 - 个人资料（头像 + 用户名/简介/签名）
+// 设置 - 个人资料（头像 + 用户名/简介/签名 + 语言）
 import { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { API, uploadImage } from '@/lib/api';
 import { useApp } from './AppProvider';
+import { setAppLanguage } from '@/lib/i18n';
 
 export default function SettingsProfile() {
   const { currentUser, setCurrentUser } = useApp();
+  const { t, i18n } = useTranslation();
   const [username, setUsername] = useState(currentUser?.username || '');
   const [bio, setBio] = useState(currentUser?.bio || '');
   const [signature, setSignature] = useState(currentUser?.signature || '');
@@ -81,6 +84,27 @@ export default function SettingsProfile() {
           <textarea rows={2} value={signature} placeholder="签名..." style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 14, background: 'var(--bg)', color: 'var(--text)', resize: 'vertical', fontFamily: 'inherit' }} onChange={(e) => setSignature(e.target.value)} />
         </div>
         <button className="btn-primary" style={{ width: '100%', padding: 10 }} onClick={handleSave}>保存设置</button>
+      </div>
+
+      {/* 语言设置 */}
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 20, marginTop: 16 }}>
+        <label style={{ fontWeight: 600, fontSize: 14, display: 'block', marginBottom: 8 }}>{t('settings.language')}</label>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            className={'btn' + (i18n.language === 'zh' ? ' btn-primary' : '')}
+            style={{ padding: '8px 20px', borderRadius: 6, cursor: 'pointer', border: '1px solid var(--border)', background: i18n.language === 'zh' ? 'var(--primary)' : 'transparent', color: i18n.language === 'zh' ? '#fff' : 'var(--text)' }}
+            onClick={() => setAppLanguage('zh')}
+          >
+            {t('settings.languageZh')}
+          </button>
+          <button
+            className={'btn' + (i18n.language === 'en' ? ' btn-primary' : '')}
+            style={{ padding: '8px 20px', borderRadius: 6, cursor: 'pointer', border: '1px solid var(--border)', background: i18n.language === 'en' ? 'var(--primary)' : 'transparent', color: i18n.language === 'en' ? '#fff' : 'var(--text)' }}
+            onClick={() => setAppLanguage('en')}
+          >
+            {t('settings.languageEn')}
+          </button>
+        </div>
       </div>
     </div>
   );

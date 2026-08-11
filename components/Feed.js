@@ -2,6 +2,7 @@
 
 // 信息流：帖子列表 + 排序 tab + 发布新帖按钮
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { API } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
@@ -15,6 +16,7 @@ function avatar(username) {
 
 export default function Feed({ onOpenModal, onReport }) {
   const { currentUser, sort, setSort, openPost, openUser, navigate, refreshKey } = useApp();
+  const { t } = useTranslation();
   const [posts, setPosts] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -57,12 +59,12 @@ export default function Feed({ onOpenModal, onReport }) {
   useEffect(() => { setPage(1); }, [sort]);
 
   const handleDelete = async (postId) => {
-    if (!confirm('确定要删除这条帖子吗？')) return;
+    if (!confirm(t('feed.confirmDelete'))) return;
     try {
       await API.deletePost(postId);
       load(page);
     } catch (err) {
-      alert('删除失败：' + err.message);
+      alert(t('feed.deleteFailed', { msg: err.message }));
     }
   };
 
@@ -70,26 +72,26 @@ export default function Feed({ onOpenModal, onReport }) {
     <main id="feed">
       <div className="feed-header">
         <div className="feed-header-left">
-          <button className={'tab' + (sort === 'latest' ? ' active' : '')} onClick={() => setSort('latest')}>最新发布</button>
-          <button className={'tab' + (sort === 'hot' ? ' active' : '')} onClick={() => setSort('hot')}>最新回复</button>
+          <button className={'tab' + (sort === 'latest' ? ' active' : '')} onClick={() => setSort('latest')}>{t('feed.latest')}</button>
+          <button className={'tab' + (sort === 'hot' ? ' active' : '')} onClick={() => setSort('hot')}>{t('feed.hot')}</button>
         </div>
         <button
           className="btn-primary fab-btn"
           onClick={() => {
-            if (!currentUser) { alert('请先登录'); return; }
+            if (!currentUser) { alert(t('newPost.pleaseLogin')); return; }
             navigate('new');
           }}
         >
-          <Icon name="plus" /> 发布新帖
+          <Icon name="plus" /> {t('feed.newPost')}
         </button>
       </div>
       <div id="postList" ref={postListRef}>
         {posts === null ? (
-          <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}><span className="spinner-sm" />加载中...</div>
+          <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}><span className="spinner-sm" />{t('feed.loading')}</div>
         ) : error ? (
-          <div style={{ textAlign: 'center', color: '#ef4444', padding: '40px 0' }}>加载失败：{error}</div>
+          <div style={{ textAlign: 'center', color: '#ef4444', padding: '40px 0' }}>{t('feed.loadFailed', { msg: error })}</div>
         ) : posts.length === 0 ? (
-          <div style={{ textAlign: 'center', color: '#94a3b8', padding: '60px 0' }}>✨ 还没有帖子，快来发布第一条吧！</div>
+          <div style={{ textAlign: 'center', color: '#94a3b8', padding: '60px 0' }}>{t('feed.empty')}</div>
         ) : (
           posts.map((p) => {
             const time = p.created_at ? new Date(p.created_at).toLocaleString('zh-CN') : '';
@@ -97,7 +99,7 @@ export default function Feed({ onOpenModal, onReport }) {
               <div key={p.id} className="post-card" style={{ cursor: 'pointer' }}
                 onClick={() => openPost(p.id)}>
                 {p.is_pinned && (
-                  <div style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600, marginBottom: 4 }}>📌 置顶</div>
+                  <div style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600, marginBottom: 4 }}>{t('feed.pinned')}</div>
                 )}
                 <div className="post-header">
                   <img src={p.avatar_url || avatar(p.username)} className="post-avatar" alt="" />
@@ -106,14 +108,14 @@ export default function Feed({ onOpenModal, onReport }) {
                     style={{ cursor: 'pointer', color: 'var(--primary)' }}
                     onClick={(e) => { e.stopPropagation(); openUser(p.username); }}
                   >
-                    {p.username || '匿名用户'}
+                    {p.username || t('feed.anonymous')}
                   </span>
                   <span className="post-time">{time}</span>
                   {p.edited_at && (
-                    <span style={{ fontSize: 11, color: 'var(--text-light)', marginLeft: 6 }}>（已编辑）</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-light)', marginLeft: 6 }}>{t('feed.deleted')}</span>
                   )}
                 </div>
-                <div className="post-title">{p.title || '无标题'}</div>
+                <div className="post-title">{p.title || t('feed.noTitle')}</div>
                 <div className="post-content" dangerouslySetInnerHTML={{ __html: renderMarkdown(p.content) }} />
                 {p.images && p.images.length > 0 && (
                   <div className="post-images">
@@ -128,17 +130,17 @@ export default function Feed({ onOpenModal, onReport }) {
                   </span>
                   <button className="action-report" onClick={(e) => {
                     e.stopPropagation();
-                    if (!currentUser) { alert('请先登录'); return; }
+                    if (!currentUser) { alert(t('newPost.pleaseLogin')); return; }
                     onReport(p.id);
                   }}>
-                    <Icon name="flag" size={14} /> 举报
+                    <Icon name="flag" size={14} /> {t('feed.report')}
                   </button>
                   {currentUser && (currentUser.id === p.user_id || currentUser.role === 'admin') && (
                     <button className="action-delete" onClick={(e) => {
                       e.stopPropagation();
                       handleDelete(p.id);
                     }}>
-                      <Icon name="trash" size={14} /> 删除
+                      <Icon name="trash" size={14} /> {t('feed.delete')}
                     </button>
                   )}
                 </div>
