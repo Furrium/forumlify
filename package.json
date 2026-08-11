@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.20.2",
+    "puppeteer-core": "^25.5.0",
     "wrangler": "^4.120.0"
   }
 }
