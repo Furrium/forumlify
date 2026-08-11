@@ -38,18 +38,18 @@ function renderFeed() {
       if (p.images && p.images.length > 0) {
         imagesHtml = '<div class="post-images">';
         p.images.forEach(img => {
-          imagesHtml += '<img src="' + img + '" class="post-image" onclick="openImageViewer(this.src)" style="cursor:pointer;" />';
+          imagesHtml += '<img src="' + escapeHTML(safeURL(img, { image: true })) + '" class="post-image" style="cursor:pointer;" />';
         });
         imagesHtml += '</div>';
       }
       const replyCount = p.reply_count || 0;
 
-      const renderedContent = marked ? marked.parse(p.content || '') : (p.content || '').replace(/\n/g, '<br>');
+      const renderedContent = renderMarkdown(p.content || '');
 
       // 签名渲染
       let signatureHtml = '';
       if (p.signature) {
-        const sigContent = marked ? marked.parse(p.signature) : p.signature;
+        const sigContent = renderMarkdown(p.signature);
         signatureHtml = `
           <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border-light);font-size:12px;color:var(--text-secondary);">
             ${sigContent}
@@ -61,12 +61,12 @@ function renderFeed() {
         <div class="post-card" data-postid="${p.id}" style="cursor:pointer;">
           ${p.is_pinned ? '<div style="font-size:12px;color:var(--primary);font-weight:600;margin-bottom:4px;">📌 置顶</div>' : ''}
           <div class="post-header">
-            <img src="${avatar}" class="post-avatar" />
-            <span class="post-username" style="cursor:pointer;color:var(--primary);" onclick="event.stopPropagation();switchPage('user','${username}')">${username}</span>
+            <img src="${escapeHTML(safeURL(avatar, { image: true }))}" class="post-avatar" />
+            <span class="post-username" data-username="${escapeHTML(username)}" style="cursor:pointer;color:var(--primary);">${escapeHTML(username)}</span>
             <span class="post-time">${time}</span>
             ${p.edited_at ? '<span style="font-size:11px;color:var(--text-light);margin-left:6px;">（已编辑）</span>' : ''}
           </div>
-          <div class="post-title">${p.title || '无标题'}</div>
+          <div class="post-title">${escapeHTML(p.title || '无标题')}</div>
           <div class="post-content">${renderedContent}</div>
           ${imagesHtml}
           <div class="post-actions">
@@ -87,7 +87,7 @@ function renderFeed() {
         </div>
       `;
     });
-    container.innerHTML = html;
+    container.innerHTML = sanitizeHTML(html);
 
     // 分页控件
     if (totalPages > 1) {
@@ -167,6 +167,20 @@ function renderFeed() {
       });
     });
 
+    container.querySelectorAll('.post-username').forEach(username => {
+      username.addEventListener('click', function(e) {
+        e.stopPropagation();
+        switchPage('user', this.dataset.username);
+      });
+    });
+
+    container.querySelectorAll('.post-image').forEach(image => {
+      image.addEventListener('click', function(e) {
+        e.stopPropagation();
+        openImageViewer(this.src);
+      });
+    });
+
     container.querySelectorAll('.action-report').forEach(btn => {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -187,7 +201,7 @@ function renderFeed() {
       });
     });
   }).catch(err => {
-    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px 0;">加载失败：' + err.message +
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px 0;">加载失败：' + escapeHTML(err.message) +
       '</div>';
   });
 }
@@ -210,9 +224,9 @@ function renderLinks() {
     }
     let html = '';
     links.forEach(l => {
-      html += '<li><a href="' + l.url + '" target="_blank">' + l.title + '</a></li>';
+      html += '<li><a href="' + escapeHTML(safeURL(l.url, { allowRelative: false })) + '" target="_blank" rel="noopener noreferrer">' + escapeHTML(l.title) + '</a></li>';
     });
-    ul.innerHTML = html;
+    ul.innerHTML = sanitizeHTML(html);
   }).catch(() => {});
 }
 
