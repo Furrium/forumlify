@@ -18,7 +18,7 @@ import Modals from '@/components/Modals';
 import LoadingScreen from '@/components/LoadingScreen';
 
 function HomeInner() {
-  const { view, currentPostId, currentUsername, currentPageName, ready, forumName, forumNameLoaded } = useApp();
+  const { view, currentPostId, currentPostPreview, currentUsername, currentPageName, ready, forumName, forumNameLoaded } = useApp();
   const [modal, setModal] = useState(null); // null | login | register | report
   const [reportPostId, setReportPostId] = useState(null);
 
@@ -34,14 +34,14 @@ function HomeInner() {
     <div className="app-fade-in">
       <Navbar onOpenModal={openModal} />
       <ChatManager />
-      <div id="app">
+      <div id="app" style={{ display: view === 'feed' ? 'flex' : 'none' }}>
         <Sidebar />
         <Feed onOpenModal={openModal} onReport={openReport} />
       </div>
 
       {/* 独立页面 */}
       <div style={{ display: view !== 'feed' ? 'block' : 'none' }}>
-        {view === 'post' && currentPostId && <PostDetail postId={currentPostId} />}
+        {view === 'post' && currentPostId && <PostDetail postId={currentPostId} initialPost={currentPostPreview} />}
         {view === 'user' && currentUsername && <UserProfile username={currentUsername} />}
         {view === 'custom' && currentPageName && <CustomPage pageName={currentPageName} />}
         {view === 'new' && <NewPost />}

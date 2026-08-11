@@ -1,5 +1,5 @@
 /* ============================================================
-   🧊 Forumlify —— 液态/磨砂玻璃风格（冰川蓝主题）
+   Forumlify —— 液态/磨砂玻璃风格（冰川蓝主题）
    支持亮色/暗色模式 + 管理后台侧边栏 + 滑动Tab
    ============================================================ */
 
@@ -32,7 +32,7 @@
 
   /* ===== 兼容旧变量（React 组件内联样式使用）===== */
   --bg: #dfe6e9;
-  --modal-bg: rgba(255, 255, 255, 0.85); /* 弹窗背景：半透明玻璃感但保证可读性 */
+  --modal-bg: rgba(255, 255, 255, 0.85);
   --surface: rgba(255, 255, 255, 0.18);
   --border: rgba(255, 255, 255, 0.30);
   --border-light: rgba(255, 255, 255, 0.12);
@@ -73,7 +73,7 @@
 
   /* ===== 兼容旧变量（React 组件内联样式使用）===== */
   --bg: #0f0f1a;
-  --modal-bg: rgba(24, 24, 38, 0.88); /* 弹窗背景：半透明玻璃感但保证可读性 */
+  --modal-bg: rgba(24, 24, 38, 0.88);
   --surface: rgba(30, 30, 50, 0.35);
   --border: rgba(255, 255, 255, 0.10);
   --border-light: rgba(255, 255, 255, 0.06);
@@ -151,6 +151,16 @@ svg {
 .btn-ghost:hover {
   background: rgba(255, 255, 255, 0.15);
   color: var(--glass-text);
+}
+
+[data-theme="light"] #authButtons .btn-ghost {
+  background: rgba(74, 74, 106, 0.1);
+  border-color: transparent;
+  color: #30304a;
+}
+[data-theme="light"] #authButtons .btn-ghost:hover {
+  background: rgba(91, 155, 213, 0.2);
+  color: #202038;
 }
 
 .btn-sm {
@@ -338,7 +348,7 @@ svg {
 }
 
 /* ===== 侧边栏 ===== */
-#sidebar {
+.sidebar {
   width: 240px;
   flex-shrink: 0;
 }
@@ -433,6 +443,8 @@ svg {
   border-radius: var(--radius-sm);
   border: 1px solid var(--glass-border);
   position: relative;
+  width: 280px;
+  max-width: 100%;
 }
 
 /* 滑块 */
@@ -470,8 +482,10 @@ svg {
   cursor: pointer;
   border-radius: calc(var(--radius-sm) - 2px);
   transition: color 0.3s ease;
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   text-align: center;
+  white-space: nowrap;
 }
 .tab:hover {
   color: var(--glass-text);
@@ -489,6 +503,36 @@ svg {
 }
 .fab-btn svg {
   margin-right: 6px;
+}
+
+.feed-posts-drawer {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform-origin: top;
+  transition:
+    grid-template-rows 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease,
+    transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.feed-posts-drawer-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.feed-posts-drawer.closing,
+.feed-posts-drawer.closed {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: scaleY(0.985);
+}
+
+.feed-posts-drawer.opening,
+.feed-posts-drawer.idle {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: scaleY(1);
 }
 
 /* ===== 帖子卡片 ===== */
@@ -611,17 +655,11 @@ svg {
 }
 .modal.active {
   display: flex;
-  animation: modalFade 0.2s ease-out;
+  animation: modalFade 0.28s ease-out;
 }
 @keyframes modalFade {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 .modal-content {
   background: var(--modal-bg, var(--glass-bg));
@@ -636,6 +674,13 @@ svg {
   overflow-y: auto;
   position: relative;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2);
+}
+.modal.active .modal-content {
+  animation: modalContentIn 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes modalContentIn {
+  from { transform: translateY(12px) scale(0.9); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
 }
 .modal-content .close {
   position: absolute;
@@ -843,6 +888,226 @@ svg {
   display: block;
   animation: slideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+#pagePost.page-slide.active {
+  animation: none;
+}
+
+html.post-view-transition #pagePost .post-detail-card,
+html.home-view-transition.returning-home #pagePost .post-detail-card {
+  view-transition-name: post-expand;
+}
+
+html.post-view-transition #navbar,
+html.home-view-transition #navbar {
+  view-transition-name: persistent-navbar;
+}
+
+html.post-view-transition #sidebar,
+html.post-view-transition #postSidebar,
+html.home-view-transition.returning-home #sidebar,
+html.home-view-transition.returning-home #postSidebar {
+  view-transition-name: post-sidebar;
+}
+
+html.post-view-transition #pagePost .post-detail-card .post-time,
+html.home-view-transition.returning-home #pagePost .post-detail-card .post-time {
+  view-transition-name: post-time;
+}
+
+html.post-view-transition #pagePost .post-page-header h2,
+html.home-view-transition.returning-home #pagePost .post-page-header h2 {
+  view-transition-name: post-heading;
+}
+
+html.post-view-transition::view-transition,
+html.home-view-transition::view-transition {
+  background: linear-gradient(145deg, var(--bg-start) 0%, var(--bg-end) 100%);
+}
+
+html.post-view-transition::view-transition-group(post-expand) {
+  animation-duration: 0.96s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.post-view-transition::view-transition-group(post-sidebar),
+html.post-view-transition::view-transition-group(post-heading) {
+  animation-duration: 0.72s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.post-view-transition::view-transition-group(post-time) {
+  animation-duration: 1.05s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.post-view-transition::view-transition-group(persistent-navbar),
+html.home-view-transition::view-transition-group(persistent-navbar),
+html.post-view-transition::view-transition-old(persistent-navbar),
+html.post-view-transition::view-transition-new(persistent-navbar),
+html.home-view-transition::view-transition-old(persistent-navbar),
+html.home-view-transition::view-transition-new(persistent-navbar) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html.post-view-transition::view-transition-old(root) {
+  animation: feedViewFadeOut 0.28s 0.34s ease-out both;
+}
+
+html.post-view-transition::view-transition-new(root) {
+  animation: postSurroundingsReveal 0.24s 0.56s ease-out both;
+}
+
+html.post-view-transition::view-transition-old(post-expand) {
+  animation: postCardFadeOut 0.2s 0.5s ease-out both;
+}
+
+html.post-view-transition::view-transition-new(post-expand) {
+  animation: postCardReveal 0.22s 0.56s ease-out both;
+}
+
+html.post-view-transition::view-transition-old(post-heading) {
+  animation: sharedTitleOut 0.14s 0.48s ease-out both;
+}
+
+html.post-view-transition::view-transition-new(post-heading) {
+  animation: sharedTitleIn 0.14s 0.82s ease-out both;
+}
+
+html.post-view-transition::view-transition-old(post-time) {
+  animation: sharedTimeOut 0.2s 0.32s ease-out both;
+}
+
+html.post-view-transition::view-transition-new(post-time) {
+  animation: sharedTimeIn 0.2s 0.38s ease-out both;
+}
+
+html.post-view-transition::view-transition-old(post-sidebar) {
+  animation: sharedSidebarOut 0.2s 0.42s ease-out both;
+}
+
+html.post-view-transition::view-transition-new(post-sidebar) {
+  animation: sharedSidebarIn 0.2s 0.42s ease-out both;
+}
+
+html.home-view-transition::view-transition-old(root) {
+  animation: homeSourceFadeOut 0.4s ease-in both;
+}
+
+html.home-view-transition::view-transition-new(root) {
+  animation: homeFeedFadeIn 0.5s ease-out both;
+}
+
+html.home-view-transition.returning-home::view-transition-old(root) {
+  animation: homeSourceFadeOut 0.24s ease-out both;
+}
+
+html.home-view-transition.returning-home::view-transition-new(root) {
+  animation: homeFeedFadeIn 0.32s ease-out both;
+}
+
+html.home-view-transition.returning-home::view-transition-group(post-expand) {
+  animation-duration: 0.48s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.home-view-transition.returning-home::view-transition-group(post-sidebar),
+html.home-view-transition.returning-home::view-transition-group(post-heading),
+html.home-view-transition.returning-home::view-transition-group(post-time) {
+  animation-duration: 0.48s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.home-view-transition.returning-home::view-transition-old(post-expand) {
+  animation: postDetailCollapse 0.24s 0.12s ease-out both;
+}
+
+html.home-view-transition.returning-home::view-transition-new(post-expand) {
+  animation: postCardFadeIn 0.24s 0.18s ease-out both;
+}
+
+html.home-view-transition.returning-home::view-transition-old(post-heading) {
+  animation: sharedTitleOut 0.12s 0.22s ease-out both;
+}
+
+html.home-view-transition.returning-home::view-transition-new(post-heading) {
+  animation: sharedTitleIn 0.12s 0.36s ease-out both;
+}
+
+html.home-view-transition.returning-home::view-transition-old(post-time),
+html.home-view-transition.returning-home::view-transition-old(post-sidebar) {
+  animation: sharedTimeOut 0.14s 0.24s ease-out both;
+}
+
+html.home-view-transition.returning-home::view-transition-new(post-time),
+html.home-view-transition.returning-home::view-transition-new(post-sidebar) {
+  animation: sharedTimeIn 0.14s 0.26s ease-out both;
+}
+
+@keyframes feedViewFadeOut {
+  to { opacity: 0; }
+}
+
+@keyframes postSurroundingsReveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes postCardFadeOut {
+  0%, 72% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes postCardReveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes homeSourceFadeOut {
+  to { opacity: 0; }
+}
+
+@keyframes homeFeedFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes postDetailCollapse {
+  to { opacity: 0; }
+}
+
+@keyframes postCardFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sharedTitleOut {
+  to { opacity: 0; }
+}
+
+@keyframes sharedTitleIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sharedTimeOut {
+  to { opacity: 0.2; }
+}
+
+@keyframes sharedTimeIn {
+  from { opacity: 0.2; }
+  to { opacity: 1; }
+}
+
+@keyframes sharedSidebarOut {
+  to { opacity: 0.72; }
+}
+
+@keyframes sharedSidebarIn {
+  from { opacity: 0.72; }
+  to { opacity: 1; }
+}
 @keyframes slideIn {
   from {
     transform: translateX(40px);
@@ -906,6 +1171,34 @@ svg {
 }
 
 /* ===== 帖子详情页 ===== */
+.post-page-layout {
+  display: flex;
+  gap: 28px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  align-items: flex-start;
+}
+
+.post-page-main {
+  flex: 1;
+  min-width: 0;
+  padding-top: 0;
+}
+
+#postSidebar {
+  width: 240px;
+  flex-shrink: 0;
+  align-self: start;
+}
+
+.post-page-header {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
 #pagePost .post-detail-card {
   background: var(--glass-bg);
   backdrop-filter: blur(16px);
@@ -921,6 +1214,10 @@ svg {
 }
 #pagePost .post-detail-card .post-title {
   font-size: 22px;
+}
+
+#pagePost .post-detail-actions {
+  margin-top: 8px;
 }
 
 #repliesList {
@@ -1292,7 +1589,7 @@ svg {
 
 /* ===== 响应式（保持原有） ===== */
 @media (max-width: 768px) {
-  #sidebar {
+  .sidebar {
     display: none;
   }
   #app {
@@ -1311,6 +1608,7 @@ svg {
   .feed-header-left {
     display: flex;
     gap: 4px;
+    width: 100%;
   }
   .tab {
     flex: 1;
@@ -1324,6 +1622,12 @@ svg {
   }
   .post-card {
     padding: 14px 16px;
+  }
+  .post-page-layout {
+    display: block;
+  }
+  .post-page-main {
+    padding-top: 0;
   }
   .post-image {
     max-width: 120px;
@@ -1488,7 +1792,7 @@ svg {
 }
 
 [data-theme="dark"] .admin-sidebar {
-  background: var(--glass-bg);
+  background: #181826;
   border-color: var(--glass-border);
 }
 [data-theme="dark"] .admin-nav-item:hover {
@@ -1505,7 +1809,7 @@ svg {
   stroke: var(--primary);
 }
 [data-theme="dark"] .admin-content {
-  background: var(--glass-bg);
+  background: #181826;
   border-color: var(--glass-border);
 }
 [data-theme="dark"] .admin-sidebar {
@@ -1541,7 +1845,7 @@ svg {
 }
 
 /* ============================================================
-   💬 私信模态框 —— 亮色模式修复
+   私信模态框 —— 亮色模式修复
    ============================================================ */
 
 /* 亮色模式下私信列表模态框 + 聊天模态框 */
@@ -1602,7 +1906,7 @@ svg {
 /* 暗色模式保持原样（不覆盖） */
 
 /* ============================================================
-   ⚠️ 自定义 CSS 警告模态框 —— 亮色模式文字修复
+   自定义 CSS 警告模态框 —— 亮色模式文字修复
    ============================================================ */
 
 /* 亮色模式下警告模态框文字变深 */
@@ -1617,7 +1921,7 @@ svg {
 }
 
 /* ============================================================
-   🎨 自定义 CSS 按钮 —— 亮色模式修复
+   自定义 CSS 按钮 —— 亮色模式修复
    ============================================================ */
 
 /* 亮色模式：删除自定义 CSS 按钮 */
@@ -1717,7 +2021,7 @@ svg {
   color: #fff !important;
 }
 /* ============================================================
-   👤 用户个人主页 —— 卡片样式覆盖
+   用户个人主页 —— 卡片样式覆盖
    ============================================================ */
 
 /* 用户主页的主卡片 */
@@ -2101,29 +2405,115 @@ a.btn-secondary {
   border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
-  color: #fff;
+  color: var(--glass-text);
+  border: 1px solid var(--glass-border);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   cursor: pointer;
   animation: toastIn 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .toast-success {
-  background: rgba(34, 197, 94, 0.92);
+  background: rgba(255, 255, 255, 0.85);
+  border-color: #22c55e;
 }
 
 .toast-error {
-  background: rgba(239, 68, 68, 0.92);
+  background: rgba(255, 255, 255, 0.85);
+  border-color: #ef4444;
 }
 
-.toast-info {
-  background: rgba(91, 155, 213, 0.92);
+.toast-warning {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: #f59e0b;
+}
+
+.toast-success svg {
+  color: #22c55e;
+}
+
+.toast-error svg {
+  color: #ef4444;
+}
+
+.toast-warning svg {
+  color: #f59e0b;
+}
+
+[data-theme="dark"] .toast {
+  background: rgba(30, 30, 50, 0.85);
+}
+
+.toast.closing {
+  animation: toastOut 0.22s ease-in forwards;
 }
 
 @keyframes toastIn {
   from { opacity: 0; transform: translateX(24px); }
   to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(24px); }
+}
+
+.modal.closing {
+  display: flex;
+  animation: modalFadeOut 0.32s ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes modalFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.modal.closing .modal-content {
+  animation: modalContentOut 0.32s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes modalContentOut {
+  from { transform: translateY(0) scale(1); opacity: 1; }
+  to { transform: translateY(12px) scale(0.9); opacity: 0; }
+}
+
+.feedback-confirm {
+  z-index: 100001;
+}
+
+.feedback-confirm .modal-content {
+  max-width: 440px;
+  background: var(--modal-bg);
+}
+
+.feedback-confirm .modal-content p {
+  color: var(--glass-text-secondary);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.feedback-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.feedback-confirm-actions button {
+  border-radius: var(--radius-sm);
+  padding: 9px 18px;
+  cursor: pointer;
+}
+
+.feedback-confirm-actions .btn-danger {
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  background: #dc2626;
+  color: #fff;
 }
 
 /* 设置页面侧边栏导航项 */
@@ -2163,6 +2553,12 @@ a.btn-secondary {
 }
 
 /* 设置页面侧边栏容器 */
+.settings-layout {
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
 .settings-sidebar {
   background: var(--glass-bg) !important;
   backdrop-filter: blur(16px) !important;
@@ -2177,6 +2573,11 @@ a.btn-secondary {
 
 /* 设置页面内容区 */
 .settings-content {
+  flex: 1 1 0;
+  width: calc(100% - 228px) !important;
+  max-width: none !important;
+  min-width: 0;
+  overflow-wrap: anywhere;
   background: var(--glass-bg) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
@@ -2184,6 +2585,59 @@ a.btn-secondary {
   border-radius: var(--radius) !important;
   padding: 20px 24px !important;
   box-shadow: var(--glass-shadow) !important;
+}
+
+.settings-content > *,
+.settings-content [data-panel] {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.language-toggle {
+  width: 220px;
+  max-width: 100%;
+}
+
+.language-toggle .tab {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .settings-layout {
+    flex-direction: column;
+    gap: 12px !important;
+  }
+
+  .settings-sidebar {
+    position: static;
+    width: 100% !important;
+  }
+
+  .settings-nav {
+    display: flex;
+    width: 100%;
+  }
+
+  .settings-nav-item {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    padding: 8px 6px;
+    border-left: 0;
+    border-bottom: 3px solid transparent;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .settings-nav-item.active {
+    border-left-color: transparent;
+    border-bottom-color: var(--primary);
+  }
+
+  .settings-content {
+    width: 100% !important;
+  }
 }
 
 /* 设置页面内部卡片 */
@@ -2255,7 +2709,7 @@ a.btn-secondary {
 
 /* 暗色模式适配 */
 [data-theme="dark"] .settings-sidebar {
-  background: var(--glass-bg) !important;
+  background: #181826 !important;
   border-color: var(--glass-border) !important;
 }
 [data-theme="dark"] .settings-nav-item:hover {
@@ -2272,7 +2726,7 @@ a.btn-secondary {
   stroke: var(--primary);
 }
 [data-theme="dark"] .settings-content {
-  background: var(--glass-bg) !important;
+  background: #181826 !important;
   border-color: var(--glass-border) !important;
 }
 [data-theme="dark"] .settings-content input,
@@ -2281,6 +2735,46 @@ a.btn-secondary {
   background: rgba(255, 255, 255, 0.06) !important;
   color: var(--glass-text) !important;
   border-color: var(--glass-border) !important;
+}
+
+/* 详情页两列布局需要压过页面尾部的通用卡片与响应式覆盖。 */
+#pagePost .post-page-layout {
+  display: flex !important;
+  gap: 28px !important;
+  width: 100% !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  align-items: start !important;
+}
+
+#pagePost #postSidebar {
+  display: block !important;
+  width: 240px !important;
+  min-width: 240px !important;
+  flex: 0 0 240px !important;
+  align-self: start !important;
+}
+
+#pagePost .post-page-main {
+  display: block !important;
+  flex: 1 1 0 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+@media (max-width: 768px) {
+  #pagePost .post-page-layout {
+    display: block !important;
+    max-width: none !important;
+  }
+
+  #pagePost #postSidebar {
+    display: none !important;
+  }
+
+  #pagePost .post-page-main {
+    width: 100% !important;
+  }
 }
 
 /* ===== 小转圈（列表/局部加载） ===== */

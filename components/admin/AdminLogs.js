@@ -2,9 +2,11 @@
 
 // 管理后台 - 事件日志
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { API } from '@/lib/api';
 
 export default function AdminLogs() {
+  const { t, i18n } = useTranslation();
   const [logs, setLogs] = useState(null);
   const [error, setError] = useState(null);
 
@@ -16,22 +18,24 @@ export default function AdminLogs() {
 
   useEffect(load, []);
 
-  if (error) return <div style={{ textAlign: 'center', color: '#ef4444', padding: 20 }}>加载失败：{error}</div>;
-  if (!logs) return <div style={{ textAlign: 'center', color: '#94a3b8', padding: 20 }}><span className="spinner-sm" />加载中...</div>;
-  if (logs.length === 0) return <div style={{ textAlign: 'center', color: '#94a3b8', padding: 40 }}>暂无日志</div>;
+  if (error) return <div style={{ textAlign: 'center', color: '#ef4444', padding: 20 }}>{t('admin.common.loadFailed', { msg: error })}</div>;
+  if (!logs) return <div style={{ textAlign: 'center', color: '#94a3b8', padding: 20 }}><span className="spinner-sm" />{t('admin.common.loading')}</div>;
+  if (logs.length === 0) return <div style={{ textAlign: 'center', color: '#94a3b8', padding: 40 }}>{t('admin.log.empty')}</div>;
+
+  const dateLocale = i18n.resolvedLanguage === 'en' ? 'en-US' : 'zh-CN';
 
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
       <thead>
         <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
-          <th>时间</th><th>用户</th><th>操作</th>
+          <th>{t('admin.log.time')}</th><th>{t('admin.log.user')}</th><th>{t('admin.log.action')}</th>
         </tr>
       </thead>
       <tbody>
         {logs.map((l) => (
           <tr key={l.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-            <td style={{ padding: '6px 0' }}>{new Date(l.created_at).toLocaleString('zh-CN')}</td>
-            <td style={{ padding: '6px 0' }}>{l.username || '系统'}</td>
+            <td style={{ padding: '6px 0' }}>{new Date(l.created_at).toLocaleString(dateLocale)}</td>
+            <td style={{ padding: '6px 0' }}>{l.username || t('admin.log.system')}</td>
             <td style={{ padding: '6px 0' }}>{l.action}</td>
           </tr>
         ))}

@@ -68,19 +68,19 @@ export default function UserProfile({ username }) {
             </button>
           )}
           <div style={{ display: 'flex', justifyContent: 'center', gap: 32, marginTop: 16, fontSize: 14, color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
-            <span>📅 加入于 {user.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '未知'}</span>
-            <span>📝 发了 {posts.length} 个帖子</span>
-            {user.role === 'admin' && <span style={{ color: 'var(--primary)', fontWeight: 600 }}>🛡️ 管理员</span>}
+            <span><Icon name="calendar" size={14} /> 加入于 {user.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '未知'}</span>
+            <span><Icon name="file" size={14} /> 发了 {posts.length} 个帖子</span>
+            {user.role === 'admin' && <span style={{ color: 'var(--primary)', fontWeight: 600 }}><Icon name="shield" size={14} /> 管理员</span>}
           </div>
         </div>
-        <h3 style={{ margin: '24px 0 16px', fontSize: 18 }}>📝 发布的帖子</h3>
+        <h3 style={{ margin: '24px 0 16px', fontSize: 18 }}><Icon name="file" size={18} /> 发布的帖子</h3>
         {posts.length === 0 ? (
           <div style={{ color: '#94a3b8', padding: '20px 0', textAlign: 'center' }}>还没有发帖</div>
         ) : (
           posts.map((p) => {
             const time = p.created_at ? new Date(p.created_at).toLocaleString('zh-CN') : '';
             return (
-              <div key={p.id} className="post-card" style={{ cursor: 'pointer' }} onClick={() => openPost(p.id)}>
+              <div key={p.id} className="post-card" style={{ cursor: 'pointer' }} onClick={(e) => openPost(p.id, e.currentTarget, p)}>
                 <div className="post-title" style={{ fontSize: 16, fontWeight: 600 }}>{p.title || '无标题'}</div>
                 <div className="post-content" style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                   {(p.content || '').substring(0, 100)}{(p.content || '').length > 100 ? '...' : ''}

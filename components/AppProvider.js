@@ -2,9 +2,46 @@
 
 // 全局状态 Provider：用户、主题、论坛名、当前视图（feed/post/new/admin/...）
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { API, getTheme, setToken, getToken } from '@/lib/api';
 
 const AppContext = createContext(null);
+
+function stageSharedGeometry(transition, { name, duration, moveOffset, preserveSizeUntilMove = false }) {
+  transition.ready.then(() => {
+    const groupAnimation = document.getAnimations().find(
+      (animation) => animation.effect?.pseudoElement === `::view-transition-group(${name})`
+    );
+    const frames = groupAnimation?.effect?.getKeyframes();
+    if (!groupAnimation || !frames || frames.length < 2) return;
+
+    const start = frames[0];
+    const end = frames[frames.length - 1];
+    groupAnimation.effect.setKeyframes([
+      {
+        offset: 0,
+        width: start.width,
+        height: start.height,
+        transform: start.transform,
+        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+      },
+      {
+        offset: moveOffset,
+        width: preserveSizeUntilMove ? start.width : end.width,
+        height: start.height,
+        transform: end.transform,
+        easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+      {
+        offset: 1,
+        width: end.width,
+        height: end.height,
+        transform: end.transform,
+      },
+    ]);
+    groupAnimation.effect.updateTiming({ duration, easing: 'linear', fill: 'both' });
+  }).catch(() => {});
+}
 
 export function useApp() {
   return useContext(AppContext);
@@ -17,6 +54,7 @@ export default function AppProvider({ children, cachedName = '' }) {
   const [theme, setThemeState] = useState('light');
   const [view, setView] = useState('feed'); // feed | post | new | admin | settings | messages | user | custom
   const [currentPostId, setCurrentPostId] = useState(null);
+  const [currentPostPreview, setCurrentPostPreview] = useState(null);
   const [currentUsername, setCurrentUsername] = useState(null);
   const [currentPageName, setCurrentPageName] = useState(null);
   const [sort, setSort] = useState('latest');
@@ -166,20 +204,101 @@ export default function AppProvider({ children, cachedName = '' }) {
       url.searchParams.set('page', page);
       url.searchParams.delete('post');
     }
-    window.history.pushState({ page }, '', url);
-    setView(page);
-    setCurrentPostId(null);
-    refresh();
-  }, [refresh]);
+    const commitNavigation = (refreshFeed = true) => {
+      window.history.pushState({ page }, '', url);
+      setView(page);
+      setCurrentPostId(null);
+      setCurrentPostPreview(null);
+      if (refreshFeed) refresh();
+    };
 
-  const openPost = useCallback((postId) => {
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (page !== 'feed' || view === 'feed' || !document.startViewTransition || reduceMotion) {
+      commitNavigation();
+      return;
+    }
+
+    let targetCard = currentPostId
+      ? Array.from(document.querySelectorAll('[data-post-id]')).find((element) => element.dataset.postId === String(currentPostId))
+      : null;
+    let targetTitle = null;
+    let targetTime = null;
+    document.documentElement.classList.add('home-view-transition');
+    if (targetCard) document.documentElement.classList.add('returning-home');
+
+    const transition = document.startViewTransition(() => {
+      flushSync(() => commitNavigation(false));
+      targetCard = currentPostId
+        ? Array.from(document.querySelectorAll('[data-post-id]')).find((element) => element.dataset.postId === String(currentPostId))
+        : null;
+      targetTitle = targetCard?.querySelector('.post-title');
+      targetTime = targetCard?.querySelector('.post-time');
+      if (targetCard) targetCard.style.viewTransitionName = 'post-expand';
+      if (targetTitle) targetTitle.style.viewTransitionName = 'post-heading';
+      if (targetTime) targetTime.style.viewTransitionName = 'post-time';
+    });
+    stageSharedGeometry(transition, { name: 'post-expand', duration: 480, moveOffset: 0.72 });
+    stageSharedGeometry(transition, {
+      name: 'post-heading',
+      duration: 480,
+      moveOffset: 0.72,
+      preserveSizeUntilMove: true,
+    });
+    const clearTargetNames = () => {
+      if (targetCard) targetCard.style.viewTransitionName = '';
+      if (targetTitle) targetTitle.style.viewTransitionName = '';
+      if (targetTime) targetTime.style.viewTransitionName = '';
+    };
+    transition.ready.then(clearTargetNames, clearTargetNames);
+    transition.finished.finally(() => {
+      document.documentElement.classList.remove('home-view-transition', 'returning-home');
+      refresh();
+    });
+  }, [currentPostId, refresh, view]);
+
+  const openPost = useCallback((postId, sourceElement = null, preview = null) => {
     const url = new URL(window.location);
     url.searchParams.set('post', postId);
     url.searchParams.delete('page');
     url.searchParams.delete('user');
-    window.history.pushState({ page: 'post', postId }, '', url);
-    setView('post');
-    setCurrentPostId(postId);
+    const commitNavigation = () => {
+      window.history.pushState({ page: 'post', postId }, '', url);
+      setView('post');
+      setCurrentPostId(postId);
+      setCurrentPostPreview(preview);
+    };
+
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (!sourceElement || !document.startViewTransition || reduceMotion) {
+      commitNavigation();
+      return;
+    }
+
+    const sourceTitle = sourceElement.querySelector('.post-title');
+    const sourceTime = sourceElement.querySelector('.post-time');
+    sourceElement.style.viewTransitionName = 'post-expand';
+    if (sourceTitle) sourceTitle.style.viewTransitionName = 'post-heading';
+    if (sourceTime) sourceTime.style.viewTransitionName = 'post-time';
+    document.documentElement.classList.add('post-view-transition');
+    const transition = document.startViewTransition(() => {
+      flushSync(commitNavigation);
+    });
+    stageSharedGeometry(transition, { name: 'post-expand', duration: 960, moveOffset: 0.62 });
+    stageSharedGeometry(transition, {
+      name: 'post-heading',
+      duration: 960,
+      moveOffset: 0.62,
+      preserveSizeUntilMove: true,
+    });
+    const clearSourceNames = () => {
+      sourceElement.style.viewTransitionName = '';
+      if (sourceTitle) sourceTitle.style.viewTransitionName = '';
+      if (sourceTime) sourceTime.style.viewTransitionName = '';
+    };
+    transition.ready.then(clearSourceNames, clearSourceNames);
+    transition.finished.finally(() => {
+      document.documentElement.classList.remove('post-view-transition');
+    });
   }, []);
 
   const openUser = useCallback((username) => {
@@ -209,6 +328,7 @@ export default function AppProvider({ children, cachedName = '' }) {
       if (state.postId) {
         setView('post');
         setCurrentPostId(state.postId);
+        setCurrentPostPreview(null);
       } else if (state.username) {
         setView('user');
         setCurrentUsername(state.username);
@@ -218,6 +338,7 @@ export default function AppProvider({ children, cachedName = '' }) {
       } else {
         setView(state.page || 'feed');
         setCurrentPostId(null);
+        setCurrentPostPreview(null);
         setCurrentUsername(null);
         setCurrentPageName(null);
       }
@@ -262,7 +383,7 @@ export default function AppProvider({ children, cachedName = '' }) {
     forumName, forumNameLoaded, updateForumName,
     theme, toggleTheme,
     view, navigate,
-    currentPostId, openPost,
+    currentPostId, currentPostPreview, openPost,
     currentUsername, openUser,
     currentPageName, openCustomPage,
     sort, setSort,

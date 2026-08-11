@@ -30,7 +30,7 @@ export default function NewPost() {
       for (const file of files) {
         if (!file.type.startsWith('image/')) continue;
         if (file.size > 5 * 1024 * 1024) {
-          alert('图片 ' + file.name + ' 超过 5MB，请压缩后上传');
+          toast('图片 ' + file.name + ' 超过 5MB，请压缩后上传', 'warning');
           continue;
         }
         const dataUrl = await new Promise((resolve) => {
@@ -44,7 +44,7 @@ export default function NewPost() {
       }
       setPreviews((prev) => [...prev, ...newPreviews]);
     } catch (err) {
-      alert('上传失败：' + err.message);
+      toast('上传失败：' + err.message, 'error');
     } finally {
       setUploading(false);
     }
@@ -117,8 +117,9 @@ export default function NewPost() {
           onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
           onDrop={(e) => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files) handleFiles(Array.from(e.dataTransfer.files)); }}
         >
+          {!uploading && !dragOver && <Icon name="image" size={32} style={{ display: 'block', margin: '0 auto 8px', color: 'var(--text-secondary)' }} />}
           <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-            {uploading ? t('newPost.uploading') : (dragOver ? t('newPost.drop') : '📷 ' + t('newPost.dropHint'))}
+            {uploading ? t('newPost.uploading') : (dragOver ? t('newPost.drop') : t('newPost.dropHint'))}
           </div>
         </div>
         <input

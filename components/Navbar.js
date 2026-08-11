@@ -7,10 +7,12 @@ import { useApp } from './AppProvider';
 import { Icon } from './Icons';
 import { API } from '@/lib/api';
 import { DMButton } from './chat/ChatManager';
+import { useToast } from './Toast';
 
 export default function Navbar({ onOpenModal }) {
   const { currentUser, forumName, theme, toggleTheme, navigate, openCustomPage, logout } = useApp();
   const { t } = useTranslation();
+  const { toast, confirmAction } = useToast();
   const [menuOpen, setMenuOpen] = useState(false);
   const [customPages, setCustomPages] = useState([]);
 
@@ -37,7 +39,7 @@ export default function Navbar({ onOpenModal }) {
 
   const goPage = (page) => {
     if (page === 'admin' && currentUser?.role !== 'admin') {
-      alert('无权限访问');
+      toast('无权限访问', 'warning');
       return;
     }
     setMenuOpen(false);
@@ -47,7 +49,7 @@ export default function Navbar({ onOpenModal }) {
   const openMessages = (e) => {
     e.preventDefault();
     setMenuOpen(false);
-    // 消息页 = 通知列表（与原版一致），私信走导航栏 ✉️ 按钮
+    // 消息页展示通知列表，私信使用导航栏按钮。
     navigate('messages');
   };
 
@@ -117,9 +119,9 @@ export default function Navbar({ onOpenModal }) {
                   <hr />
                   <a
                     href="#"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.preventDefault();
-                      if (confirm(t('nav.logoutConfirm'))) {
+                      if (await confirmAction(t('nav.logoutConfirm'))) {
                         setMenuOpen(false);
                         logout();
                       }

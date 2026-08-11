@@ -7,6 +7,7 @@ import { useApp } from '../AppProvider';
 import { Icon } from '../Icons';
 import ConversationList from './ConversationList';
 import ChatWindow from './ChatWindow';
+import { useToast } from '../Toast';
 
 // 私信按钮（含未读 badge），渲染在导航栏内
 export function DMButton() {
@@ -101,15 +102,16 @@ export default function ChatManager() {
 // 供其他组件调用的打开私信（通过自定义事件桥接）
 export function useOpenPrivateChat() {
   const { currentUser } = useApp();
+  const { toast } = useToast();
   const open = async (otherUserId, otherUsername) => {
-    if (!currentUser) { alert('请先登录'); return; }
+    if (!currentUser) { toast('请先登录', 'warning'); return; }
     try {
       const result = await API.getOrCreateConversation(otherUserId);
       window.dispatchEvent(new CustomEvent('forumlify-open-chat', {
         detail: { conversationId: result.id, otherUserId, otherUsername },
       }));
     } catch (err) {
-      alert('打开私信失败：' + err.message);
+      toast('打开私信失败：' + err.message, 'error');
     }
   };
   return open;

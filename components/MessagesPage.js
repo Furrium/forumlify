@@ -6,7 +6,7 @@ import { API } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
 
-const TYPE_MAP = { reply: '💬', post_deleted: '🗑️', report_handled: '🛡️', system: '📢' };
+const TYPE_MAP = { reply: 'message', post_deleted: 'trash', report_handled: 'shield', system: 'megaphone' };
 
 export default function MessagesPage() {
   const { currentUser } = useApp();
@@ -46,11 +46,11 @@ export default function MessagesPage() {
           </div>
         ) : (
           notifications.map((n) => {
-            const icon = TYPE_MAP[n.type] || '📌';
+            const icon = TYPE_MAP[n.type] || 'pin';
             const time = n.created_at ? new Date(n.created_at).toLocaleString('zh-CN') : '';
             return (
               <div key={n.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px', borderBottom: '1px solid var(--border-light)', background: 'var(--surface)', borderRadius: 6, marginBottom: 6 }}>
-                <span style={{ fontSize: 20 }}>{icon}</span>
+                <span style={{ color: 'var(--text-secondary)', paddingTop: 2 }}><Icon name={icon} size={20} /></span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{n.title}</div>
                   <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 2 }}>{n.content}</div>

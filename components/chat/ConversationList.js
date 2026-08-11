@@ -26,7 +26,7 @@ export default function ConversationList({ onOpenChat, onClose }) {
       <div className="modal-content" style={{ display: 'flex', flexDirection: 'column', height: '70vh', maxHeight: '70vh', padding: 0, overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
           <h2 style={{ fontSize: 18, margin: 0 }}><Icon name="message" size={18} style={{ verticalAlign: -3, marginRight: 6 }} /> 私信</h2>
-          <span className="close" onClick={onClose} style={{ fontSize: 24, cursor: 'pointer', color: 'var(--text-light)', lineHeight: 1 }}>&times;</span>
+          <span className="close" onClick={onClose} style={{ cursor: 'pointer', color: 'var(--text-light)', lineHeight: 1 }}><Icon name="close" size={20} /></span>
         </div>
         <div id="messageListContent" style={{ flex: 1, overflowY: 'auto', padding: 0 }}>
           {conversations === null ? (

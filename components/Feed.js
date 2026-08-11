@@ -8,6 +8,7 @@ import { useApp } from './AppProvider';
 import { Icon } from './Icons';
 import ImageViewer from './ImageViewer';
 import { renderMarkdown } from '@/lib/markdown';
+import { useToast } from './Toast';
 
 function avatar(username) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || '匿名用户') +
@@ -17,17 +18,21 @@ function avatar(username) {
 export default function Feed({ onOpenModal, onReport }) {
   const { currentUser, sort, setSort, openPost, openUser, navigate, refreshKey } = useApp();
   const { t } = useTranslation();
+  const { toast, confirmAction } = useToast();
   const [posts, setPosts] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [viewerSrc, setViewerSrc] = useState(null);
+  const [selectedSort, setSelectedSort] = useState(sort);
+  const [drawerPhase, setDrawerPhase] = useState('idle');
   const postListRef = useRef(null);
+  const sortTimerRef = useRef(null);
+  const pendingSortRef = useRef(null);
   const PAGE_SIZE = 20;
 
   const load = useCallback(async (targetPage) => {
-    setPosts(null);
     setError(null);
     try {
       const result = await API.getPosts(sort, null, targetPage, PAGE_SIZE);
@@ -37,6 +42,16 @@ export default function Feed({ onOpenModal, onReport }) {
     } catch (err) {
       setError(err.message);
       setPosts([]);
+    } finally {
+      if (pendingSortRef.current === sort) {
+        requestAnimationFrame(() => {
+          setDrawerPhase('opening');
+          sortTimerRef.current = setTimeout(() => {
+            pendingSortRef.current = null;
+            setDrawerPhase('idle');
+          }, 360);
+        });
+      }
     }
   }, [sort, refreshKey]);
 
@@ -58,13 +73,37 @@ export default function Feed({ onOpenModal, onReport }) {
   // 排序切换时回第一页
   useEffect(() => { setPage(1); }, [sort]);
 
+  useEffect(() => () => clearTimeout(sortTimerRef.current), []);
+
+  const handleSortChange = (nextSort) => {
+    if (nextSort === selectedSort) return;
+
+    setSelectedSort(nextSort);
+    clearTimeout(sortTimerRef.current);
+
+    // 快速切回当前排序时，直接重新展开尚未替换的列表。
+    if (nextSort === sort) {
+      pendingSortRef.current = null;
+      setDrawerPhase('opening');
+      sortTimerRef.current = setTimeout(() => setDrawerPhase('idle'), 360);
+      return;
+    }
+
+    setDrawerPhase('closing');
+    sortTimerRef.current = setTimeout(() => {
+      pendingSortRef.current = nextSort;
+      setDrawerPhase('closed');
+      setSort(nextSort);
+    }, 220);
+  };
+
   const handleDelete = async (postId) => {
-    if (!confirm(t('feed.confirmDelete'))) return;
+    if (!await confirmAction(t('feed.confirmDelete'))) return;
     try {
       await API.deletePost(postId);
       load(page);
     } catch (err) {
-      alert(t('feed.deleteFailed', { msg: err.message }));
+      toast(t('feed.deleteFailed', { msg: err.message }), 'error');
     }
   };
 
@@ -72,34 +111,36 @@ export default function Feed({ onOpenModal, onReport }) {
     <main id="feed">
       <div className="feed-header">
         <div className="feed-header-left">
-          <button className={'tab' + (sort === 'latest' ? ' active' : '')} onClick={() => setSort('latest')}>{t('feed.latest')}</button>
-          <button className={'tab' + (sort === 'hot' ? ' active' : '')} onClick={() => setSort('hot')}>{t('feed.hot')}</button>
+          <button className={'tab' + (selectedSort === 'latest' ? ' active' : '')} onClick={() => handleSortChange('latest')}>{t('feed.latest')}</button>
+          <button className={'tab' + (selectedSort === 'hot' ? ' active' : '')} onClick={() => handleSortChange('hot')}>{t('feed.hot')}</button>
         </div>
         <button
           className="btn-primary fab-btn"
           onClick={() => {
-            if (!currentUser) { alert(t('newPost.pleaseLogin')); return; }
+            if (!currentUser) { toast(t('newPost.pleaseLogin'), 'warning'); return; }
             navigate('new');
           }}
         >
           <Icon name="plus" /> {t('feed.newPost')}
         </button>
       </div>
-      <div id="postList" ref={postListRef}>
-        {posts === null ? (
-          <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}><span className="spinner-sm" />{t('feed.loading')}</div>
-        ) : error ? (
-          <div style={{ textAlign: 'center', color: '#ef4444', padding: '40px 0' }}>{t('feed.loadFailed', { msg: error })}</div>
-        ) : posts.length === 0 ? (
-          <div style={{ textAlign: 'center', color: '#94a3b8', padding: '60px 0' }}>{t('feed.empty')}</div>
-        ) : (
-          posts.map((p) => {
-            const time = p.created_at ? new Date(p.created_at).toLocaleString('zh-CN') : '';
-            return (
-              <div key={p.id} className="post-card" style={{ cursor: 'pointer' }}
-                onClick={() => openPost(p.id)}>
+      <div className={'feed-posts-drawer ' + drawerPhase}>
+        <div className="feed-posts-drawer-inner">
+          <div id="postList" ref={postListRef}>
+            {posts === null ? (
+              <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}><span className="spinner-sm" />{t('feed.loading')}</div>
+            ) : error ? (
+              <div style={{ textAlign: 'center', color: '#ef4444', padding: '40px 0' }}>{t('feed.loadFailed', { msg: error })}</div>
+            ) : posts.length === 0 ? (
+              <div style={{ textAlign: 'center', color: '#94a3b8', padding: '60px 0' }}>{t('feed.empty')}</div>
+            ) : (
+              posts.map((p) => {
+                const time = p.created_at ? new Date(p.created_at).toLocaleString('zh-CN') : '';
+                return (
+                  <div key={p.id} className="post-card" data-post-id={p.id} style={{ cursor: 'pointer' }}
+                    onClick={(e) => openPost(p.id, e.currentTarget, p)}>
                 {p.is_pinned && (
-                  <div style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600, marginBottom: 4 }}>{t('feed.pinned')}</div>
+                  <div style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600, marginBottom: 4 }}><Icon name="pin" size={12} /> {t('feed.pinned')}</div>
                 )}
                 <div className="post-header">
                   <img src={p.avatar_url || avatar(p.username)} className="post-avatar" alt="" />
@@ -130,7 +171,7 @@ export default function Feed({ onOpenModal, onReport }) {
                   </span>
                   <button className="action-report" onClick={(e) => {
                     e.stopPropagation();
-                    if (!currentUser) { alert(t('newPost.pleaseLogin')); return; }
+                    if (!currentUser) { toast(t('newPost.pleaseLogin'), 'warning'); return; }
                     onReport(p.id);
                   }}>
                     <Icon name="flag" size={14} /> {t('feed.report')}
@@ -144,10 +185,12 @@ export default function Feed({ onOpenModal, onReport }) {
                     </button>
                   )}
                 </div>
-              </div>
-            );
-          })
-        )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
       </div>
       {totalPages > 1 && posts && posts.length > 0 && (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, padding: '16px 0', marginTop: 8, borderTop: '1px solid var(--border)', flexWrap: 'wrap' }}>

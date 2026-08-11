@@ -27,7 +27,7 @@ export async function POST(req) {
 
     return Response.json({
       user: r.rows[0],
-      message: isFirstUser ? '🎉 你是第一个用户，已自动设为管理员！' : '注册成功',
+      message: isFirstUser ? '你是第一个用户，已自动设为管理员！' : '注册成功',
     });
   } catch (err) {
     if (err.code === '23505') {

@@ -4,6 +4,8 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { API } from '@/lib/api';
 import { useApp } from '../AppProvider';
+import { Icon } from '../Icons';
+import { useToast } from '../Toast';
 
 function avatar(username) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || 'U') +
@@ -12,6 +14,7 @@ function avatar(username) {
 
 export default function ChatWindow({ conversationId, otherUserId, otherUsername, onClose, onRefreshList }) {
   const { currentUser } = useApp();
+  const { toast } = useToast();
   const [messages, setMessages] = useState(null);
   const [content, setContent] = useState('');
   const containerRef = useRef(null);
@@ -47,7 +50,7 @@ export default function ChatWindow({ conversationId, otherUserId, otherUsername,
       load();
       onRefreshList();
     } catch (err) {
-      alert('发送失败：' + err.message);
+      toast('发送失败：' + err.message, 'error');
     }
   };
 
@@ -56,7 +59,7 @@ export default function ChatWindow({ conversationId, otherUserId, otherUsername,
       <div className="modal-content" style={{ display: 'flex', flexDirection: 'column', height: '70vh', maxHeight: '70vh', padding: 0, overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
           <span id="chatTitle" style={{ fontWeight: 600, fontSize: 16 }}>{otherUsername}</span>
-          <span className="close" onClick={onClose} style={{ fontSize: 24, cursor: 'pointer', color: 'var(--text-light)', lineHeight: 1 }}>&times;</span>
+          <span className="close" onClick={onClose} style={{ cursor: 'pointer', color: 'var(--text-light)', lineHeight: 1 }}><Icon name="close" size={20} /></span>
         </div>
         <div id="chatMessages" ref={containerRef} style={{ flex: 1, overflowY: 'auto', padding: 16, minHeight: 0 }}>
           {messages === null ? (
@@ -83,7 +86,7 @@ export default function ChatWindow({ conversationId, otherUserId, otherUsername,
                       {m.content}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 4, textAlign: isMine ? 'right' : 'left' }}>
-                      {time} {isMine ? (m.is_read ? '✓✓' : '✓') : ''}
+                      {time} {isMine && <Icon name="success" size={10} aria-label={m.is_read ? '已读' : '已发送'} />}
                     </div>
                   </div>
                 </div>

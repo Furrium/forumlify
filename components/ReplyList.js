@@ -7,6 +7,7 @@ import { useApp } from './AppProvider';
 import { Icon } from './Icons';
 import { renderMarkdown } from '@/lib/markdown';
 import CaptchaImage from './CaptchaImage';
+import { useToast } from './Toast';
 
 function avatar(username) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || '匿名用户') +
@@ -15,6 +16,7 @@ function avatar(username) {
 
 export default function ReplyList({ postId, onRefresh }) {
   const { currentUser, openUser } = useApp();
+  const { toast, confirmAction } = useToast();
   const [replies, setReplies] = useState([]);
   const [content, setContent] = useState('');
   const [captcha, setCaptcha] = useState(null);
@@ -31,10 +33,10 @@ export default function ReplyList({ postId, onRefresh }) {
   useEffect(() => { setCaptcha(generateCaptcha()); }, [postId]);
 
   const handleSubmit = async () => {
-    if (!currentUser) { alert('请先登录'); return; }
-    if (!content.trim()) { alert('请填写回复内容'); return; }
+    if (!currentUser) { toast('请先登录', 'warning'); return; }
+    if (!content.trim()) { toast('请填写回复内容', 'warning'); return; }
     if (!captcha || parseInt(captchaInput) !== captcha.answer) {
-      alert('验证码错误，请重新计算');
+      toast('验证码错误，请重新计算', 'warning');
       setCaptcha(generateCaptcha());
       setCaptchaInput('');
       return;
@@ -48,17 +50,17 @@ export default function ReplyList({ postId, onRefresh }) {
       load();
       onRefresh();
     } catch (err) {
-      alert('回复失败：' + err.message);
+      toast('回复失败：' + err.message, 'error');
     }
   };
 
   const handleDelete = async (replyId) => {
-    if (!confirm('确定要删除这条回复吗？')) return;
+    if (!await confirmAction('确定要删除这条回复吗？')) return;
     try {
       await API.deleteReply(replyId);
       load();
     } catch (err) {
-      alert('删除失败：' + err.message);
+      toast('删除失败：' + err.message, 'error');
     }
   };
 
@@ -69,7 +71,7 @@ export default function ReplyList({ postId, onRefresh }) {
       </div>
       <div style={{ marginTop: 12 }}>
         {replies.length === 0 ? (
-          <div style={{ color: '#94a3b8', padding: '20px 0', textAlign: 'center' }}>还没有回复，快来抢沙发吧 🛋️</div>
+          <div style={{ color: '#94a3b8', padding: '20px 0', textAlign: 'center' }}><Icon name="message" size={16} /> 还没有回复，快来发表第一条回复吧</div>
         ) : (
           replies.map((r) => {
             const rTime = r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '';

@@ -4,11 +4,23 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { API } from '@/lib/api';
+import { Icon } from './Icons';
+import { useToast } from './Toast';
 
 export default function RecoveryCodes() {
   const { t } = useTranslation();
+  const { toast, confirmAction } = useToast();
   const [count, setCount] = useState(0);
   const [modal, setModal] = useState(null); // null | {codes, isNew}
+  const [modalClosing, setModalClosing] = useState(false);
+
+  const closeModal = () => {
+    setModalClosing(true);
+    setTimeout(() => {
+      setModal(null);
+      setModalClosing(false);
+    }, 340);
+  };
 
   const loadCount = () => {
     API.getRecoveryCodeCount().then((d) => setCount(d.count || 0)).catch(() => {});
@@ -16,13 +28,13 @@ export default function RecoveryCodes() {
   useEffect(loadCount, []);
 
   const regenerate = async () => {
-    if (!confirm(t('recovery.confirmRegenerate'))) return;
+    if (!await confirmAction(t('recovery.confirmRegenerate'))) return;
     try {
       const d = await API.generateRecoveryCodes();
       setModal({ codes: d.codes || [], isNew: true });
       loadCount();
     } catch (err) {
-      alert(t('recovery.genFailed', { msg: err.message }));
+      toast(t('recovery.genFailed', { msg: err.message }), 'error');
     }
   };
 
@@ -33,32 +45,32 @@ export default function RecoveryCodes() {
       setModal({ codes: d.codes || [], isNew: false });
       loadCount();
     } catch (err) {
-      alert(t('recovery.fetchFailed', { msg: err.message }));
+      toast(t('recovery.fetchFailed', { msg: err.message }), 'error');
     }
   };
 
   return (
     <div style={{ marginTop: 16, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 20 }}>
-      <h3 style={{ fontSize: 16, marginBottom: 8 }}>🔑 {t('recovery.title')}</h3>
+      <h3 style={{ fontSize: 16, marginBottom: 8 }}><Icon name="key" size={16} /> {t('recovery.title')}</h3>
       <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>{t('recovery.desc')}</p>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button className="btn-secondary" style={{ padding: '8px 16px', border: '1px solid var(--border)', borderRadius: 4, background: 'var(--surface)', cursor: 'pointer', color: 'var(--text)' }} onClick={view}>📋 {t('recovery.view')}</button>
-        <button className="btn-secondary" style={{ padding: '8px 16px', border: '1px solid var(--border)', borderRadius: 4, background: 'var(--surface)', cursor: 'pointer', color: 'var(--text)' }} onClick={regenerate}>🔄 {t('recovery.regenerate')}</button>
+        <button className="btn-secondary" style={{ padding: '8px 16px', border: '1px solid var(--border)', borderRadius: 4, background: 'var(--surface)', cursor: 'pointer', color: 'var(--text)' }} onClick={view}><Icon name="list" size={14} /> {t('recovery.view')}</button>
+        <button className="btn-secondary" style={{ padding: '8px 16px', border: '1px solid var(--border)', borderRadius: 4, background: 'var(--surface)', cursor: 'pointer', color: 'var(--text)' }} onClick={regenerate}><Icon name="refresh" size={14} /> {t('recovery.regenerate')}</button>
       </div>
       <div id="recoveryCodesStatus" style={{ fontSize: 13, color: 'var(--text-light)', marginTop: 8 }}>{t('recovery.remaining', { count })}</div>
 
       {modal && (
-        <div className="modal active" style={{ display: 'flex' }} onClick={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
+        <div className={'modal active' + (modalClosing ? ' closing' : '')} style={{ display: 'flex' }} onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
           <div className="modal-content" style={{ maxWidth: 480, position: 'relative' }}>
-            <span className="close" style={{ position: 'absolute', top: 12, right: 16, fontSize: 24, cursor: 'pointer', color: 'var(--text-light)' }} onClick={() => setModal(null)}>&times;</span>
+            <span className="close" style={{ position: 'absolute', top: 12, right: 16, cursor: 'pointer', color: 'var(--text-light)' }} onClick={closeModal}><Icon name="close" size={20} /></span>
             <h2 style={{ marginBottom: 12 }}>{modal.isNew ? t('recovery.newCodes') : t('recovery.title')}</h2>
-            <p style={{ fontSize: 13, color: '#ef4444', marginBottom: 12 }}>{t('recovery.saveWarning')}</p>
+            <p style={{ fontSize: 13, color: '#ef4444', marginBottom: 12, display: 'flex', alignItems: 'flex-start', gap: 6 }}><Icon name="warning" size={14} /> {t('recovery.saveWarning')}</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {modal.codes.map((c, i) => (
                 <code key={i} style={{ background: 'var(--bg)', padding: '8px 12px', borderRadius: 6, fontSize: 13, textAlign: 'center', userSelect: 'all' }}>{c}</code>
               ))}
             </div>
-            <button className="btn-primary" style={{ width: '100%', padding: 10, marginTop: 16 }} onClick={() => setModal(null)}>{t('recovery.saved')}</button>
+            <button className="btn-primary" style={{ width: '100%', padding: 10, marginTop: 16 }} onClick={closeModal}>{t('recovery.saved')}</button>
           </div>
         </div>
       )}

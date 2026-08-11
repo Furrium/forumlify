@@ -47,10 +47,10 @@ export default function SettingsPage() {
 
   return (
     <div className="page-slide active">
-      <div className="page-header" style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
+      <div className="page-header" style={{ width: '100%' }}>
         <h2><Icon name="settings" size={20} /> {t('settings.title')}</h2>
       </div>
-      <div className="settings-layout" style={{ maxWidth: 1200, margin: '0 auto', width: '100%', display: 'flex', gap: 28, alignItems: 'flex-start' }}>
+      <div className="settings-layout" style={{ width: '100%', display: 'flex', gap: 28, alignItems: 'flex-start' }}>
         <aside className="settings-sidebar" style={{ width: 200, flexShrink: 0 }}>
           <nav className="settings-nav">
             {NAV.map((n) => (

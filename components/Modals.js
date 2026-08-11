@@ -7,10 +7,12 @@ import { API, generateCaptcha } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
 import CaptchaImage from './CaptchaImage';
+import { useToast } from './Toast';
 
 export default function Modals({ modal, onClose, reportPostId }) {
   const { login, register, currentUser, refresh } = useApp();
   const { t } = useTranslation();
+  const { toast } = useToast();
 
   // 登录表单
   const [loginEmail, setLoginEmail] = useState('');
@@ -38,7 +40,7 @@ export default function Modals({ modal, onClose, reportPostId }) {
   };
 
   const handleLogin = async () => {
-    if (!loginEmail.trim() || !loginPassword) { alert('请填写完整信息'); return; }
+    if (!loginEmail.trim() || !loginPassword) { toast('请填写完整信息', 'warning'); return; }
     try {
       const result = await login(loginEmail.trim(), loginPassword);
       if (result.user) {
@@ -48,15 +50,15 @@ export default function Modals({ modal, onClose, reportPostId }) {
         refresh();
       }
     } catch (err) {
-      alert('登录失败：' + err.message);
+      toast('登录失败：' + err.message, 'error');
     }
   };
 
   const handleRegister = async () => {
-    if (!regUsername.trim() || !regEmail.trim() || !regPassword) { alert('请填写完整信息'); return; }
-    if (regPassword.length < 6) { alert('密码至少6位'); return; }
+    if (!regUsername.trim() || !regEmail.trim() || !regPassword) { toast('请填写完整信息', 'warning'); return; }
+    if (regPassword.length < 6) { toast('密码至少6位', 'warning'); return; }
     if (!regCaptcha || parseInt(regCaptchaInput) !== regCaptcha.answer) {
-      alert('验证码错误，请重新计算');
+      toast('验证码错误，请重新计算', 'warning');
       setRegCaptcha(generateCaptcha());
       setRegCaptchaInput('');
       return;
@@ -68,10 +70,10 @@ export default function Modals({ modal, onClose, reportPostId }) {
       setRegEmail('');
       setRegPassword('');
       setRegCaptchaInput('');
-      alert('注册成功！');
+      toast('注册成功！', 'success');
       refresh();
     } catch (err) {
-      alert('注册失败：' + err.message);
+      toast('注册失败：' + err.message, 'error');
     }
   };
 
@@ -80,9 +82,9 @@ export default function Modals({ modal, onClose, reportPostId }) {
     try {
       await API.createReport(reportPostId, reportReason);
       onClose();
-      alert('举报已提交，管理员将尽快处理');
+      toast('举报已提交，管理员将尽快处理', 'success');
     } catch (err) {
-      alert('举报失败：' + err.message);
+      toast('举报失败：' + err.message, 'error');
     }
   };
 
