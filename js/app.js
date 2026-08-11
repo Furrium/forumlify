@@ -287,7 +287,7 @@ async function renderMessages(conversationId, silent = false) {
   try {
     const messages = await API.getMessages(conversationId);
     if (messages.length === 0) {
-      container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">还没有消息，打个招呼吧 👋</div>';
+      container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">还没有消息，打个招呼吧</div>';
       return;
     }
     let html = '';
@@ -515,17 +515,17 @@ async function renderMessagesPage() {
 
     let html = '';
     const typeMap = {
-      reply: '💬',
-      post_deleted: '🗑️',
-      report_handled: '🛡️',
-      system: '📢'
+      reply: getIcon('message'),
+      post_deleted: getIcon('delete'),
+      report_handled: getIcon('shield'),
+      system: getIcon('megaphone')
     };
     notifications.forEach(n => {
-      const icon = typeMap[n.type] || '📌';
+      const icon = typeMap[n.type] || getIcon('pin');
       const time = n.created_at ? new Date(n.created_at).toLocaleString('zh-CN') : '';
       html += `
         <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border-light);background:var(--surface);border-radius:6px;margin-bottom:6px;">
-          <span style="font-size:20px;">${icon}</span>
+          <span style="font-size:20px;display:inline-flex;align-items:center;">${icon}</span>
           <div style="flex:1;min-width:0;">
             <div style="font-weight:600;font-size:14px;">${n.title}</div>
             <div style="color:var(--text-secondary);font-size:13px;margin-top:2px;">${n.content}</div>
@@ -575,7 +575,7 @@ async function renderSettingsPage(tab = 'profile') {
 
     if (tab === 'profile') {
       container.innerHTML = `
-        <h3 style="margin-bottom:16px;text-align:center;">👤 个人资料</h3>
+        <h3 style="margin-bottom:16px;text-align:center;">${getIcon('user')} 个人资料</h3>
 
         <!-- 头像 -->
         <div style="text-align:center;margin-bottom:24px;">
@@ -583,16 +583,16 @@ async function renderSettingsPage(tab = 'profile') {
             <img id="avatarPreview" src="${user.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.username) + '&background=6366f1&color=fff&size=128'}" 
                  style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);" />
             <button id="avatarUploadBtn" style="position:absolute;bottom:0;right:0;background:var(--primary);color:#fff;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(99,102,241,0.4);">
-              📷
+              ${getIcon('camera')}
             </button>
           </div>
           <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" />
           <h2 style="margin:12px 0 4px;">${user.username}</h2>
           <p style="color:var(--text-secondary);font-size:14px;">${user.bio || '这个人很懒，什么都没写'}</p>
           <div style="display:flex;justify-content:center;gap:16px;margin-top:8px;font-size:13px;color:var(--text-secondary);flex-wrap:wrap;">
-            <span>📅 加入 ${user.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '未知'}</span>
-            <span>📝 ${postCount} 帖</span>
-            ${user.role === 'admin' ? '<span style="color:var(--primary);font-weight:600;">🛡️ 管理员</span>' : ''}
+            <span>${getIcon('calendar')} 加入 ${user.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '未知'}</span>
+            <span>${getIcon('file')} ${postCount} 帖</span>
+            ${user.role === 'admin' ? `<span style="color:var(--primary);font-weight:600;">${getIcon('shield')} 管理员</span>` : ''}
           </div>
           <div id="avatarUploadStatus" style="font-size:13px;margin-top:8px;"></div>
         </div>
@@ -631,18 +631,15 @@ async function renderSettingsPage(tab = 'profile') {
           const file = this.files[0];
           if (!file) return;
           if (!file.type.startsWith('image/')) {
-            statusEl.textContent = '❌ 请选择图片文件';
-            statusEl.style.color = '#ef4444';
+            showToast('请选择图片文件', 'error');
             return;
           }
           if (file.size > 5 * 1024 * 1024) {
-            statusEl.textContent = '❌ 图片不能超过 5MB';
-            statusEl.style.color = '#ef4444';
+            showToast('图片不能超过 5MB', 'error');
             return;
           }
 
-          statusEl.textContent = '⏳ 上传中...';
-          statusEl.style.color = 'var(--text-secondary)';
+          showToast('上传中...', 'warning');
 
           try {
             const formData = new FormData();
@@ -665,13 +662,11 @@ async function renderSettingsPage(tab = 'profile') {
 
             currentUser.avatar_url = avatarUrl;
             avatarPreview.src = avatarUrl;
-            statusEl.textContent = '✅ 头像更新成功！';
-            statusEl.style.color = '#22c55e';
+            showToast('头像更新成功！', 'success');
             renderNav();
 
           } catch (err) {
-            statusEl.textContent = '❌ ' + err.message;
-            statusEl.style.color = '#ef4444';
+            showToast(err.message, 'error');
           }
         });
       }
@@ -698,7 +693,7 @@ async function renderSettingsPage(tab = 'profile') {
 
     else if (tab === 'security') {
       container.innerHTML = `
-        <h3 style="margin-bottom:16px;text-align:center;">🔒 安全设置</h3>
+        <h3 style="margin-bottom:16px;text-align:center;">${getIcon('lock')} 安全设置</h3>
 
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
           <h4 style="font-size:14px;margin-bottom:12px;">修改密码</h4>
@@ -786,13 +781,13 @@ async function renderSettingsPage(tab = 'profile') {
 
     else if (tab === 'recovery') {
       container.innerHTML = `
-        <h3 style="margin-bottom:16px;text-align:center;">🔑 恢复码</h3>
+        <h3 style="margin-bottom:16px;text-align:center;">${getIcon('key')} 恢复码</h3>
 
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
           <p style="font-size:14px;color:var(--text-secondary);margin-bottom:12px;">用于忘记密码时重置账户。每个恢复码只能使用一次。</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button id="viewRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">📋 查看恢复码</button>
-            <button id="regenerateRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">🔄 重新生成</button>
+            <button id="viewRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">${getIcon('list')} 查看恢复码</button>
+            <button id="regenerateRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">${getIcon('refresh')} 重新生成</button>
           </div>
           <div id="recoveryCodesStatus" style="font-size:13px;color:var(--text-light);margin-top:8px;">剩余 ${recoveryCount} 个可用恢复码</div>
         </div>
@@ -860,7 +855,7 @@ function openEditModal(postId, currentTitle, currentContent) {
   modal.innerHTML = `
     <div class="modal-content" style="max-width:600px;">
       <span class="close" style="position:absolute;top:12px;right:16px;font-size:24px;cursor:pointer;color:var(--text-light);">&times;</span>
-      <h2 style="margin-bottom:16px;">✏️ 编辑帖子</h2>
+      <h2 style="margin-bottom:16px;">${getIcon('edit')} 编辑帖子</h2>
       <input type="text" id="editPostTitle" value="${currentTitle || ''}" placeholder="标题" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:6px;font-size:15px;font-weight:600;margin-bottom:12px;font-family:inherit;background:var(--bg);color:var(--text);" />
       <textarea id="editPostContent" rows="6" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:6px;font-size:15px;font-family:inherit;resize:vertical;background:var(--bg);color:var(--text);">${currentContent || ''}</textarea>
       <button id="editPostSaveBtn" class="btn-primary" style="padding:10px 24px;margin-top:12px;width:100%;">保存修改</button>
@@ -922,14 +917,14 @@ function showRecoveryCodesModal(codes) {
 
   modal.innerHTML = `
     <div class="modal-content" style="max-width:480px;">
-      <h2 style="margin-bottom:8px;">🔑 恢复码</h2>
+      <h2 style="margin-bottom:8px;">${getIcon('key')} 恢复码</h2>
       <p style="font-size:14px;color:var(--text-secondary);margin-bottom:16px;">
         请妥善保存以下恢复码。当你忘记密码时，可以使用它们重置密码。
         <strong style="color:#ef4444;">每个恢复码只能使用一次。</strong>
       </p>
       <div style="margin-bottom:16px;">${codesHtml}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button id="copyRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">📋 复制全部</button>
+        <button id="copyRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">${getIcon('list')} 复制全部</button>
         <button id="closeRecoveryCodesBtn" class="btn-primary" style="padding:8px 16px;">我已保存</button>
       </div>
       <div id="copyStatus" style="font-size:13px;margin-top:8px;color:var(--text-light);"></div>
