@@ -7,7 +7,7 @@ import { API, getTheme, setToken, getToken } from '@/lib/api';
 
 const AppContext = createContext(null);
 
-function stageSharedGeometry(transition, { name, duration, moveOffset, preserveSizeUntilMove = false }) {
+function stageSharedGeometry(transition, { name, duration, moveOffset }) {
   transition.ready.then(() => {
     const groupAnimation = document.getAnimations().find(
       (animation) => animation.effect?.pseudoElement === `::view-transition-group(${name})`
@@ -27,7 +27,7 @@ function stageSharedGeometry(transition, { name, duration, moveOffset, preserveS
       },
       {
         offset: moveOffset,
-        width: preserveSizeUntilMove ? start.width : end.width,
+        width: end.width,
         height: start.height,
         transform: end.transform,
         easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
@@ -238,12 +238,6 @@ export default function AppProvider({ children, cachedName = '' }) {
       if (targetTime) targetTime.style.viewTransitionName = 'post-time';
     });
     stageSharedGeometry(transition, { name: 'post-expand', duration: 480, moveOffset: 0.72 });
-    stageSharedGeometry(transition, {
-      name: 'post-heading',
-      duration: 480,
-      moveOffset: 0.72,
-      preserveSizeUntilMove: true,
-    });
     const clearTargetNames = () => {
       if (targetCard) targetCard.style.viewTransitionName = '';
       if (targetTitle) targetTitle.style.viewTransitionName = '';
@@ -284,12 +278,6 @@ export default function AppProvider({ children, cachedName = '' }) {
       flushSync(commitNavigation);
     });
     stageSharedGeometry(transition, { name: 'post-expand', duration: 960, moveOffset: 0.62 });
-    stageSharedGeometry(transition, {
-      name: 'post-heading',
-      duration: 960,
-      moveOffset: 0.62,
-      preserveSizeUntilMove: true,
-    });
     const clearSourceNames = () => {
       sourceElement.style.viewTransitionName = '';
       if (sourceTitle) sourceTitle.style.viewTransitionName = '';

@@ -31,6 +31,7 @@ export async function GET(req) {
         p.*,
         u.username,
         u.avatar_url,
+        u.signature,
         (SELECT COUNT(*) FROM replies WHERE post_id = p.id) as reply_count
       FROM posts p
       JOIN users u ON p.user_id = u.id
