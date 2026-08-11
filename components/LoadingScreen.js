@@ -1,16 +1,17 @@
 'use client';
 
 // 全屏加载页：初始化未完成时显示转圈，加载完成后淡出
-// - 未收到论坛名时：只显示 spinner，不显示名字/图标
-// - 收到论坛名后：名字在原位置渐渐淡入出现
+// - 名字容器总是渲染（空）：layout.js 内联脚本会在 DOMContentLoaded（早于
+//   React hydrate）时把缓存的论坛名填入，实现二次访问首帧即显示名字
+// - 首次访问无缓存：由 React 在收到服务器论坛名后淡入显示
 export default function LoadingScreen({ forumName, forumNameLoaded }) {
   return (
     <div className="loading-screen">
       <div className="loading-inner">
         <div className="loading-spinner" />
-        {forumNameLoaded && forumName && (
-          <div className="loading-title loading-title-appear">{forumName}</div>
-        )}
+        <div className="loading-title loading-title-appear" id="loadingTitle">
+          {forumNameLoaded && forumName}
+        </div>
         <div className="loading-sub">加载中...</div>
       </div>
     </div>
