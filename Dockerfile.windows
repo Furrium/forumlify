@@ -4,7 +4,7 @@
 # ============================================================
 
 # ---- 构建阶段 ----
-FROM node:20-windowsservercore-ltsc2022 AS builder
+FROM node:24-windowsservercore-ltsc2022 AS builder
 WORKDIR C:/app
 ENV DOCKER=1
 
@@ -16,7 +16,7 @@ COPY . .
 RUN bun run build
 
 # ---- 运行阶段 ----
-FROM node:20-windowsservercore-ltsc2022
+FROM node:24-windowsservercore-ltsc2022
 WORKDIR C:/app
 ENV NODE_ENV=production
 
