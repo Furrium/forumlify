@@ -22,10 +22,9 @@ export default function UserProfile({ username }) {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const users = await API.getUsersByUsername(username);
-      const u = users && users.length > 0 ? users[0] : null;
-      if (!u) {
-        setError('用户不存在');
+      const u = await API.getUserProfile(username);
+      if (u.error || !u.id) {
+        setError(u.error || '用户不存在');
         return;
       }
       setUser(u);
