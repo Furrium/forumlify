@@ -392,5 +392,18 @@ function applyTranslation() {
 //  初始化
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(applyTranslation, 200);
+  // 先隐藏 body
+  document.body.style.opacity = '0';
+
+  setTimeout(function() {
+    // 加载论坛名称
+    if (typeof loadForumName === 'function') {
+      loadForumName();
+    }
+    // 翻译
+    applyTranslation();
+    // 淡入显示
+    document.body.style.transition = 'opacity 0.2s ease';
+    document.body.style.opacity = '1';
+  }, 200);
 });
