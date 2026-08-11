@@ -94,15 +94,6 @@ export default function ReplyList({ postId, onRefresh }) {
   // 正在回复的目标回复对象（用于显示 @用户名）
   const replyToObj = replyTo ? replies.find((x) => x.id === replyTo) : null;
 
-  // 回复折叠：根据视口高度动态调整可见条数（至少 3 条）
-  const [showCount, setShowCount] = useState(3);
-  const [showAllReplies, setShowAllReplies] = useState(false);
-  useEffect(() => {
-    setShowCount(Math.max(3, Math.floor(window.innerHeight / 200)));
-  }, []);
-  const visibleReplies = showAllReplies ? replies : replies.slice(-showCount);
-  const hiddenCount = replies.length - visibleReplies.length;
-
   return (
     <>
       <div className="post-reply-count" style={{ marginTop: 20, fontSize: 14, color: '#64748b' }}>
@@ -112,7 +103,7 @@ export default function ReplyList({ postId, onRefresh }) {
         {replies.length === 0 ? (
           <div style={{ color: '#94a3b8', padding: '20px 0', textAlign: 'center' }}><Icon name="message" size={16} /> 还没有回复，快来发表第一条回复吧</div>
         ) : (
-          visibleReplies.map((r) => {
+          replies.map((r) => {
             const rTime = r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '';
             const nestDepth = Math.min(replyDepths[r.id] || 0, 5);
             return (
@@ -140,11 +131,6 @@ export default function ReplyList({ postId, onRefresh }) {
               </div>
             );
           })
-        )}
-        {hiddenCount > 0 && (
-          <button className="reply-show-more" onClick={() => setShowAllReplies(true)}>
-            <Icon name="chevronDown" size={13} /> 继续此消息串（还有 {hiddenCount} 条回复）
-          </button>
         )}
       </div>
 

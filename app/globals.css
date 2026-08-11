@@ -3144,25 +3144,3 @@ a.btn-secondary {
     flex-wrap: wrap;
   }
 }
-
-/* ===== 继续此消息串（Discourse 风格折叠） ===== */
-.reply-show-more {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 12px 0 4px;
-  padding: 8px 16px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
-  color: var(--primary);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.reply-show-more:hover {
-  background: var(--primary);
-  color: #fff;
-  border-color: var(--primary);
-}
