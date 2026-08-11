@@ -1438,7 +1438,7 @@ svg {
 }
 
 [data-theme="dark"] .page-slide {
-  background: rgba(0, 0, 0, 0.3);
+  background: linear-gradient(145deg, var(--bg-start) 0%, var(--bg-end) 100%);
 }
 
 [data-theme="dark"] #replyArea textarea {

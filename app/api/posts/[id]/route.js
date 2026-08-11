@@ -1,6 +1,7 @@
 // GET /api/posts/[id], DELETE /api/posts/[id]
 import pool from '@/lib/db';
 import { getUser } from '@/lib/auth';
+import { jsonWithEtag } from '@/lib/http-cache';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -21,7 +22,7 @@ export async function GET(req, { params }) {
     if (r.rows.length === 0) {
       return invalidId();
     }
-    return Response.json(r.rows[0]);
+    return jsonWithEtag(req, r.rows[0]);
   } catch {
     return Response.json({ error: '服务器错误' }, { status: 500 });
   }

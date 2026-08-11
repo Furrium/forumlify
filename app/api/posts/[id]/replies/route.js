@@ -1,6 +1,7 @@
 // GET /api/posts/[id]/replies, POST /api/posts/[id]/replies
 import pool from '@/lib/db';
 import { getUser } from '@/lib/auth';
+import { jsonWithEtag } from '@/lib/http-cache';
 
 export async function GET(req, { params }) {
   try {
@@ -12,7 +13,7 @@ export async function GET(req, { params }) {
        ORDER BY r.created_at ASC`,
       [(await params).id]
     );
-    return Response.json(r.rows);
+    return jsonWithEtag(req, r.rows);
   } catch {
     return Response.json({ error: '服务器错误' }, { status: 500 });
   }
