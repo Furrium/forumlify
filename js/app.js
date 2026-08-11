@@ -811,8 +811,11 @@ async function renderSettingsPage(tab = 'profile') {
           await API.changePassword(oldPassword, newPassword);
           document.getElementById('changeOldPassword').value = '';
           document.getElementById('changeNewPassword').value = '';
-          statusEl.textContent = getIcon('success') + ' 密码修改成功！';
-          statusEl.style.color = '#22c55e';
+          alert('密码修改成功，所有会话已失效，请重新登录');
+          await API.logout();
+          currentUser = null;
+          renderNav();
+          switchPage('feed');
         } catch (err) {
           statusEl.textContent = getIcon('error') + ' ' + err.message;
           statusEl.style.color = '#ef4444';
@@ -835,9 +838,11 @@ async function renderSettingsPage(tab = 'profile') {
           await API.changeEmail(password, newEmail);
           document.getElementById('changeEmailPassword').value = '';
           document.getElementById('changeNewEmail').value = '';
-          currentUser.email = newEmail;
-          statusEl.textContent = getIcon('success') + ' 邮箱修改成功！';
-          statusEl.style.color = '#22c55e';
+          alert('邮箱修改成功，所有会话已失效，请使用新邮箱重新登录');
+          await API.logout();
+          currentUser = null;
+          renderNav();
+          switchPage('feed');
         } catch (err) {
           statusEl.textContent = getIcon('error') + ' ' + err.message;
           statusEl.style.color = '#ef4444';
