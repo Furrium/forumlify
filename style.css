@@ -2526,11 +2526,4 @@ a.btn-secondary {
    🌍 国际化加载前隐藏
    ============================================================ */
 
-body:not(.i18n-ready) {
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
 
-body.i18n-ready {
-  opacity: 1;
-}
