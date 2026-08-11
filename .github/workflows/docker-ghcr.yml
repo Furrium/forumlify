@@ -8,23 +8,29 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: lezi-fun/forumlify-deploy
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  linux-amd64:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: lezi-fun
-          password: ${{ secrets.GHCR_TOKEN }}
-      - name: Metadata
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -32,80 +38,16 @@ jobs:
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=git-
-      - name: Build & push linux/amd64
+
+      - name: Build and push (linux/amd64 + linux/arm64)
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          platforms: linux/amd64
-          tags: ${{ steps.meta.outputs.tags }}-amd64
+          platforms: linux/amd64, linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=amd64
-          cache-to: type=gha,mode=max,scope=amd64
-
-  linux-arm64:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: lezi-fun
-          password: ${{ secrets.GHCR_TOKEN }}
-      - name: Metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=sha,prefix=git-
-      - name: Build & push linux/arm64
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          platforms: linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}-arm64
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=arm64
-          cache-to: type=gha,mode=max,scope=arm64
-
-
-  manifest:
-    needs: [linux-amd64, linux-arm64]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: lezi-fun
-          password: ${{ secrets.GHCR_TOKEN }}
-      - name: Metadata (base tags)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=sha,prefix=git-
-      - name: Merge multi-arch manifests
-        shell: bash
-        run: |
-          set -e
-          TAGS=$(echo "${{ steps.meta.outputs.tags }}" | tr '\n' ' ')
-          for tag in $TAGS; do
-            echo "merging: $tag (amd64 + arm64)"
-            docker manifest create "$tag" --amend "$tag-amd64" --amend "$tag-arm64"
-            docker manifest push "$tag"
-          done
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
