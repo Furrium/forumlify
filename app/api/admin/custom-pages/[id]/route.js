@@ -9,7 +9,7 @@ export async function PUT(req, { params }) {
   if (!user) return Response.json({ error: '请先登录' }, { status: 401 });
   const forbidden = await requireAdmin(user);
   if (forbidden) return forbidden;
-  if (!UUID_RE.test(params.id)) {
+  if (!UUID_RE.test((await params).id)) {
     return Response.json({ error: '页面不存在' }, { status: 404 });
   }
 
@@ -20,7 +20,7 @@ export async function PUT(req, { params }) {
        SET title = $1, content = $2, enabled = $3, updated_at = NOW()
        WHERE id = $4
        RETURNING *`,
-      [title, content, enabled, params.id]
+      [title, content, enabled, (await params).id]
     );
     if (r.rows.length === 0) {
       return Response.json({ error: '页面不存在' }, { status: 404 });
@@ -36,11 +36,11 @@ export async function DELETE(req, { params }) {
   if (!user) return Response.json({ error: '请先登录' }, { status: 401 });
   const forbidden = await requireAdmin(user);
   if (forbidden) return forbidden;
-  if (!UUID_RE.test(params.id)) {
+  if (!UUID_RE.test((await params).id)) {
     return Response.json({ error: '页面不存在' }, { status: 404 });
   }
   try {
-    await pool.query('DELETE FROM custom_pages WHERE id = $1', [params.id]);
+    await pool.query('DELETE FROM custom_pages WHERE id = $1', [(await params).id]);
     return Response.json({ success: true });
   } catch {
     return Response.json({ error: '删除失败，请稍后重试' }, { status: 500 });

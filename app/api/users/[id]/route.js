@@ -3,7 +3,7 @@ import pool from '@/lib/db';
 import { getUser, requireAdmin, isFirstUser } from '@/lib/auth';
 
 export async function PUT(req, { params }) {
-  const { id } = params;
+  const { id } = await params;
   const user = getUser(req);
   if (!user) {
     return Response.json({ error: '请先登录' }, { status: 401 });

@@ -5,7 +5,7 @@ export async function GET(req, { params }) {
   try {
     const r = await pool.query(
       'SELECT id, name, title, content FROM custom_pages WHERE name = $1 AND enabled = true',
-      [params.name]
+      [(await params).name]
     );
     if (r.rows.length === 0) {
       return Response.json({ error: '页面不存在' }, { status: 404 });

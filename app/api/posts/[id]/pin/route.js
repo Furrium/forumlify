@@ -10,21 +10,21 @@ export async function PUT(req, { params }) {
   if (!user) return Response.json({ error: '请先登录' }, { status: 401 });
   const forbidden = await requireAdmin(user);
   if (forbidden) return forbidden;
-  if (!UUID_RE.test(params.id)) {
+  if (!UUID_RE.test((await params).id)) {
     return Response.json({ error: '帖子不存在' }, { status: 404 });
   }
 
   try {
-    const post = await pool.query('SELECT id, user_id FROM posts WHERE id = $1', [params.id]);
+    const post = await pool.query('SELECT id, user_id FROM posts WHERE id = $1', [(await params).id]);
     if (post.rows.length === 0) {
       return Response.json({ error: '帖子不存在' }, { status: 404 });
     }
-    const check = await pool.query('SELECT is_pinned FROM posts WHERE id = $1', [params.id]);
+    const check = await pool.query('SELECT is_pinned FROM posts WHERE id = $1', [(await params).id]);
     const isPinned = check.rows[0].is_pinned;
 
     const r = await pool.query(
       `UPDATE posts SET is_pinned = $1, pinned_at = $2 WHERE id = $3 RETURNING *`,
-      [!isPinned, !isPinned ? new Date().toISOString() : null, params.id]
+      [!isPinned, !isPinned ? new Date().toISOString() : null, (await params).id]
     );
 
     await createNotification(
@@ -32,7 +32,7 @@ export async function PUT(req, { params }) {
       'system',
       isPinned ? '你的帖子已被取消置顶' : '你的帖子已被置顶',
       isPinned ? '管理员取消了你的帖子置顶' : '管理员把你的帖子置顶了',
-      '/?post=' + params.id
+      '/?post=' + (await params).id
     );
 
     return Response.json(r.rows[0]);
