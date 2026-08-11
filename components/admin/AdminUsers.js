@@ -73,7 +73,7 @@ export default function AdminUsers() {
                       display: 'inline-block', padding: '2px 10px', borderRadius: 4, fontSize: 12, fontWeight: 500,
                       ...(isAdmin ? { background: '#6366f1', color: '#fff' } : { background: 'var(--border)', color: 'var(--text-secondary)' }),
                     }}>
-                      {isAdmin ? t('admin.user.roleAdmin') : t('admin.user.roleUser')}
+                      {isAdmin ? (u.is_super ? t('admin.user.roleSuper') : t('admin.user.roleAdmin')) : t('admin.user.roleUser')}
                     </span>
                   </td>
                   <td style={{ padding: '10px 12px', color: '#94a3b8', fontSize: 13 }}>

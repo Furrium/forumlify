@@ -208,7 +208,8 @@
       "you": "You",
       "cannotSelf": "You cannot edit yourself",
       "makeUser": "Make user",
-      "makeAdmin": "Make admin"
+      "makeAdmin": "Make admin",
+      "roleSuper": "Super admin"
     },
     "log": {
       "empty": "No logs",

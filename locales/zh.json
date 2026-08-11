@@ -208,7 +208,8 @@
       "you": "你",
       "cannotSelf": "不可操作自己",
       "makeUser": "设为普通用户",
-      "makeAdmin": "设为管理员"
+      "makeAdmin": "设为管理员",
+      "roleSuper": "超级管理员"
     },
     "log": {
       "empty": "暂无日志",

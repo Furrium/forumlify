@@ -11,6 +11,12 @@ export async function GET(req) {
   const username = url.searchParams.get('username');
 
   try {
+    // 超级管理员 = 最早注册的 admin（对齐迁移：无 admin 时自动提升最早注册用户）
+    const superR = await pool.query(
+      `SELECT id FROM users WHERE role = 'admin' ORDER BY created_at ASC, id ASC LIMIT 1`
+    );
+    const superAdminId = superR.rows[0]?.id || null;
+
     let query = 'SELECT id, username, avatar_url, bio, role, created_at FROM users';
     const params = [];
     if (username) {
@@ -19,7 +25,9 @@ export async function GET(req) {
     }
     query += ' ORDER BY created_at DESC';
     const r = await pool.query(query, params);
-    return Response.json(r.rows);
+    // 标记超级管理员（前端显示"超级管理员"）
+    const rows = r.rows.map((u) => ({ ...u, is_super: u.id === superAdminId }));
+    return Response.json(rows);
   } catch {
     return Response.json({ error: '服务器错误' }, { status: 500 });
   }

@@ -2855,6 +2855,9 @@ a.btn-secondary {
   .settings-nav-item.active {
     border-left-color: transparent;
     border-bottom-color: var(--primary);
+    /* 手机端选中 tab：仅左上/右上圆角（桌面端保持直角不变） */
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
   }
 
   .settings-content {
