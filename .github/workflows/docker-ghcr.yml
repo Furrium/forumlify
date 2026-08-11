@@ -42,12 +42,47 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=git-
 
-      - name: Build and push
+      - name: Build and push (linux/amd64 + linux/arm64)
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
+          platforms: linux/amd64, linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # Windows 容器镜像（windowsservercore）：需要在 Windows runner 上
+  # 切换 Windows 容器引擎后原生 docker build（buildx 不支持交叉构建 Windows 容器）
+  windows:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Switch Docker to Windows containers
+        shell: pwsh
+        run: |
+          & "$env:ProgramFiles\Docker\Docker\DockerCli.exe" -SwitchWindowsEngine
+
+      - name: Build Windows image
+        shell: pwsh
+        run: |
+          docker build -f Dockerfile.windows -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:next-windows .
+
+      - name: Push Windows image
+        shell: pwsh
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:next-windows
