@@ -3166,13 +3166,3 @@ a.btn-secondary {
   color: #fff;
   border-color: var(--primary);
 }
-
-/* ===== 回复链视图头部 ===== */
-.reply-chain-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-}

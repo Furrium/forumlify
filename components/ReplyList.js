@@ -1,7 +1,6 @@
 'use client';
 
 // 回复列表 + 发表回复表单
-// 支持树形子回复链折叠：每条回复的子回复 >3 条时折叠，点击"继续此消息串"进入独立链视图
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { API } from '@/lib/api';
 import { useApp } from './AppProvider';
@@ -15,68 +14,19 @@ function avatar(username) {
     '&background=6366f1&color=fff&size=64';
 }
 
-// 渲染单条回复（树形，带子回复折叠）
-function ReplyItem({ r, children, onStartReply, onDelete, currentUser, openUser, onShowChain, chainParentId }) {
-  const rTime = r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '';
-  const childList = children[r.id] || [];
-  // 子回复折叠：最多显示 3 条，超出的折叠显示"继续此消息串"
-  const [showAll, setShowAll] = useState(false);
-  const visibleChildren = chainParentId || showAll ? childList : childList.slice(0, 3);
-  const hiddenCount = childList.length - visibleChildren.length;
-
-  return (
-    <div key={r.id} className="reply-item" data-username={r.username} data-reply-id={r.id}>
-      <div className="reply-header">
-        <img src={r.avatar_url || avatar(r.username)} className="reply-avatar" alt="" />
-        <span className="reply-username" style={{ cursor: 'pointer', color: 'var(--primary)' }} onClick={() => openUser(r.username)}>
-          {r.username || '匿名用户'}
-        </span>
-        <span className="reply-time">{rTime}</span>
-        <button className="reply-btn" onClick={() => onStartReply(r.id)} title="回复">
-          <Icon name="reply" size={13} />
-        </button>
-        {currentUser && (currentUser.id === r.user_id || currentUser.role === 'admin') && (
-          <button className="btn-sm btn-danger reply-delete-btn" onClick={() => onDelete(r.id)}>
-            <Icon name="trash" size={12} /> 删除
-          </button>
-        )}
-      </div>
-      <div className="reply-content" dangerouslySetInnerHTML={{ __html: renderMarkdown(r.content) }} />
-      {/* 子回复列表 */}
-      {visibleChildren.map((child) => (
-        <ReplyItem
-          key={child.id}
-          r={child}
-          children={children}
-          onStartReply={onStartReply}
-          onDelete={onDelete}
-          currentUser={currentUser}
-          openUser={openUser}
-          onShowChain={onShowChain}
-          chainParentId={chainParentId}
-        />
-      ))}
-      {/* 子回复折叠按钮 */}
-      {hiddenCount > 0 && !chainParentId && (
-        <button className="reply-show-more" onClick={() => onShowChain(r.id)}>
-          <Icon name="chevronDown" size={13} /> 继续此消息串（还有 {hiddenCount} 条回复）
-        </button>
-      )}
-    </div>
-  );
-}
-
-export default function ReplyList({ postId, onRefresh, chainParentId, onBack }) {
+export default function ReplyList({ postId, onRefresh }) {
   const { currentUser, openUser } = useApp();
   const { toast, confirmAction } = useToast();
   const [replies, setReplies] = useState([]);
   const [content, setContent] = useState('');
   const [captcha, setCaptcha] = useState(null);
   const [captchaInput, setCaptchaInput] = useState('');
+  // 正在回复的用户（hover 回复按钮 → 回填到回复框）
   const [replyTo, setReplyTo] = useState(null);
   const replyAreaRef = useRef(null);
   const replyInputRef = useRef(null);
 
+  // 点击"回复"：记录目标回复 ID，滚动到回复框并聚焦
   const startReply = (replyId) => {
     setReplyTo(replyId);
     setTimeout(() => {
@@ -100,6 +50,7 @@ export default function ReplyList({ postId, onRefresh, chainParentId, onBack }) 
     if (!content.trim()) { toast('请填写回复内容', 'warning'); return; }
     if (!captcha || !captchaInput.trim()) { toast('请填写验证码', 'warning'); return; }
     try {
+      // 答案由服务端 HMAC 校验
       await API.createReply(postId, content.trim(), { id: captcha.id, answer: captchaInput.trim(), sig: captcha.sig }, replyTo);
       API.logEvent('create_reply').catch(() => {});
       setContent('');
@@ -125,69 +76,75 @@ export default function ReplyList({ postId, onRefresh, chainParentId, onBack }) 
     }
   };
 
-  // 构建回复树（reply_id → children）
-  const children = {};
-  replies.forEach((r) => {
-    const pid = r.reply_to_id || '__root__';
-    if (!children[pid]) children[pid] = [];
-    children[pid].push(r);
-  });
-  // 根回复（无 reply_to 或回复目标不在当前回复列表）
-  const rootReplies = (children['__root__'] || []).concat(
-    replies.filter((r) => r.reply_to_id && !replies.find((x) => x.id === r.reply_to_id))
-  );
+  // 计算每条回复的嵌套深度（按 reply_to_id 精确追踪回复链）
+  const replyDepths = (() => {
+    const map = {};
+    const getDepth = (r) => {
+      if (map[r.id] !== undefined) return map[r.id];
+      if (!r.reply_to_id) { map[r.id] = 0; return 0; }
+      const parent = replies.find((x) => x.id === r.reply_to_id);
+      const d = parent ? getDepth(parent) + 1 : 0;
+      map[r.id] = d;
+      return d;
+    };
+    replies.forEach((r) => getDepth(r));
+    return map;
+  })();
 
+  // 正在回复的目标回复对象（用于显示 @用户名）
   const replyToObj = replyTo ? replies.find((x) => x.id === replyTo) : null;
+
+  // 回复折叠：根据视口高度动态调整可见条数（至少 3 条）
+  const [showCount, setShowCount] = useState(3);
+  const [showAllReplies, setShowAllReplies] = useState(false);
+  useEffect(() => {
+    setShowCount(Math.max(3, Math.floor(window.innerHeight / 200)));
+  }, []);
+  const visibleReplies = showAllReplies ? replies : replies.slice(-showCount);
+  const hiddenCount = replies.length - visibleReplies.length;
 
   return (
     <>
-      {chainParentId && onBack && (
-        <div className="reply-chain-header">
-          <button className="btn-sm" onClick={() => onBack(null)}>
-            <Icon name="arrowLeft" size={14} /> 返回所有回复
-          </button>
-          <span style={{ fontSize: 13, color: 'var(--text-light)' }}>回复链</span>
-        </div>
-      )}
-      <div className="post-reply-count" style={{ marginTop: chainParentId ? 12 : 20, fontSize: 14, color: '#64748b' }}>
+      <div className="post-reply-count" style={{ marginTop: 20, fontSize: 14, color: '#64748b' }}>
         <Icon name="message" size={14} /> {replies.length} 条回复
       </div>
       <div style={{ marginTop: 12 }}>
         {replies.length === 0 ? (
           <div style={{ color: '#94a3b8', padding: '20px 0', textAlign: 'center' }}><Icon name="message" size={16} /> 还没有回复，快来发表第一条回复吧</div>
-        ) : chainParentId ? (
-          // 链视图：显示指定回复 + 所有子回复（递归展开）
-          (() => {
-            const chainRoot = replies.find((r) => r.id === chainParentId);
-            if (!chainRoot) return null;
-            return (
-              <ReplyItem
-                r={chainRoot}
-                children={children}
-                onStartReply={startReply}
-                onDelete={handleDelete}
-                currentUser={currentUser}
-                openUser={openUser}
-                onShowChain={onBack}
-                chainParentId={true}
-              />
-            );
-          })()
         ) : (
-          // 普通视图：显示根回复，每条回复的子回复最多 3 条
-          rootReplies.map((r) => (
-            <ReplyItem
-              key={r.id}
-              r={r}
-              children={children}
-              onStartReply={startReply}
-              onDelete={handleDelete}
-              currentUser={currentUser}
-              openUser={openUser}
-              onShowChain={onBack}
-              chainParentId={false}
-            />
-          ))
+          visibleReplies.map((r) => {
+            const rTime = r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '';
+            const nestDepth = Math.min(replyDepths[r.id] || 0, 5);
+            return (
+              <div key={r.id} className="reply-item" data-username={r.username} data-reply-id={r.id} style={{ marginLeft: nestDepth ? nestDepth * 18 : 0 }}>
+                <div className="reply-header">
+                  <img src={r.avatar_url || avatar(r.username)} className="reply-avatar" alt="" />
+                  <span
+                    className="reply-username"
+                    style={{ cursor: 'pointer', color: 'var(--primary)' }}
+                    onClick={() => openUser(r.username)}
+                  >
+                    {r.username || '匿名用户'}
+                  </span>
+                  <span className="reply-time">{rTime}</span>
+                  <button className="reply-btn" onClick={() => startReply(r.id)} title="回复">
+                    <Icon name="reply" size={13} />
+                  </button>
+                  {currentUser && (currentUser.id === r.user_id || currentUser.role === 'admin') && (
+                    <button className="btn-sm btn-danger reply-delete-btn" onClick={() => handleDelete(r.id)}>
+                      <Icon name="trash" size={12} /> 删除
+                    </button>
+                  )}
+                </div>
+                <div className="reply-content" dangerouslySetInnerHTML={{ __html: renderMarkdown(r.content) }} />
+              </div>
+            );
+          })
+        )}
+        {hiddenCount > 0 && (
+          <button className="reply-show-more" onClick={() => setShowAllReplies(true)}>
+            <Icon name="chevronDown" size={13} /> 继续此消息串（还有 {hiddenCount} 条回复）
+          </button>
         )}
       </div>
 
