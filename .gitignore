@@ -10,3 +10,11 @@ out/
 .env.local
 .env.*.local
 .vercel
+
+# OpenNext
+.open-next
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
