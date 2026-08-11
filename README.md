@@ -1,6 +1,6 @@
 
 
-# Forumlify Express Edition 🌊
+# Forumlify LITE Edition 🌊
 
 > 一个简洁、优雅的现代社区系统。5 分钟 Docker 一键部署。
 
