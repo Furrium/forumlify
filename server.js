@@ -5,7 +5,7 @@
 
 const express = require('express');
 const cors = require('cors');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
 const multer = require('multer');
@@ -1407,19 +1407,24 @@ app.post('/api/auth/reset-password', async (req, res) => {
 app.use(express.static('.'));
 
 app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, 'index.html'));
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: '接口不存在' });
   }
+  return res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // ============================================================
 //  启动服务器
 // ============================================================
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log('========================================');
-  console.log('  🌊 Forumlify 已启动');
-  console.log('  📡 http://localhost:' + PORT);
-  console.log('  📡 API: http://localhost:' + PORT + '/api');
-  console.log('========================================');
-});
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log('========================================');
+    console.log('  🌊 Forumlify 已启动');
+    console.log('  📡 http://localhost:' + PORT);
+    console.log('  📡 API: http://localhost:' + PORT + '/api');
+    console.log('========================================');
+  });
+}
+
+module.exports = { app, pool };
