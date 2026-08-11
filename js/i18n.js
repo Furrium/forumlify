@@ -51,6 +51,7 @@ const TRANSLATIONS = {
     '提交回复': '提交回复',
     '还没有回复，快来抢沙发吧 🛋️': '还没有回复，快来抢沙发吧 🛋️',
     '写下你的回复...': '写下你的回复...',
+    '条回复': '条回复',
 
     // ===== 统计 =====
     '社区统计': '社区统计',
@@ -151,9 +152,17 @@ const TRANSLATIONS = {
     '链接地址': '链接地址',
     '添加': '添加',
 
-    // ===== 消息/通知 =====
+    // ===== 通知 =====
     '有人回复了你的帖子': '有人回复了你的帖子',
     '查看详情 →': '查看详情 →',
+    '你的帖子已被删除': '你的帖子已被删除',
+    '你的举报已被处理': '你的举报已被处理',
+    '你的帖子已被置顶': '你的帖子已被置顶',
+    '管理员取消了你的帖子置顶': '管理员取消了你的帖子置顶',
+    '管理员删除了你的帖子': '管理员删除了你的帖子',
+    '你举报的帖子已被管理员删除': '你举报的帖子已被管理员删除',
+    '你举报的帖子已被管理员驳回': '你举报的帖子已被管理员驳回',
+    '管理员把你的帖子置顶了': '管理员把你的帖子置顶了',
 
     // ===== 提示 =====
     '保存成功！': '保存成功！',
@@ -311,6 +320,7 @@ const TRANSLATIONS = {
     '提交回复': 'Submit Reply',
     '还没有回复，快来抢沙发吧 🛋️': 'No replies yet. Be the first!',
     '写下你的回复...': 'Write your reply...',
+    '条回复': ' replies',
 
     // ===== 统计 =====
     '社区统计': 'Community Stats',
@@ -411,9 +421,17 @@ const TRANSLATIONS = {
     '链接地址': 'Link URL',
     '添加': 'Add',
 
-    // ===== 消息/通知 =====
+    // ===== 通知 =====
     '有人回复了你的帖子': 'Someone replied to your post',
     '查看详情 →': 'View details →',
+    '你的帖子已被删除': 'Your post has been deleted',
+    '你的举报已被处理': 'Your report has been processed',
+    '你的帖子已被置顶': 'Your post has been pinned',
+    '管理员取消了你的帖子置顶': 'An admin has unpinned your post',
+    '管理员删除了你的帖子': 'An admin deleted your post',
+    '你举报的帖子已被管理员删除': 'The post you reported has been deleted',
+    '你举报的帖子已被管理员驳回': 'The post you reported has been rejected',
+    '管理员把你的帖子置顶了': 'An admin pinned your post',
 
     // ===== 提示 =====
     '保存成功！': 'Saved!',
