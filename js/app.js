@@ -69,14 +69,19 @@ async function loadForumName() {
   }
 }
 
-function switchPage(page, param) {
+function switchPage(page, param, { historyMode = 'push' } = {}) {
   const url = new URL(window.location);
+  const updateHistory = state => {
+    if (historyMode === 'none') return;
+    const method = historyMode === 'replace' ? 'replaceState' : 'pushState';
+    window.history[method](state, '', url);
+  };
 
   if (page === 'user' && param) {
     url.searchParams.set('user', param);
     url.searchParams.delete('page');
     url.searchParams.delete('post');
-    window.history.pushState({ page: 'user', username: param }, '', url);
+    updateHistory({ page: 'user', username: param });
     showUserPage(param);
     return;
   }
@@ -85,7 +90,7 @@ function switchPage(page, param) {
     url.searchParams.set('post', param);
     url.searchParams.delete('page');
     url.searchParams.delete('user');
-    window.history.pushState({ page: 'post', postId: param }, '', url);
+    updateHistory({ page: 'post', postId: param });
     showPostPage(param);
     return;
   }
@@ -95,7 +100,7 @@ function switchPage(page, param) {
     url.searchParams.delete('page');
     url.searchParams.delete('post');
     url.searchParams.delete('user');
-    window.history.pushState({ page: 'custom', custom: param }, '', url);
+    updateHistory({ page: 'custom', custom: param });
     showCustomPage(param);
     return;
   }
@@ -111,7 +116,7 @@ function switchPage(page, param) {
     url.searchParams.delete('user');
     url.searchParams.delete('custom');
   }
-  window.history.pushState({ page: page }, '', url);
+  updateHistory({ page: page });
 
   document.getElementById('app').style.display = 'none';
   document.querySelectorAll('.page-slide').forEach(el => {
@@ -630,8 +635,8 @@ async function renderSettingsPage(tab = 'profile') {
   const user = currentUser;
 
   try {
-    const userPosts = await apiFetch('/posts?user_id=' + user.id);
-    const postCount = userPosts.data ? userPosts.data.length : 0;
+    const userPosts = await apiFetch('/posts?user_id=' + user.id + '&page=1&limit=1');
+    const postCount = userPosts.pagination?.total || 0;
 
     let recoveryCount = 0;
     try {
@@ -852,34 +857,20 @@ async function renderSettingsPage(tab = 'profile') {
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
           <p style="font-size:14px;color:var(--text-secondary);margin-bottom:12px;">用于忘记密码时重置账户。每个恢复码只能使用一次。</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button id="viewRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">${getIcon('list')} 查看恢复码</button>
-            <button id="regenerateRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">${getIcon('refresh')} 重新生成</button>
+            <button id="regenerateRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">${getIcon('refresh')} ${recoveryCount > 0 ? '替换恢复码' : '生成恢复码'}</button>
           </div>
+          <p style="font-size:12px;color:var(--text-light);margin-top:8px;">恢复码仅在生成时显示，之后无法再次查看。</p>
           <div id="recoveryCodesStatus" style="font-size:13px;color:var(--text-light);margin-top:8px;">剩余 ${recoveryCount} 个可用恢复码</div>
         </div>
       `;
 
       // ===== 恢复码管理 =====
-      const viewBtn = document.getElementById('viewRecoveryCodesBtn');
       const regenBtn = document.getElementById('regenerateRecoveryCodesBtn');
       const recoveryStatus = document.getElementById('recoveryCodesStatus');
 
-      if (viewBtn) {
-        viewBtn.addEventListener('click', async function() {
-          try {
-            const data = await API.generateRecoveryCodes();
-            showRecoveryCodesModal(data.codes);
-            const countData = await API.getRecoveryCodesCount();
-            if (recoveryStatus) recoveryStatus.textContent = '剩余 ' + (countData.count || 0) + ' 个可用恢复码';
-          } catch (err) {
-            alert('获取恢复码失败：' + err.message);
-          }
-        });
-      }
-
       if (regenBtn) {
         regenBtn.addEventListener('click', async function() {
-          if (!confirm('重新生成将替换所有旧的恢复码，确定继续吗？')) return;
+          if (recoveryCount > 0 && !confirm('生成新恢复码将使所有旧恢复码失效，确定继续吗？')) return;
           try {
             const data = await API.generateRecoveryCodes();
             showRecoveryCodesModal(data.codes);
@@ -1115,19 +1106,19 @@ async function init() {
   }
 
   if (customParam) {
-    showCustomPage(customParam);
+    switchPage('custom', customParam, { historyMode: 'replace' });
   } else if (userParam) {
-    showUserPage(userParam);
+    switchPage('user', userParam, { historyMode: 'replace' });
   } else if (postParam) {
-    showPostPage(postParam);
+    switchPage('post', postParam, { historyMode: 'replace' });
   } else if (pageParam && ['messages', 'settings', 'admin', 'new'].includes(pageParam)) {
     if (pageParam === 'admin' && currentUser?.role !== 'admin') {
-      switchPage('feed');
+      switchPage('feed', null, { historyMode: 'replace' });
     } else {
-      switchPage(pageParam);
+      switchPage(pageParam, null, { historyMode: 'replace' });
     }
   } else {
-    switchPage('feed');
+    switchPage('feed', null, { historyMode: 'replace' });
   }
 
   // ============================================================
@@ -1330,13 +1321,13 @@ async function init() {
     const username = state.username || null;
     const custom = state.custom || null;
     if (postId) {
-      showPostPage(postId);
+      switchPage('post', postId, { historyMode: 'none' });
     } else if (username) {
-      showUserPage(username);
+      switchPage('user', username, { historyMode: 'none' });
     } else if (custom) {
-      showCustomPage(custom);
+      switchPage('custom', custom, { historyMode: 'none' });
     } else {
-      switchPage(page);
+      switchPage(page, null, { historyMode: 'none' });
     }
   });
 

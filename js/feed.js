@@ -206,30 +206,6 @@ function renderFeed() {
   });
 }
 
-function renderStats() {
-  API.getStats().then(stats => {
-    document.getElementById('statTopics').textContent = stats.topics || 0;
-    document.getElementById('statPosts').textContent = stats.posts || 0;
-    document.getElementById('statUsers').textContent = stats.users || 0;
-    // 在线人数已移除
-  }).catch(() => {});
-}
-
-function renderLinks() {
-  API.getLinks().then(links => {
-    const ul = document.getElementById('friendlyLinks');
-    if (!links || links.length === 0) {
-      ul.innerHTML = '<li style="color:#94a3b8;font-size:13px;">暂无链接</li>';
-      return;
-    }
-    let html = '';
-    links.forEach(l => {
-      html += '<li><a href="' + escapeHTML(safeURL(l.url, { allowRelative: false })) + '" target="_blank" rel="noopener noreferrer">' + escapeHTML(l.title) + '</a></li>';
-    });
-    ul.innerHTML = sanitizeHTML(html);
-  }).catch(() => {});
-}
-
 // 排序切换
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', function() {

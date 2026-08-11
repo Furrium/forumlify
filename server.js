@@ -1286,7 +1286,7 @@ app.get('/api/admin/custom-pages', auth, admin, async (req, res) => {
 
 // 创建自定义页面（管理员）
 app.post('/api/admin/custom-pages', auth, admin, async (req, res) => {
-  const { name, title, content } = req.body;
+  const { name, title, content, enabled = true } = req.body;
   if (!name || !title || !content) {
     return res.status(400).json({ error: '请填写完整信息' });
   }
@@ -1295,10 +1295,10 @@ app.post('/api/admin/custom-pages', auth, admin, async (req, res) => {
   }
   try {
     const r = await pool.query(
-      `INSERT INTO custom_pages (name, title, content)
-       VALUES ($1, $2, $3)
+      `INSERT INTO custom_pages (name, title, content, enabled)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [name, title, content]
+      [name, title, content, Boolean(enabled)]
     );
     res.json(r.rows[0]);
   } catch (err) {

@@ -719,7 +719,7 @@ function openCustomPageEditor(page) {
       if (isEdit) {
         await API.updateCustomPage(page.id, title, content, enabled);
       } else {
-        await API.createCustomPage(name, title, content);
+        await API.createCustomPage(name, title, content, enabled);
       }
       modal.remove();
       loadCustomPageList();

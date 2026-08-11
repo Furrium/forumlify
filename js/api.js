@@ -3,7 +3,7 @@
 // ============================================================
 let token = localStorage.getItem('forumlify-token') || null;
 
-function apiFetch(path, options = {}) {
+async function apiFetch(path, options = {}) {
   const url = CONFIG.API_BASE_URL + path;
   const headers = {
     'Content-Type': 'application/json',
@@ -12,10 +12,25 @@ function apiFetch(path, options = {}) {
   if (token) {
     headers['Authorization'] = 'Bearer ' + token;
   }
-  return fetch(url, {
+
+  const response = await fetch(url, {
     ...options,
     headers
-  }).then(res => res.json());
+  });
+  const contentType = response.headers.get('content-type') || '';
+  let data;
+
+  if (contentType.includes('application/json')) {
+    data = await response.json();
+  } else {
+    const text = await response.text();
+    data = { error: text.trim() || `请求失败 (${response.status})` };
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error || `请求失败 (${response.status})`);
+  }
+  return data;
 }
 
 const API = {
@@ -303,10 +318,10 @@ const API = {
     return data || [];
   },
 
-  async createCustomPage(name, title, content) {
+  async createCustomPage(name, title, content, enabled) {
     const data = await apiFetch('/admin/custom-pages', {
       method: 'POST',
-      body: JSON.stringify({ name, title, content })
+      body: JSON.stringify({ name, title, content, enabled })
     });
     if (data.error) throw new Error(data.error);
     return data;
@@ -381,18 +396,6 @@ const API = {
     const data = await apiFetch('/users/' + currentUser.id + '/email', {
       method: 'PUT',
       body: JSON.stringify({ password, newEmail })
-    });
-    if (data.error) throw new Error(data.error);
-    return data;
-  },
-
-  // ============================================================
-  //  置顶
-  // ============================================================
-
-  async togglePinPost(postId) {
-    const data = await apiFetch('/posts/' + postId + '/pin', {
-      method: 'PUT'
     });
     if (data.error) throw new Error(data.error);
     return data;

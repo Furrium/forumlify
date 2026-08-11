@@ -19,6 +19,7 @@ async function renderUserProfile(username) {
 
     const result = await apiFetch('/posts?user_id=' + user.id + '&page=1&limit=100');
     const posts = result.data || [];
+    const postCount = result.pagination?.total || posts.length;
 
     const avatar = user.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.username) + '&background=6366f1&color=fff&size=128';
 
@@ -29,7 +30,7 @@ async function renderUserProfile(username) {
         <p style="color:var(--text-secondary);font-size:14px;">${escapeHTML(user.bio || '这个人很懒，什么都没写')}</p>
         <div style="display:flex;justify-content:center;gap:32px;margin-top:16px;font-size:14px;color:var(--text-secondary);flex-wrap:wrap;">
           <span>📅 加入于 ${user.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '未知'}</span>
-          <span>📝 发了 ${posts.length} 个帖子</span>
+          <span>📝 发了 ${postCount} 个帖子</span>
           ${user.role === 'admin' ? '<span style="color:var(--primary);font-weight:600;">🛡️ 管理员</span>' : ''}
         </div>
         ${currentUser && currentUser.id !== user.id ? `
