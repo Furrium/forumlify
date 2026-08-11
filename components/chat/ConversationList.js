@@ -29,7 +29,7 @@ export default function ConversationList({ onOpenChat, onClose }) {
         </div>
         <div id="messageListContent" style={{ flex: 1, overflowY: 'auto', padding: 0 }}>
           {conversations === null ? (
-            <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}>加载中...</div>
+            <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}><span className="spinner-sm" />加载中...</div>
           ) : conversations.length === 0 ? (
             <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}>暂无私信</div>
           ) : (

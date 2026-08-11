@@ -60,7 +60,7 @@ export default function ChatWindow({ conversationId, otherUserId, otherUsername,
         </div>
         <div id="chatMessages" ref={containerRef} style={{ flex: 1, overflowY: 'auto', padding: 16, minHeight: 0 }}>
           {messages === null ? (
-            <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}>加载中...</div>
+            <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}><span className="spinner-sm" />加载中...</div>
           ) : messages.length === 0 ? (
             <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}>还没有消息，打个招呼吧 👋</div>
           ) : (

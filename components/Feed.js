@@ -85,7 +85,7 @@ export default function Feed({ onOpenModal, onReport }) {
       </div>
       <div id="postList" ref={postListRef}>
         {posts === null ? (
-          <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}>加载中...</div>
+          <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}><span className="spinner-sm" />加载中...</div>
         ) : error ? (
           <div style={{ textAlign: 'center', color: '#ef4444', padding: '40px 0' }}>加载失败：{error}</div>
         ) : posts.length === 0 ? (

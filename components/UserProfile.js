@@ -45,7 +45,7 @@ export default function UserProfile({ username }) {
     );
   }
   if (!user) {
-    return <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}>加载中...</div>;
+    return <div style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}><span className="spinner-sm" />加载中...</div>;
   }
 
   return (
@@ -55,7 +55,7 @@ export default function UserProfile({ username }) {
       </div>
       <div style={{ maxWidth: 700, margin: '0 auto', width: '100%' }}>
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 32, textAlign: 'center' }}>
-          <img src={avatar(user.username)} style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }} alt="" />
+          <img src={user.avatar_url || avatar(user.username)} style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }} alt="" />
           <h2 style={{ margin: '16px 0 4px', fontSize: 24 }}>{user.username}</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{user.bio || '这个人很懒，什么都没写'}</p>
           {currentUser && currentUser.id !== user.id && (

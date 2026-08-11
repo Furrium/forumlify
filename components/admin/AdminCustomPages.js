@@ -38,7 +38,7 @@ export default function AdminCustomPages() {
       </div>
       <div id="customPageList">
         {pages === null ? (
-          <div style={{ textAlign: 'center', color: '#94a3b8', padding: 20 }}>加载中...</div>
+          <div style={{ textAlign: 'center', color: '#94a3b8', padding: 20 }}><span className="spinner-sm" />加载中...</div>
         ) : pages.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#94a3b8', padding: 20 }}>暂无自定义页面</div>
         ) : (
