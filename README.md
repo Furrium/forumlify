@@ -5,7 +5,7 @@
 ## ✨ 特性
 
 - 🎨 精致简约的界面设计，支持亮色/暗色模式
-- ⚡️ 基于 Next.js 14 (App Router) + React 18，前后端一体化
+- ⚡️ 基于 Next.js 16 (App Router) + React 19，前后端一体化
 - 🔐 自带用户认证（JWT）
 - 📝 发帖、回复、举报、管理后台
 - 🐳 Docker 一键部署
@@ -36,7 +36,7 @@ docker-compose up -d
 
 #### 环境要求
 
-- Node.js 18.17+（Next.js 14 要求）
+- Node.js 20.9+（Next.js 16 要求）
 - PostgreSQL 13+（`schema.sql` 使用了内置的 `gen_random_uuid()`）
 
 #### 步骤
@@ -181,17 +181,17 @@ npx opennextjs-cloudflare deploy
 > 注意：OpenNext 使用 R2 增量缓存，首次部署前需创建缓存桶：
 > `npx wrangler r2 bucket create forumlify-opennext-cache`
 >
-> `--dangerouslyUseUnsupportedNextVersion` 是因为 Next.js 14 已超出官方 2 年支持期，功能不受影响。
+> `--dangerouslyUseUnsupportedNextVersion` 用于跳过 Next.js 主版本支持期检查（如仍在使用旧主版本时）。
 
 > 提示：`next.config.js` 中的 `output: 'standalone'` 仅在设置了 `DOCKER=1` 环境变量时启用，serverless 平台会自动跳过。
 
 ## 🔄 与 main 分支（Express 版）的对比
 
-本分支（`next`）基于上游 `main` 的 Express 单文件架构全面重构为 Next.js 14（App Router）。两者功能一致，实现方式不同：
+本分支（`next`）基于上游 `main` 的 Express 单文件架构全面重构为 Next.js 16（App Router）。两者功能一致，实现方式不同：
 
-| 维度 | main 分支（Express） | next 分支（Next.js 14） |
+| 维度 | main 分支（Express） | next 分支（Next.js 16） |
 |------|---------------------|------------------------|
-| **前端** | 单个 1488 行 `index.html` + `js/` 原生 JS 模块（手写 DOM 操作） | React 18 组件（`components/`），状态由 `AppProvider` 管理 |
+| **前端** | 单个 1488 行 `index.html` + `js/` 原生 JS 模块（手写 DOM 操作） | React 19 组件（`components/`），状态由 `AppProvider` 管理 |
 | **后端** | 单个 1000+ 行 `server.js`（Express 路由） | 36 个 Route Handlers（`app/api/**/route.js`），每个接口独立文件 |
 | **模板渲染** | `innerHTML` 字符串拼接 + `onclick` 事件绑定 | JSX 声明式渲染 + React 事件 |
 | **图片上传** | multer + `uploads/` 本地目录 | 存储抽象层（`lib/storage.js`）：本地磁盘 或 S3 兼容对象存储（serverless） |
@@ -231,7 +231,7 @@ config.js              # 服务端配置（端口/地址）
 
 ## 📚 技术栈
 
-- Next.js 14 (App Router) + React 18
+- Next.js 16 (App Router) + React 19
 - Express 风格 Route Handlers (Node.js Runtime)
 - PostgreSQL + pg
 - JWT 认证 + bcrypt 密码哈希
