@@ -218,13 +218,13 @@
       "system": "系统"
     },
     "link": {
+      "add": "添加链接",
+      "empty": "暂无链接",
       "incomplete": "请填写完整信息",
       "addFailed": "添加失败：{{msg}}",
-      "confirmDelete": "确定删除该链接吗？",
+      "confirmDelete": "确定要删除这个链接吗？",
       "namePlaceholder": "链接名称",
-      "urlPlaceholder": "链接地址",
-      "add": "添加",
-      "empty": "暂无友情链接"
+      "urlPlaceholder": "链接地址"
     },
     "page": {
       "confirmDelete": "确定要删除这个页面吗？",

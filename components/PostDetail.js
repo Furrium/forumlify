@@ -28,6 +28,15 @@ export default function PostDetail({ postId, initialPost = null }) {
   const [editImages, setEditImages] = useState([]);
   const [editUploading, setEditUploading] = useState(false);
   const editImageInputRef = useRef(null);
+  // 评论抽屉：帖子加载完成后自动展开（动画完整播放）
+  const [repliesOpen, setRepliesOpen] = useState(false);
+  useEffect(() => {
+    if (post && !repliesOpen) {
+      // 延迟到帖子内容渲染后，让抽屉动画平滑播放
+      const t = setTimeout(() => setRepliesOpen(true), 60);
+      return () => clearTimeout(t);
+    }
+  }, [post]);
 
   const load = useCallback(async () => {
     setError(null);
@@ -183,7 +192,14 @@ export default function PostDetail({ postId, initialPost = null }) {
               <div className="post-detail-signature" style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid var(--border-light)', fontSize: 12, color: 'var(--text-secondary)' }} dangerouslySetInnerHTML={{ __html: renderedSignature }} />
             )}
           </div>
-          <ReplyList postId={postId} onRefresh={load} />
+          <div style={{ maxWidth: 700, margin: '0 auto', width: '100%', marginTop: 16 }}>
+            {/* 评论抽屉：帖子加载完成后自动展开 */}
+            <div className={'replies-drawer' + (repliesOpen ? ' open' : '')}>
+              <div className="replies-drawer-inner">
+                <ReplyList postId={postId} onRefresh={load} />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

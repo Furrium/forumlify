@@ -5,8 +5,10 @@ import { ToastProvider } from '@/components/Toast';
 import I18nInit from '@/components/I18nInit';
 
 export const metadata = {
-  // 初始标题由客户端 AppProvider 接管（加载时轮换 Loading.，完成后显示论坛名）
-  title: 'Loading...',
+  // 初始标题用默认论坛名（AppProvider 加载期轮换 Loading.，完成后覆盖为真实名）。
+  // 注意：不能设 'Loading...' —— Next.js 客户端重渲染会重置 <title> 为 metadata 值，
+  // 导致加载完成后标题又变回 "Loading..."。
+  title: 'Forumlify',
   description: 'Forumlify - 简洁优雅的现代社区系统',
 };
 

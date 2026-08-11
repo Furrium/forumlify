@@ -59,7 +59,7 @@ export default function AdminLinks() {
           <div style={{ color: '#94a3b8', fontSize: 13 }}>{t('admin.link.empty')}</div>
         ) : (
           links.map((l) => (
-            <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
+            <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
               <span><a href={l.url} target="_blank" rel="noreferrer" style={{ color: '#6366f1', textDecoration: 'none' }}>{l.title}</a></span>
               <button className="btn-sm btn-danger" onClick={() => handleDelete(l.id)}>
                 <Icon name="trash" size={12} /> {t('admin.common.delete')}

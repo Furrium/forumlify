@@ -218,13 +218,13 @@
       "system": "System"
     },
     "link": {
-      "incomplete": "Please complete all fields",
+      "add": "Add link",
+      "empty": "No links yet",
+      "incomplete": "Please fill in all fields",
       "addFailed": "Add failed: {{msg}}",
       "confirmDelete": "Delete this link?",
       "namePlaceholder": "Link name",
-      "urlPlaceholder": "Link URL",
-      "add": "Add",
-      "empty": "No links"
+      "urlPlaceholder": "Link URL"
     },
     "page": {
       "confirmDelete": "Delete this page?",

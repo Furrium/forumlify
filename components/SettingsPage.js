@@ -46,7 +46,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="page-slide active">
+    <div className="page-slide active" style={{ overflow: 'hidden', height: '100vh' }}>
       <div className="page-header" style={{ width: '100%' }}>
         <h2><Icon name="settings" size={20} /> {t('settings.title')}</h2>
       </div>

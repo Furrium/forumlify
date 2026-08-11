@@ -3015,3 +3015,40 @@ a.btn-secondary {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ===== 评论抽屉（平滑展开/收起） ===== */
+.replies-drawer {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+}
+.replies-drawer.open {
+  grid-template-rows: 1fr;
+}
+.replies-drawer > .replies-drawer-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+.replies-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.replies-toggle:hover {
+  background: var(--primary-bg);
+}
+.replies-toggle .chev {
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.replies-toggle.open .chev {
+  transform: rotate(180deg);
+}

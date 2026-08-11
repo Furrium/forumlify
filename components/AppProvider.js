@@ -204,9 +204,10 @@ export default function AppProvider({ children, cachedName = '' }) {
     init();
   }, []);
 
-  // 页面标题：初始化中轮换 Loading. → Loading.. → Loading...，完成后显示论坛名
+  // 页面标题：初始化中轮换 Loading. → Loading.. → Loading...，收到论坛名/完成后显示论坛名
   useEffect(() => {
-    if (!ready) {
+    // 尚未收到论坛名且未完成初始化：轮换 Loading.
+    if (!ready && !forumNameLoaded) {
       const seq = ['Loading.', 'Loading..', 'Loading...'];
       let i = 0;
       document.title = seq[0];
@@ -218,11 +219,11 @@ export default function AppProvider({ children, cachedName = '' }) {
         clearInterval(t);
       };
     }
-    // 初始化完成：标题恢复为论坛名
+    // 已收到论坛名或初始化完成：标题显示论坛名（Next 重置 metadata 时也能恢复）
     document.title = forumName;
     const titleEl = document.querySelector('title');
     if (titleEl) titleEl.textContent = forumName;
-  }, [ready, forumName]);
+  }, [ready, forumNameLoaded, forumName]);
 
   // 按 URL 参数初始化视图
   useEffect(() => {
