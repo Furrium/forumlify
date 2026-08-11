@@ -7,11 +7,15 @@ function renderAdminReports() {
   container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px 0;">加载中...</div>';
   API.getReports().then(reports => {
     if (!reports || reports.length === 0) {
-      container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">✅ 暂无举报</div>';
+      container.innerHTML = `<div style="text-align:center;color:#94a3b8;padding:40px 0;">${getIcon('success')} 暂无举报</div>`;
       return;
     }
     let html = '';
-    const statusMap = { pending: '⏳ 待处理', approved: '✅ 已删除', rejected: '❌ 已驳回' };
+    const statusMap = {
+      pending: `${getIcon('pending')} 待处理`,
+      approved: `${getIcon('success')} 已删除`,
+      rejected: `${getIcon('error')} 已驳回`
+    };
     reports.forEach(r => {
       const postTitle = r.post_title || '无标题';
       html += `
@@ -418,7 +422,7 @@ function renderAdminLinks() {
 function renderAdminSettings() {
   const container = document.getElementById('adminContent');
   container.innerHTML = `
-    <h3 style="margin-bottom:16px;text-align:center;">⚙️ 论坛名称</h3>
+    <h3 style="margin-bottom:16px;text-align:center;">${getIcon('settings')} 论坛名称</h3>
 
     <div style="max-width:400px;margin:0 auto;width:100%;">
       <label style="font-weight:600;font-size:14px;display:block;margin-bottom:6px;">论坛名称</label>
@@ -437,14 +441,14 @@ function renderAdminSettings() {
     if (!name) { alert('请输入论坛名称'); return; }
     try {
       await API.updateSettings(name);
-      document.getElementById('settingsResult').textContent = '✅ 保存成功！';
+      document.getElementById('settingsResult').textContent = `${getIcon('success')} 保存成功！`;
       document.getElementById('settingsResult').style.color = '#22c55e';
       document.getElementById('forumName').textContent = name;
       document.title = name;
       const titleEl = document.getElementById('pageTitle');
       if (titleEl) titleEl.textContent = name;
     } catch (err) {
-      document.getElementById('settingsResult').textContent = '❌ 保存失败';
+      document.getElementById('settingsResult').textContent = `${getIcon('error')} 保存失败`;
       document.getElementById('settingsResult').style.color = '#ef4444';
     }
   });
@@ -457,7 +461,7 @@ function renderAdminSettings() {
 function renderAdminCustomCSS() {
   const container = document.getElementById('adminContent');
   container.innerHTML = `
-    <h3 style="margin-bottom:8px;text-align:center;">🎨 自定义 CSS</h3>
+    <h3 style="margin-bottom:8px;text-align:center;">${getIcon('paint')} 自定义 CSS</h3>
     <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;text-align:center;">上传 style.css 覆盖默认样式，自定义论坛外观。</p>
 
     <div style="max-width:500px;margin:0 auto;">
@@ -472,8 +476,8 @@ function renderAdminCustomCSS() {
       <div id="customCssStatus" style="font-size:13px;margin-top:8px;color:var(--text-light);"></div>
 
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center;">
-        <button id="customCssSaveBtn" class="btn-primary" style="padding:8px 20px;">💾 保存 CSS</button>
-        <button id="customCssDeleteBtn" class="btn-secondary" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">🗑️ 删除自定义 CSS</button>
+        <button id="customCssSaveBtn" class="btn-primary" style="padding:8px 20px;">${getIcon('save')} 保存 CSS</button>
+        <button id="customCssDeleteBtn" class="btn-secondary" style="padding:8px 20px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">${getIcon('delete')} 删除自定义 CSS</button>
       </div>
     </div>
   `;
@@ -582,8 +586,8 @@ function renderAdminCustomPages() {
   const container = document.getElementById('adminContent');
   container.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h3 style="margin:0;">📄 自定义页面</h3>
-      <button id="addCustomPageBtn" class="btn-primary" style="padding:8px 16px;">➕ 添加页面</button>
+      <h3 style="margin:0;">${getIcon('page')} 自定义页面</h3>
+      <button id="addCustomPageBtn" class="btn-primary" style="padding:8px 16px;">${getIcon('add')} 添加页面</button>
     </div>
     <div id="customPageList"></div>
   `;
@@ -623,10 +627,10 @@ function loadCustomPageList() {
           <td style="padding:8px 12px;"><code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px;">${p.name}</code></td>
           <td style="padding:8px 12px;">${p.title}</td>
           <td style="padding:8px 12px;"><code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px;">?custom=${p.name}</code></td>
-          <td style="padding:8px 12px;"><span style="color:${p.enabled ? '#22c55e' : '#ef4444'};">${p.enabled ? '✅ 启用' : '❌ 禁用'}</span></td>
+          <td style="padding:8px 12px;"><span style="color:${p.enabled ? '#22c55e' : '#ef4444'};">${p.enabled ? `${getIcon('success')} 启用` : `${getIcon('error')} 禁用`}</span></td>
           <td style="padding:8px 12px;text-align:center;display:flex;gap:6px;justify-content:center;">
-            <button class="btn-sm btn-secondary" data-id="${p.id}" data-action="edit">✏️</button>
-            <button class="btn-sm btn-danger" data-id="${p.id}" data-action="delete">🗑️</button>
+            <button class="btn-sm btn-secondary" data-id="${p.id}" data-action="edit">${getIcon('edit')}</button>
+            <button class="btn-sm btn-danger" data-id="${p.id}" data-action="delete">${getIcon('delete')}</button>
           </td>
         </tr>
       `;
@@ -666,7 +670,7 @@ function openCustomPageEditor(page) {
   modal.innerHTML = `
     <div class="modal-content" style="max-width:600px;max-height:90vh;overflow-y:auto;">
       <span class="close" style="position:absolute;top:12px;right:16px;font-size:24px;cursor:pointer;color:var(--text-light);">&times;</span>
-      <h2 style="margin-bottom:16px;">${isEdit ? '✏️ 编辑页面' : '📄 添加页面'}</h2>
+      <h2 style="margin-bottom:16px;">${isEdit ? getIcon('edit') + ' 编辑页面' : getIcon('add') + ' 添加页面'}</h2>
       <div style="margin-bottom:12px;">
         <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">页面名称</label>
         <input type="text" id="editorPageName" value="${isEdit ? page.name : ''}" ${isEdit ? 'readonly style="background:var(--border-light);color:var(--text-light);"' : ''}
@@ -742,7 +746,7 @@ function showCustomCssWarningModal(onConfirm) {
   modal.style.display = 'flex';
   modal.innerHTML = `
     <div class="modal-content" style="max-width:420px;">
-      <h2 style="margin-bottom:12px;">⚠️ 警告</h2>
+      <h2 style="margin-bottom:12px;">${getIcon('warning')} 警告</h2>
       <p style="font-size:14px;color:var(--text-secondary);margin-bottom:16px;">
         若上传的 <strong>style.css</strong> 存在问题，将导致整个论坛界面样式错乱，甚至无法正常使用。
       </p>
