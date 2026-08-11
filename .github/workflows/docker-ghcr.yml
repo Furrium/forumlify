@@ -12,6 +12,7 @@ env:
 
 jobs:
   linux-amd64:
+    if: github.repository == 'lezi-fun/forumlify-deploy'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -45,6 +46,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=amd64
 
   linux-arm64:
+    if: github.repository == 'lezi-fun/forumlify-deploy'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -79,6 +81,7 @@ jobs:
 
 
   manifest:
+    if: github.repository == 'lezi-fun/forumlify-deploy'
     needs: [linux-amd64, linux-arm64]
     runs-on: ubuntu-latest
     permissions:
