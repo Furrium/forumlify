@@ -9,7 +9,9 @@ export default function LoadingScreen({ forumName, forumNameLoaded }) {
     <div className="loading-screen">
       <div className="loading-inner">
         <div className="loading-spinner" />
-        <div className="loading-title loading-title-appear" id="loadingTitle">
+        {/* suppressHydrationWarning: 内联脚本会在 hydrate 前填入缓存名，
+            避免 React 检测到文本不匹配而重写 DOM（名字二次出现/转圈重启） */}
+        <div className="loading-title loading-title-appear" id="loadingTitle" suppressHydrationWarning>
           {forumNameLoaded && forumName}
         </div>
         <div className="loading-sub">加载中...</div>
