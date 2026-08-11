@@ -2470,3 +2470,28 @@ a.btn-secondary {
   background: rgba(30, 30, 50, 0.85);
   border-color: var(--glass-border);
 }
+/* ============================================================
+   自定义页面编辑器模态框 —— 不透明背景
+   ============================================================ */
+
+/* 自定义页面编辑器的内容区（不透明） */
+#editorPageModal .modal-content,
+.modal-content:has(#editorPageName) {
+  background: var(--surface) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 亮色模式 */
+[data-theme="light"] .modal-content:has(#editorPageName) {
+  background: #ffffff !important;
+  border-color: #e9edf4 !important;
+}
+
+/* 暗色模式 */
+[data-theme="dark"] .modal-content:has(#editorPageName) {
+  background: #1a1d27 !important;
+  border-color: #2a2d3a !important;
+}
