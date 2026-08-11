@@ -52,7 +52,13 @@ function waitForPostImages(container) {
   });
 }
 
-function stageSharedGeometry(transition, { name, duration, moveOffset }) {
+function stageSharedGeometry(transition, {
+  name,
+  duration,
+  moveOffset,
+  moveEasing = 'cubic-bezier(0.16, 1, 0.3, 1)',
+  resizeEasing = 'cubic-bezier(0.4, 0, 0.2, 1)',
+}) {
   transition.ready.then(() => {
     const groupAnimation = document.getAnimations().find(
       (animation) => animation.effect?.pseudoElement === `::view-transition-group(${name})`
@@ -68,14 +74,14 @@ function stageSharedGeometry(transition, { name, duration, moveOffset }) {
         width: start.width,
         height: start.height,
         transform: start.transform,
-        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        easing: moveEasing,
       },
       {
         offset: moveOffset,
         width: end.width,
         height: start.height,
         transform: end.transform,
-        easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        easing: resizeEasing,
       },
       {
         offset: 1,
@@ -309,6 +315,7 @@ export default function AppProvider({ children, cachedName = '' }) {
       return;
     }
 
+    document.documentElement.classList.remove('post-transition-settled');
     sourceElement.style.viewTransitionName = 'post-expand';
     const sourceParts = namePostTransitionParts(sourceElement);
     document.documentElement.classList.add('post-view-transition');
@@ -316,7 +323,13 @@ export default function AppProvider({ children, cachedName = '' }) {
       flushSync(commitNavigation);
       await waitForPostImages(document.querySelector('#pagePost .post-detail-card'));
     });
-    stageSharedGeometry(transition, { name: 'post-expand', duration: 960, moveOffset: 0.62 });
+    stageSharedGeometry(transition, {
+      name: 'post-expand',
+      duration: 960,
+      moveOffset: 0.62,
+      moveEasing: 'cubic-bezier(0.42, 0, 0.58, 1)',
+      resizeEasing: 'cubic-bezier(0.42, 0, 0.58, 1)',
+    });
     stageSharedGeometry(transition, { name: 'post-body', duration: 960, moveOffset: 0.62 });
     const clearSourceNames = () => {
       sourceElement.style.viewTransitionName = '';
@@ -324,7 +337,10 @@ export default function AppProvider({ children, cachedName = '' }) {
     };
     transition.ready.then(clearSourceNames, clearSourceNames);
     transition.finished.finally(() => {
-      document.documentElement.classList.remove('post-view-transition');
+      const root = document.documentElement;
+      root.classList.remove('post-view-transition');
+      root.classList.add('post-transition-settled');
+      window.setTimeout(() => root.classList.remove('post-transition-settled'), 220);
     });
   }, []);
 

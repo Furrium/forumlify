@@ -66,7 +66,7 @@ export default function ReplyList({ postId, onRefresh }) {
 
   return (
     <>
-      <div style={{ marginTop: 20, fontSize: 14, color: '#64748b' }}>
+      <div className="post-reply-count" style={{ marginTop: 20, fontSize: 14, color: '#64748b' }}>
         <Icon name="message" size={14} /> {replies.length} 条回复
       </div>
       <div style={{ marginTop: 12 }}>
