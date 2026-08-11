@@ -542,6 +542,66 @@ async function renderMessagesPage() {
 }
 
 // ============================================================
+//  📊 统计数据
+// ============================================================
+
+function renderStats() {
+  API.getStats().then(stats => {
+    // 主页的统计
+    const topicsEl = document.getElementById('statTopics');
+    const postsEl = document.getElementById('statPosts');
+    const usersEl = document.getElementById('statUsers');
+    if (topicsEl) topicsEl.textContent = stats.topics || 0;
+    if (postsEl) postsEl.textContent = stats.posts || 0;
+    if (usersEl) usersEl.textContent = stats.users || 0;
+
+    // 帖子详情页的统计（ID 带 2）
+    const topics2El = document.getElementById('statTopics2');
+    const posts2El = document.getElementById('statPosts2');
+    const users2El = document.getElementById('statUsers2');
+    if (topics2El) topics2El.textContent = stats.topics || 0;
+    if (posts2El) posts2El.textContent = stats.posts || 0;
+    if (users2El) users2El.textContent = stats.users || 0;
+  }).catch(() => {});
+}
+
+// ============================================================
+//  🔗 友情链接
+// ============================================================
+
+function renderLinks() {
+  API.getLinks().then(links => {
+    // 主页的友链
+    const ul = document.getElementById('friendlyLinks');
+    if (ul) {
+      if (!links || links.length === 0) {
+        ul.innerHTML = '<li style="color:#94a3b8;font-size:13px;">暂无链接</li>';
+      } else {
+        let html = '';
+        links.forEach(l => {
+          html += '<li><a href="' + l.url + '" target="_blank">' + l.title + '</a></li>';
+        });
+        ul.innerHTML = html;
+      }
+    }
+
+    // 帖子详情页的友链
+    const ul2 = document.getElementById('friendlyLinks2');
+    if (ul2) {
+      if (!links || links.length === 0) {
+        ul2.innerHTML = '<li style="color:#94a3b8;font-size:13px;">暂无链接</li>';
+      } else {
+        let html = '';
+        links.forEach(l => {
+          html += '<li><a href="' + l.url + '" target="_blank">' + l.title + '</a></li>';
+        });
+        ul2.innerHTML = html;
+      }
+    }
+  }).catch(() => {});
+}
+
+// ============================================================
 //  ⚙️ 设置页面（含侧边栏）
 // ============================================================
 
@@ -745,10 +805,10 @@ async function renderSettingsPage(tab = 'profile') {
           await API.changePassword(oldPassword, newPassword);
           document.getElementById('changeOldPassword').value = '';
           document.getElementById('changeNewPassword').value = '';
-          statusEl.textContent = '✅ 密码修改成功！';
+          statusEl.textContent = getIcon('success') + ' 密码修改成功！';
           statusEl.style.color = '#22c55e';
         } catch (err) {
-          statusEl.textContent = '❌ ' + err.message;
+          statusEl.textContent = getIcon('error') + ' ' + err.message;
           statusEl.style.color = '#ef4444';
         }
       });
@@ -770,10 +830,10 @@ async function renderSettingsPage(tab = 'profile') {
           document.getElementById('changeEmailPassword').value = '';
           document.getElementById('changeNewEmail').value = '';
           currentUser.email = newEmail;
-          statusEl.textContent = '✅ 邮箱修改成功！';
+          statusEl.textContent = getIcon('success') + ' 邮箱修改成功！';
           statusEl.style.color = '#22c55e';
         } catch (err) {
-          statusEl.textContent = '❌ ' + err.message;
+          statusEl.textContent = getIcon('error') + ' ' + err.message;
           statusEl.style.color = '#ef4444';
         }
       });
@@ -941,7 +1001,7 @@ function showRecoveryCodesModal(codes) {
   document.getElementById('copyRecoveryCodesBtn').addEventListener('click', function() {
     const text = codes.join('\n');
     navigator.clipboard.writeText(text).then(() => {
-      document.getElementById('copyStatus').textContent = '✅ 已复制到剪贴板';
+      document.getElementById('copyStatus').textContent = getIcon('success') + ' 已复制到剪贴板';
     }).catch(() => {
       const textarea = document.createElement('textarea');
       textarea.value = text;
@@ -949,7 +1009,7 @@ function showRecoveryCodesModal(codes) {
       textarea.select();
       document.execCommand('copy');
       textarea.remove();
-      document.getElementById('copyStatus').textContent = '✅ 已复制到剪贴板';
+      document.getElementById('copyStatus').textContent = getIcon('success') + ' 已复制到剪贴板';
     });
   });
 
@@ -1138,7 +1198,7 @@ async function init() {
 
     try {
       await API.resetPassword(email, code, newPassword);
-      statusEl.textContent = '✅ 重置成功！请登录';
+      statusEl.textContent = getIcon('success') + ' 重置成功！请登录';
       statusEl.style.color = '#22c55e';
       setTimeout(() => {
         document.getElementById('forgotPasswordModal').classList.remove('active');
@@ -1147,7 +1207,7 @@ async function init() {
         document.getElementById('resetNewPassword').value = '';
       }, 1500);
     } catch (err) {
-      statusEl.textContent = '❌ ' + err.message;
+      statusEl.textContent = getIcon('error') + ' ' + err.message;
       statusEl.style.color = '#ef4444';
     }
   });
