@@ -3155,12 +3155,11 @@ a.btn-secondary {
 }
 
 /* ===== 回复层次缩进（Discourse 嵌套风格） ===== */
-/* 有回复目标的回复：左侧浅色线 + 缩进 */
+/* 有回复目标的回复：左侧缩进 + 保留圆角 */
 .reply-item[data-username]:has(.reply-to-indicator) {
   margin-left: 16px;
   padding-left: 12px;
   border-left: 2px solid var(--border);
-  border-radius: 0;
 }
 .reply-item[data-username]:has(.reply-to-indicator):hover {
   border-left-color: var(--primary);
