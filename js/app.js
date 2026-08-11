@@ -1232,16 +1232,15 @@ async function init() {
     }
     const title = document.getElementById('postTitle').value.trim() || '无标题';
     const content = document.getElementById('postContent').value.trim();
-    const captchaInput = document.getElementById('postCaptchaInput').value.trim();
-    const captchaAnswer = parseInt(document.getElementById('postCaptchaInput').dataset.answer);
+    const captcha = getCaptchaSubmission('post');
     if (!content) { alert('请填写内容'); return; }
-    if (parseInt(captchaInput) !== captchaAnswer) { alert('验证码错误，请重新计算'); refreshCaptcha('post'); return; }
+    if (!captcha) { alert('请填写验证码'); return; }
     const images = [];
     document.querySelectorAll('#imagePreview img').forEach(img => {
       images.push(img.src);
     });
     try {
-      await API.createPost(title, content, images);
+      await API.createPost(title, content, images, captcha);
       API.logEvent('create_post').catch(() => {});
       alert('发布成功！');
       switchPage('feed');
@@ -1249,6 +1248,7 @@ async function init() {
       renderStats();
     } catch (err) {
       alert('发布失败：' + err.message);
+      refreshCaptcha('post');
     }
   });
 

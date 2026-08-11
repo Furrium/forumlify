@@ -42,15 +42,15 @@ document.getElementById('registerSubmit').addEventListener('click', async () => 
   const username = document.getElementById('regUsername').value.trim();
   const email = document.getElementById('regEmail').value.trim();
   const password = document.getElementById('regPassword').value;
-  const captchaInput = document.getElementById('regCaptchaInput').value.trim();
-  const captchaAnswer = parseInt(document.getElementById('regCaptchaInput').dataset.answer);
+  const captcha = getCaptchaSubmission('reg');
   if (!username || !email || !password) { alert('请填写完整信息'); return; }
   if (password.length < 6) { alert('密码至少6位'); return; }
-  if (parseInt(captchaInput) !== captchaAnswer) { alert('验证码错误，请重新计算'); refreshCaptcha('reg'); return; }
+  if (!captcha) { alert('请填写验证码'); return; }
   try {
-    await API.register(email, password, username);
+    await API.register(email, password, username, captcha);
   } catch (err) {
     alert('注册失败：' + err.message);
+    refreshCaptcha('reg');
     return;
   }
 

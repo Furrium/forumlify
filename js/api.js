@@ -19,6 +19,12 @@ function apiFetch(path, options = {}) {
 }
 
 const API = {
+  async getCaptcha(context) {
+    const data = await apiFetch('/captcha?context=' + encodeURIComponent(context));
+    if (data.error) throw new Error(data.error);
+    return data;
+  },
+
   // ============================================================
   //  认证
   // ============================================================
@@ -35,10 +41,16 @@ const API = {
     return data;
   },
 
-  async register(email, password, username) {
+  async register(email, password, username, captcha) {
     const data = await apiFetch('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password, username })
+      body: JSON.stringify({
+        email,
+        password,
+        username,
+        captcha_id: captcha?.id,
+        captcha_answer: captcha?.answer
+      })
     });
     if (data.error) throw new Error(data.error);
     return data;
@@ -71,10 +83,16 @@ const API = {
     return data;
   },
 
-  async createPost(title, content, images) {
+  async createPost(title, content, images, captcha) {
     const data = await apiFetch('/posts', {
       method: 'POST',
-      body: JSON.stringify({ title, content, images: images || [] })
+      body: JSON.stringify({
+        title,
+        content,
+        images: images || [],
+        captcha_id: captcha?.id,
+        captcha_answer: captcha?.answer
+      })
     });
     if (data.error) throw new Error(data.error);
     return data;
@@ -112,10 +130,14 @@ const API = {
     return data || [];
   },
 
-  async createReply(postId, content) {
+  async createReply(postId, content, captcha) {
     const data = await apiFetch('/posts/' + postId + '/replies', {
       method: 'POST',
-      body: JSON.stringify({ content })
+      body: JSON.stringify({
+        content,
+        captcha_id: captcha?.id,
+        captcha_answer: captcha?.answer
+      })
     });
     if (data.error) throw new Error(data.error);
     return data;

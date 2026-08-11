@@ -84,6 +84,8 @@ psql -U forumlify -d forumlify -f schema.sql
 | `DATABASE_URL` | `postgresql://forumlify:***@localhost:5432/forumlify` | PostgreSQL 连接串 |
 | `PORT` | `3000` | HTTP 监听端口 |
 | `JWT_SECRET` | 本地开发使用内置值 | JWT 签名密钥；`NODE_ENV=production` 时必须显式设置 |
+| `CAPTCHA_SECRET` | 与 `JWT_SECRET` 相同 | 验证码答案 HMAC 密钥；生产环境可单独设置强随机值 |
+| `ENABLE_CAPTCHA` | `true` | 设为 `false` 可关闭注册、发帖和回复的服务器验证码校验 |
 | `ALLOWED_ORIGINS` | 空 | 允许跨域访问的来源，多个值用逗号分隔；为空时仅支持同源访问 |
 | `TRUST_PROXY` | `false` | 位于可信反向代理后时设为 `true`，用于正确识别限流 IP |
 
@@ -102,7 +104,7 @@ npm start
 | 配置项 | 默认值 | 说明 |
 |--------|--------|------|
 | `FORUM_NAME` | `Forumlify` | 论坛名称（左上角显示） |
-| `ENABLE_CAPTCHA` | `true` | 发帖/注册的人机验证（10 以内加减法） |
+| `ENABLE_CAPTCHA` | `true` | 注册、发帖和回复的服务器验证一次性算术挑战 |
 | `SERVER_PORT` | `null` | 可选：服务端监听端口。优先级：环境变量 `PORT` > `SERVER_PORT` > 默认 `3000` |
 
 #### 上传目录

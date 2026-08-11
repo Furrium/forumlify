@@ -13,6 +13,7 @@ const { Pool } = require('pg');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const app = express();
 
@@ -23,6 +24,8 @@ const CONFIG = require('./config');
 const PORT = process.env.PORT || CONFIG.SERVER_PORT || 3000;
 const DEFAULT_JWT_SECRET = 'forumlify-secret-key-change-me-in-production';
 const JWT_SECRET = process.env.JWT_SECRET || DEFAULT_JWT_SECRET;
+const CAPTCHA_SECRET = process.env.CAPTCHA_SECRET || JWT_SECRET;
+const CAPTCHA_ENABLED = process.env.ENABLE_CAPTCHA !== 'false' && CONFIG.ENABLE_CAPTCHA !== false;
 
 if (process.env.NODE_ENV === 'production' && JWT_SECRET === DEFAULT_JWT_SECRET) {
   throw new Error('JWT_SECRET must be set to a unique value in production');
@@ -75,9 +78,17 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   handler: (req, res) => res.status(429).json({ error: '尝试次数过多，请稍后重试' }),
 });
+const captchaLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 60,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  handler: (req, res) => res.status(429).json({ error: '验证码请求过于频繁，请稍后重试' }),
+});
 
 app.use('/api', apiLimiter);
 app.use(['/api/auth/login', '/api/auth/register', '/api/auth/reset-password'], authLimiter);
+app.use('/api/captcha', captchaLimiter);
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
@@ -132,6 +143,98 @@ async function createNotification(userId, type, title, content, link = null) {
   }
 }
 
+function hashCaptchaAnswer(id, context, answer) {
+  return crypto
+    .createHmac('sha256', CAPTCHA_SECRET)
+    .update(`${id}:${context}:${answer}`)
+    .digest('hex');
+}
+
+function secureHashMatch(actual, expected) {
+  const actualBuffer = Buffer.from(String(actual));
+  const expectedBuffer = Buffer.from(String(expected));
+  return actualBuffer.length === expectedBuffer.length &&
+    crypto.timingSafeEqual(actualBuffer, expectedBuffer);
+}
+
+async function consumeCaptcha(challengeId, answer, context) {
+  if (!/^[0-9a-f-]{36}$/i.test(String(challengeId || '')) ||
+      !/^-?\d{1,3}$/.test(String(answer || '').trim())) {
+    return false;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const challenge = await client.query(
+      `SELECT id, context, answer_hash, expires_at, used_at
+       FROM captcha_challenges
+       WHERE id = $1
+       FOR UPDATE`,
+      [challengeId]
+    );
+    if (!challenge.rows[0] || challenge.rows[0].used_at) {
+      await client.query('ROLLBACK');
+      return false;
+    }
+
+    await client.query(
+      'UPDATE captcha_challenges SET used_at = NOW() WHERE id = $1',
+      [challengeId]
+    );
+    await client.query('COMMIT');
+
+    const row = challenge.rows[0];
+    const expected = hashCaptchaAnswer(challengeId, context, String(answer).trim());
+    return row.context === context && new Date(row.expires_at) > new Date() &&
+      secureHashMatch(row.answer_hash, expected);
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function requireCaptcha(req, res, context) {
+  if (!CAPTCHA_ENABLED) return true;
+  const valid = await consumeCaptcha(req.body.captcha_id, req.body.captcha_answer, context);
+  if (!valid) {
+    res.status(400).json({ error: '验证码无效或已过期，请重新计算' });
+    return false;
+  }
+  return true;
+}
+
+app.get('/api/captcha', async (req, res) => {
+  if (!CAPTCHA_ENABLED) return res.json({ enabled: false });
+  const context = req.query.context;
+  if (!['registration', 'post', 'reply'].includes(context)) {
+    return res.status(400).json({ error: '验证码场景无效' });
+  }
+
+  let left = crypto.randomInt(1, 10);
+  let right = crypto.randomInt(1, 10);
+  const operator = crypto.randomInt(0, 2) === 0 ? '+' : '-';
+  if (operator === '-' && left < right) [left, right] = [right, left];
+  const answer = operator === '+' ? left + right : left - right;
+  const id = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+  const answerHash = hashCaptchaAnswer(id, context, answer);
+
+  try {
+    await pool.query('DELETE FROM captcha_challenges WHERE expires_at < NOW() - INTERVAL \'1 hour\'');
+    await pool.query(
+      `INSERT INTO captcha_challenges (id, context, answer_hash, expires_at)
+       VALUES ($1, $2, $3, $4)`,
+      [id, context, answerHash, expiresAt]
+    );
+    return res.json({ id, question: `${left} ${operator} ${right} = ?`, expires_at: expiresAt });
+  } catch (error) {
+    return res.status(500).json({ error: '验证码生成失败' });
+  }
+});
+
 // ============================================================
 //  论坛设置接口
 // ============================================================
@@ -179,6 +282,12 @@ app.post('/api/auth/register', async (req, res) => {
   }
   if (password.length < 6) {
     return res.status(400).json({ error: '密码至少6位' });
+  }
+
+  try {
+    if (!await requireCaptcha(req, res, 'registration')) return;
+  } catch (error) {
+    return res.status(500).json({ error: '验证码验证失败' });
   }
 
   try {
@@ -565,6 +674,12 @@ app.post('/api/posts', auth, async (req, res) => {
   }
 
   try {
+    if (!await requireCaptcha(req, res, 'post')) return;
+  } catch (error) {
+    return res.status(500).json({ error: '验证码验证失败' });
+  }
+
+  try {
     const r = await pool.query(
       `INSERT INTO posts (user_id, title, content, images)
        VALUES ($1, $2, $3, $4)
@@ -696,6 +811,12 @@ app.post('/api/posts/:id/replies', auth, async (req, res) => {
 
   if (!content || content.trim().length === 0) {
     return res.status(400).json({ error: '请填写回复内容' });
+  }
+
+  try {
+    if (!await requireCaptcha(req, res, 'reply')) return;
+  } catch (error) {
+    return res.status(500).json({ error: '验证码验证失败' });
   }
 
   try {

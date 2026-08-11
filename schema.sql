@@ -193,6 +193,19 @@ CREATE TABLE IF NOT EXISTS recovery_codes (
 
 CREATE INDEX IF NOT EXISTS idx_recovery_codes_user_id ON recovery_codes(user_id);
 
+-- One-time, short-lived server-verified CAPTCHA challenges.
+CREATE TABLE IF NOT EXISTS captcha_challenges (
+  id UUID PRIMARY KEY,
+  context VARCHAR(20) NOT NULL CHECK (context IN ('registration', 'post', 'reply')),
+  answer_hash CHAR(64) NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_captcha_challenges_expires_at
+  ON captcha_challenges(expires_at);
+
 -- 帖子表添加置顶字段
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT false;
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS pinned_at TIMESTAMPTZ;

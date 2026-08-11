@@ -1,28 +1,62 @@
 // ============================================================
-//  🧠 验证码
+//  🧠 服务器验证的一次性验证码
 // ============================================================
 
-function generateCaptcha() {
-  let a = Math.floor(Math.random() * 9) + 1;
-  let b = Math.floor(Math.random() * 9) + 1;
-  let op = ['+', '-'][Math.floor(Math.random() * 2)];
-  if (op === '-' && a < b) { let t = a;
-    a = b;
-    b = t; }
-  let answer = op === '+' ? a + b : a - b;
-  return { question: a + ' ' + op + ' ' + b + ' = ?', answer: answer };
+const CAPTCHA_CONTEXTS = {
+  reg: 'registration',
+  post: 'post',
+  reply: 'reply'
+};
+
+const CAPTCHA_ELEMENTS = {
+  reg: ['regCaptchaQuestion', 'regCaptchaInput'],
+  post: ['postCaptchaQuestion', 'postCaptchaInput'],
+  reply: ['replyCaptchaQuestion', 'replyCaptchaInput']
+};
+
+async function refreshCaptcha(type) {
+  const context = CAPTCHA_CONTEXTS[type];
+  const elementIds = CAPTCHA_ELEMENTS[type];
+  if (!context || !elementIds) return;
+
+  const question = document.getElementById(elementIds[0]);
+  const input = document.getElementById(elementIds[1]);
+  if (!question || !input) return;
+
+  const row = question.closest('.captcha-row');
+  input.value = '';
+  input.dataset.challengeId = '';
+  input.dataset.captchaEnabled = 'true';
+  input.disabled = true;
+  question.textContent = '加载验证码...';
+  if (row) row.style.display = '';
+
+  try {
+    const challenge = await API.getCaptcha(context);
+    if (challenge.enabled === false) {
+      input.dataset.captchaEnabled = 'false';
+      if (row) row.style.display = 'none';
+      return;
+    }
+
+    input.dataset.challengeId = challenge.id;
+    question.textContent = challenge.question;
+    input.disabled = false;
+  } catch (error) {
+    question.textContent = '验证码加载失败，点击重试';
+    input.disabled = true;
+  }
 }
 
-function refreshCaptcha(type) {
-  let q = generateCaptcha();
-  if (type === 'reg') {
-    document.getElementById('regCaptchaQuestion').textContent = q.question;
-    document.getElementById('regCaptchaInput').dataset.answer = q.answer;
-  } else if (type === 'post') {
-    document.getElementById('postCaptchaQuestion').textContent = q.question;
-    document.getElementById('postCaptchaInput').dataset.answer = q.answer;
-  } else if (type === 'reply') {
-    document.getElementById('replyCaptchaQuestion').textContent = q.question;
-    document.getElementById('replyCaptchaInput').dataset.answer = q.answer;
-  }
+function getCaptchaSubmission(type) {
+  const elementIds = CAPTCHA_ELEMENTS[type];
+  if (!elementIds) return null;
+
+  const input = document.getElementById(elementIds[1]);
+  if (!input || input.dataset.captchaEnabled === 'false') return {};
+
+  const id = input.dataset.challengeId;
+  const answer = input.value.trim();
+  if (!id || !answer) return null;
+  return { id, answer };
 }

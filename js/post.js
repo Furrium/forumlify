@@ -222,12 +222,11 @@ async function renderPostDetail(postId) {
 async function handleReplySubmit(postId) {
   if (!currentUser) { alert('请先登录'); return; }
   const content = document.getElementById('replyContent').value.trim();
-  const captchaInput = document.getElementById('replyCaptchaInput').value.trim();
-  const captchaAnswer = parseInt(document.getElementById('replyCaptchaInput').dataset.answer);
+  const captcha = getCaptchaSubmission('reply');
   if (!content) { alert('请填写回复内容'); return; }
-  if (parseInt(captchaInput) !== captchaAnswer) { alert('验证码错误，请重新计算'); refreshCaptcha('reply'); return; }
+  if (!captcha) { alert('请填写验证码'); return; }
   try {
-    await API.createReply(postId, content);
+    await API.createReply(postId, content, captcha);
     API.logEvent('create_reply').catch(() => {});
     renderPostDetail(postId);
     if (currentPage === 'feed') {
@@ -236,5 +235,6 @@ async function handleReplySubmit(postId) {
     renderStats();
   } catch (err) {
     alert('回复失败：' + err.message);
+    refreshCaptcha('reply');
   }
 }
