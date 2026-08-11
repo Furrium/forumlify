@@ -40,13 +40,13 @@ const TRANSLATIONS = {
     '已编辑': '已编辑',
     '匿名': '匿名',
     '无标题': '无标题',
+    '回复': '回复',
 
     // ===== 帖子详情 =====
     '帖子详情': '帖子详情',
     '发表回复': '发表回复',
     '提交回复': '提交回复',
     '还没有回复，快来抢沙发吧 🛋️': '还没有回复，快来抢沙发吧 🛋️',
-    '回复': '回复',
 
     // ===== 统计 =====
     '社区统计': '社区统计',
@@ -56,11 +56,9 @@ const TRANSLATIONS = {
     '友情链接': '友情链接',
 
     // ===== 登录/注册 =====
-    '登录': '登录',
     '邮箱': '邮箱',
     '密码': '密码',
     '忘记密码？': '忘记密码？',
-    '注册': '注册',
     '用户名': '用户名',
     '密码（至少6位）': '密码（至少6位）',
     '请先登录': '请先登录',
@@ -69,10 +67,8 @@ const TRANSLATIONS = {
     '举报记录': '举报记录',
     '用户列表': '用户列表',
     '操作日志': '操作日志',
-    '友情链接': '友情链接',
     '自定义CSS': '自定义CSS',
     '论坛名称设置': '论坛名称设置',
-    '自定义页面': '自定义页面',
     '暂无举报': '暂无举报',
     '待处理': '待处理',
     '已删除': '已删除',
@@ -90,8 +86,15 @@ const TRANSLATIONS = {
     '新邮箱': '新邮箱',
     '查看恢复码': '查看恢复码',
     '重新生成': '重新生成',
+    '个人简介': '个人简介',
+    '帖子签名': '帖子签名',
+    '显示在每篇帖子底部，支持 Markdown': '显示在每篇帖子底部，支持 Markdown',
+    '用 --- 分隔，支持 Markdown': '用 --- 分隔，支持 Markdown',
 
     // ===== 恢复码 =====
+    '用于忘记密码时重置账户。每个恢复码只能使用一次。': '用于忘记密码时重置账户。每个恢复码只能使用一次。',
+    '剩余': '剩余',
+    '个可用恢复码': '个可用恢复码',
     '复制全部': '复制全部',
     '我已保存': '我已保存',
 
@@ -157,6 +160,7 @@ const TRANSLATIONS = {
     '加入于': '加入于',
     '发了': '发了',
     '个帖子': '个帖子',
+    '帖': '帖',
     '发私信': '发私信',
     '还没有发帖': '还没有发帖',
 
@@ -189,7 +193,6 @@ const TRANSLATIONS = {
     '点击或拖拽上传图片': '点击或拖拽上传图片',
     '支持 JPG、PNG、GIF、WebP，单张最大 5MB': '支持 JPG、PNG、GIF、WebP，单张最大 5MB',
     '答案': '答案',
-    '编辑帖子': '编辑帖子',
     '请填写内容': '请填写内容',
     '发布成功！': '发布成功！',
     '发布失败': '发布失败',
@@ -243,13 +246,13 @@ const TRANSLATIONS = {
     '已编辑': 'Edited',
     '匿名': 'Anonymous',
     '无标题': 'Untitled',
+    '回复': 'Reply',
 
     // ===== 帖子详情 =====
     '帖子详情': 'Post Details',
     '发表回复': 'Reply',
     '提交回复': 'Submit Reply',
     '还没有回复，快来抢沙发吧 🛋️': 'No replies yet. Be the first!',
-    '回复': 'Reply',
 
     // ===== 统计 =====
     '社区统计': 'Community Stats',
@@ -259,11 +262,9 @@ const TRANSLATIONS = {
     '友情链接': 'Links',
 
     // ===== 登录/注册 =====
-    '登录': 'Login',
     '邮箱': 'Email',
     '密码': 'Password',
     '忘记密码？': 'Forgot Password?',
-    '注册': 'Register',
     '用户名': 'Username',
     '密码（至少6位）': 'Password (min 6 chars)',
     '请先登录': 'Please login first',
@@ -272,10 +273,8 @@ const TRANSLATIONS = {
     '举报记录': 'Reports',
     '用户列表': 'Users',
     '操作日志': 'Logs',
-    '友情链接': 'Links',
     '自定义CSS': 'Custom CSS',
     '论坛名称设置': 'Forum Settings',
-    '自定义页面': 'Custom Pages',
     '暂无举报': 'No reports',
     '待处理': 'Pending',
     '已删除': 'Approved',
@@ -293,8 +292,15 @@ const TRANSLATIONS = {
     '新邮箱': 'New Email',
     '查看恢复码': 'View Recovery Codes',
     '重新生成': 'Regenerate',
+    '个人简介': 'Bio',
+    '帖子签名': 'Post Signature',
+    '显示在每篇帖子底部，支持 Markdown': 'Displayed at the bottom of each post. Supports Markdown.',
+    '用 --- 分隔，支持 Markdown': 'Use --- as separator. Supports Markdown.',
 
     // ===== 恢复码 =====
+    '用于忘记密码时重置账户。每个恢复码只能使用一次。': 'Used to reset your password if you forget it. Each recovery code can only be used once.',
+    '剩余': '',
+    '个可用恢复码': ' recovery codes available',
     '复制全部': 'Copy All',
     '我已保存': 'Saved',
 
@@ -331,7 +337,7 @@ const TRANSLATIONS = {
 
     // ===== 用户 =====
     '共': 'Total',
-    '位用户': 'users',
+    '位用户': ' users',
     '搜索用户名...': 'Search username...',
     '搜索': 'Search',
     '清空': 'Clear',
@@ -345,7 +351,7 @@ const TRANSLATIONS = {
     '暂无日志': 'No logs',
     '时间': 'Time',
     '操作': 'Action',
-    '条日志': 'logs',
+    '条日志': ' logs',
 
     // ===== 重置密码 =====
     '重置密码': 'Reset Password',
@@ -359,7 +365,8 @@ const TRANSLATIONS = {
     '这个人很懒，什么都没写': 'This user is lazy, nothing written',
     '加入于': 'Joined',
     '发了': 'Posted',
-    '个帖子': 'posts',
+    '个帖子': ' posts',
+    '帖': ' posts',
     '发私信': 'Send Message',
     '还没有发帖': 'No posts yet',
 
@@ -392,7 +399,6 @@ const TRANSLATIONS = {
     '点击或拖拽上传图片': 'Click or drag to upload image',
     '支持 JPG、PNG、GIF、WebP，单张最大 5MB': 'Supports JPG, PNG, GIF, WebP, max 5MB',
     '答案': 'Answer',
-    '编辑帖子': 'Edit Post',
     '请填写内容': 'Please enter content',
     '发布成功！': 'Posted!',
     '发布失败': 'Post failed',
