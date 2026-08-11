@@ -37,7 +37,7 @@ Forumlify 提供了两个不同架构的分支版本，以满足不同部署环�
 ### Docker 部署（推荐）
 
 ```bash
-# 本分支（next，Next.js 版）；如要部署 Express 版请 clone main 分支
+# 本分支（NEXT 版）；如要部署 LITE 版请 clone main 分支
 git clone -b next https://github.com/furrium/forumlify.git
 cd forumlify
 docker-compose up -d
@@ -47,7 +47,7 @@ docker-compose up -d
 
 ---
 
-> 以下内容添加自 NodeLoc @Lezi-fun 的 PR（从源码构建与配置说明）
+> 以下内容需要一定的Nextjs开发技术！
 
 ---
 
