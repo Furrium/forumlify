@@ -24,7 +24,7 @@ export default function CustomPage({ pageName }) {
     );
   }
   if (html === null) {
-    return <div style={{ padding: '84px 32px', textAlign: 'center', color: '#94a3b8' }}>加载中...</div>;
+    return <div style={{ padding: '84px 32px', textAlign: 'center', color: '#94a3b8' }}><span className="spinner-sm" />加载中...</div>;
   }
 
   const srcdoc = `<!DOCTYPE html>

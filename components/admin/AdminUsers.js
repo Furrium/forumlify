@@ -30,7 +30,7 @@ export default function AdminUsers() {
   };
 
   if (error) return <div style={{ textAlign: 'center', color: '#ef4444', padding: 20 }}>加载失败：{error}</div>;
-  if (!users) return <div style={{ textAlign: 'center', color: '#94a3b8', padding: 20 }}>加载中...</div>;
+  if (!users) return <div style={{ textAlign: 'center', color: '#94a3b8', padding: 20 }}><span className="spinner-sm" />加载中...</div>;
 
   return (
     <>

@@ -17,7 +17,7 @@ export default function AdminLogs() {
   useEffect(load, []);
 
   if (error) return <div style={{ textAlign: 'center', color: '#ef4444', padding: 20 }}>加载失败：{error}</div>;
-  if (!logs) return <div style={{ textAlign: 'center', color: '#94a3b8', padding: 20 }}>加载中...</div>;
+  if (!logs) return <div style={{ textAlign: 'center', color: '#94a3b8', padding: 20 }}><span className="spinner-sm" />加载中...</div>;
   if (logs.length === 0) return <div style={{ textAlign: 'center', color: '#94a3b8', padding: 40 }}>暂无日志</div>;
 
   return (

@@ -32,6 +32,7 @@
 
   /* ===== 兼容旧变量（React 组件内联样式使用）===== */
   --bg: #dfe6e9;
+  --modal-bg: rgba(255, 255, 255, 0.85); /* 弹窗背景：半透明玻璃感但保证可读性 */
   --surface: rgba(255, 255, 255, 0.18);
   --border: rgba(255, 255, 255, 0.30);
   --border-light: rgba(255, 255, 255, 0.12);
@@ -72,6 +73,7 @@
 
   /* ===== 兼容旧变量（React 组件内联样式使用）===== */
   --bg: #0f0f1a;
+  --modal-bg: rgba(24, 24, 38, 0.88); /* 弹窗背景：半透明玻璃感但保证可读性 */
   --surface: rgba(30, 30, 50, 0.35);
   --border: rgba(255, 255, 255, 0.10);
   --border-light: rgba(255, 255, 255, 0.06);
@@ -622,7 +624,7 @@ svg {
   }
 }
 .modal-content {
-  background: var(--glass-bg);
+  background: var(--modal-bg, var(--glass-bg));
   backdrop-filter: blur(32px);
   -webkit-backdrop-filter: blur(32px);
   border: 1px solid var(--glass-border);
@@ -2285,4 +2287,21 @@ a.btn-secondary {
   background: rgba(255, 255, 255, 0.06) !important;
   color: var(--glass-text) !important;
   border-color: var(--glass-border) !important;
+}
+
+/* ===== 小转圈（列表/局部加载） ===== */
+.spinner-sm {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--glass-border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: -3px;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
