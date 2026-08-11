@@ -30,6 +30,7 @@ export default function PostDetail({ postId, initialPost = null }) {
   const editImageInputRef = useRef(null);
   // 评论抽屉：帖子加载完成后自动展开（动画完整播放）
   const [repliesOpen, setRepliesOpen] = useState(false);
+  const [chainParentId, setChainParentId] = useState(null);
   useEffect(() => {
     if (post && !repliesOpen) {
       // 延迟到帖子内容渲染后，让抽屉动画平滑播放
@@ -196,7 +197,7 @@ export default function PostDetail({ postId, initialPost = null }) {
             {/* 评论抽屉：帖子加载完成后自动展开 */}
             <div className={'replies-drawer' + (repliesOpen ? ' open' : '')}>
               <div className="replies-drawer-inner">
-                <ReplyList postId={postId} onRefresh={load} />
+                <ReplyList postId={postId} onRefresh={load} chainParentId={chainParentId} onBack={setChainParentId} />
               </div>
             </div>
           </div>
