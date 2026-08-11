@@ -451,7 +451,7 @@ function renderAdminSettings() {
 }
 
 // ============================================================
-//  🎨 自定义 CSS（独立标签页）
+//  🎨 自定义 CSS（独立标签页）- 已改用 Toast 提示
 // ============================================================
 
 function renderAdminCustomCSS() {
@@ -524,43 +524,37 @@ function renderAdminCustomCSS() {
 
   function handleCssFile(file) {
     if (file.name !== 'style.css') {
-      statusEl.textContent = '❌ 文件名必须是 style.css';
-      statusEl.style.color = '#ef4444';
+      showToast('文件名必须是 style.css', 'error');
       selectedFile = null;
       fileInput.value = '';
       return;
     }
     if (!file.type.includes('text/css') && !file.name.endsWith('.css')) {
-      statusEl.textContent = '❌ 请上传 CSS 文件';
-      statusEl.style.color = '#ef4444';
+      showToast('请上传 CSS 文件', 'error');
       selectedFile = null;
       fileInput.value = '';
       return;
     }
     selectedFile = file;
-    statusEl.textContent = '✅ 已选择: ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
-    statusEl.style.color = '#22c55e';
+    showToast('已选择: ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)', 'success');
   }
 
   document.getElementById('customCssSaveBtn').addEventListener('click', function() {
     if (!selectedFile) {
-      statusEl.textContent = '⚠️ 请先选择 style.css 文件';
-      statusEl.style.color = '#f59e0b';
+      showToast('请先选择 style.css 文件', 'warning');
       return;
     }
 
     showCustomCssWarningModal(async function() {
       try {
         await API.uploadCustomCSS(selectedFile);
-        statusEl.textContent = '✅ CSS 上传成功！刷新页面查看效果';
-        statusEl.style.color = '#22c55e';
+        showToast('CSS 上传成功！刷新页面查看效果', 'success');
         selectedFile = null;
         fileInput.value = '';
         dropText.textContent = '点击或拖拽上传 style.css';
         loadCustomCSS();
       } catch (err) {
-        statusEl.textContent = '❌ 上传失败：' + err.message;
-        statusEl.style.color = '#ef4444';
+        showToast('上传失败：' + err.message, 'error');
       }
     });
   });
@@ -569,13 +563,11 @@ function renderAdminCustomCSS() {
     if (!confirm('确定要删除自定义 CSS 吗？将恢复默认样式。')) return;
     try {
       await API.deleteCustomCSS();
-      statusEl.textContent = '✅ 已删除自定义 CSS';
-      statusEl.style.color = '#22c55e';
+      showToast('已删除自定义 CSS', 'success');
       const link = document.getElementById('customCssLink');
       if (link) link.remove();
     } catch (err) {
-      statusEl.textContent = '❌ 删除失败：' + err.message;
-      statusEl.style.color = '#ef4444';
+      showToast('删除失败：' + err.message, 'error');
     }
   });
 }
