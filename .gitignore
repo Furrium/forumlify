@@ -5,10 +5,11 @@ out/
 *.log
 .DS_Store
 
-# .env 允许提交到仓库（项目约定）
-# 仅忽略本地覆盖文件
-.env.local
-.env.*.local
+# 环境变量：.env 是用户本地环境变量（不提交），模板 .env.example 进仓库
+.env
+.env.*
+!.env.example
+
 .vercel
 
 # OpenNext
