@@ -2471,27 +2471,54 @@ a.btn-secondary {
   border-color: var(--glass-border);
 }
 /* ============================================================
-   自定义页面编辑器模态框 —— 不透明背景
+   自定义页面编辑模态框 —— 亮色模式背景修复
    ============================================================ */
 
-/* 自定义页面编辑器的内容区（不透明） */
-#editorPageModal .modal-content,
-.modal-content:has(#editorPageName) {
-  background: var(--surface) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: 1px solid var(--border) !important;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* 亮色模式 */
+/* 亮色模式下自定义页面编辑模态框用纯白背景 */
+[data-theme="light"] #editorModal .modal-content,
 [data-theme="light"] .modal-content:has(#editorPageName) {
   background: #ffffff !important;
-  border-color: #e9edf4 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #e9edf4 !important;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12) !important;
 }
 
-/* 暗色模式 */
+/* 亮色模式下模态框里的文字颜色 */
+[data-theme="light"] #editorModal .modal-content h2,
+[data-theme="light"] .modal-content:has(#editorPageName) h2 {
+  color: #1a1a2e !important;
+}
+
+[data-theme="light"] #editorModal .modal-content label,
+[data-theme="light"] .modal-content:has(#editorPageName) label {
+  color: #1a1a2e !important;
+}
+
+[data-theme="light"] #editorModal .modal-content input,
+[data-theme="light"] #editorModal .modal-content textarea,
+[data-theme="light"] #editorModal .modal-content select,
+[data-theme="light"] .modal-content:has(#editorPageName) input,
+[data-theme="light"] .modal-content:has(#editorPageName) textarea,
+[data-theme="light"] .modal-content:has(#editorPageName) select {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid #e9edf4 !important;
+  color: #1a1a2e !important;
+}
+
+[data-theme="light"] #editorModal .modal-content input:focus,
+[data-theme="light"] #editorModal .modal-content textarea:focus,
+[data-theme="light"] .modal-content:has(#editorPageName) input:focus,
+[data-theme="light"] .modal-content:has(#editorPageName) textarea:focus {
+  background: rgba(0, 0, 0, 0.06) !important;
+  border-color: var(--primary) !important;
+}
+
+/* 暗色模式保持原样 */
+[data-theme="dark"] #editorModal .modal-content,
 [data-theme="dark"] .modal-content:has(#editorPageName) {
-  background: #1a1d27 !important;
-  border-color: #2a2d3a !important;
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(32px) !important;
+  -webkit-backdrop-filter: blur(32px) !important;
+  border: 1px solid var(--glass-border) !important;
 }
