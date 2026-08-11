@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS friendly_links (
 -- 举报表
 CREATE TABLE IF NOT EXISTS reports (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  post_id UUID REFERENCES posts(id) ON DELETE SET NULL,
   reporter_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   reason VARCHAR(100) NOT NULL,
   status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
