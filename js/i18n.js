@@ -41,12 +41,15 @@ const TRANSLATIONS = {
     '匿名': '匿名',
     '无标题': '无标题',
     '回复': '回复',
+    '📌 置顶': '📌 置顶',
+    '✏️ 编辑': '✏️ 编辑',
 
     // ===== 帖子详情 =====
     '帖子详情': '帖子详情',
     '发表回复': '发表回复',
     '提交回复': '提交回复',
     '还没有回复，快来抢沙发吧 🛋️': '还没有回复，快来抢沙发吧 🛋️',
+    '写下你的回复...': '写下你的回复...',
 
     // ===== 统计 =====
     '社区统计': '社区统计',
@@ -92,6 +95,7 @@ const TRANSLATIONS = {
     '帖子签名': '帖子签名',
     '显示在每篇帖子底部，支持 Markdown': '显示在每篇帖子底部，支持 Markdown',
     '用 --- 分隔，支持 Markdown': '用 --- 分隔，支持 Markdown',
+    '当前密码（验证身份）': '当前密码（验证身份）',
 
     // ===== 恢复码 =====
     '用于忘记密码时重置账户。每个恢复码只能使用一次。': '用于忘记密码时重置账户。每个恢复码只能使用一次。',
@@ -114,6 +118,7 @@ const TRANSLATIONS = {
     '用于 URL: ?custom=': '用于 URL: ?custom=',
     '页面内容（HTML + CSS + JS）': '页面内容（HTML + CSS + JS）',
     '支持 HTML、CSS（<style>）、JS（<script>），内容会在独立的沙盒中渲染': '支持 HTML、CSS（<style>）、JS（<script>），内容会在独立的沙盒中渲染',
+    '暂无自定义页面': '暂无自定义页面',
 
     // ===== 自定义 CSS =====
     '自定义 CSS': '自定义 CSS',
@@ -122,6 +127,13 @@ const TRANSLATIONS = {
     '只能上传 style.css 文件': '只能上传 style.css 文件',
     '保存 CSS': '保存 CSS',
     '删除自定义 CSS': '删除自定义 CSS',
+
+    // ===== 自定义 CSS 警告模态框 =====
+    '警告': '警告',
+    '若上传的 style.css 存在问题，将导致整个论坛界面样式错乱，甚至无法正常使用。': '若上传的 style.css 存在问题，将导致整个论坛界面样式错乱，甚至无法正常使用。',
+    '请确保 CSS 文件是完整的、经过测试的版本。如出现问题，可点击「删除自定义 CSS」恢复默认样式。': '请确保 CSS 文件是完整的、经过测试的版本。如出现问题，可点击「删除自定义 CSS」恢复默认样式。',
+    '我了解，继续上传': '我了解，继续上传',
+    '取消': '取消',
 
     // ===== 友情链接 =====
     '链接名称': '链接名称',
@@ -182,12 +194,14 @@ const TRANSLATIONS = {
     '用户主页': '用户主页',
     '用户不存在': '用户不存在',
     '这个人很懒，什么都没写': '这个人很懒，什么都没写',
-    '加入于': '加入于',
+    '加入': '加入',
+    '于': '于',
     '发了': '发了',
     '个帖子': '个帖子',
     '帖': '帖',
     '发私信': '发私信',
     '还没有发帖': '还没有发帖',
+    '加入 ': '加入 ',
 
     // ===== 私信 =====
     '私信': '私信',
@@ -272,12 +286,15 @@ const TRANSLATIONS = {
     '匿名': 'Anonymous',
     '无标题': 'Untitled',
     '回复': 'Reply',
+    '📌 置顶': '📌 Pinned',
+    '✏️ 编辑': '✏️ Edit',
 
     // ===== 帖子详情 =====
     '帖子详情': 'Post Details',
     '发表回复': 'Reply',
     '提交回复': 'Submit Reply',
     '还没有回复，快来抢沙发吧 🛋️': 'No replies yet. Be the first!',
+    '写下你的回复...': 'Write your reply...',
 
     // ===== 统计 =====
     '社区统计': 'Community Stats',
@@ -323,6 +340,7 @@ const TRANSLATIONS = {
     '帖子签名': 'Post Signature',
     '显示在每篇帖子底部，支持 Markdown': 'Displayed at the bottom of each post. Supports Markdown.',
     '用 --- 分隔，支持 Markdown': 'Use --- as separator. Supports Markdown.',
+    '当前密码（验证身份）': 'Current password (verify identity)',
 
     // ===== 恢复码 =====
     '用于忘记密码时重置账户。每个恢复码只能使用一次。': 'Used to reset your password if you forget it. Each recovery code can only be used once.',
@@ -345,6 +363,7 @@ const TRANSLATIONS = {
     '用于 URL: ?custom=': 'Used in URL: ?custom=',
     '页面内容（HTML + CSS + JS）': 'Page Content (HTML + CSS + JS)',
     '支持 HTML、CSS（<style>）、JS（<script>），内容会在独立的沙盒中渲染': 'Supports HTML, CSS (<style>), JS (<script>). Rendered in an isolated sandbox.',
+    '暂无自定义页面': 'No custom pages',
 
     // ===== 自定义 CSS =====
     '自定义 CSS': 'Custom CSS',
@@ -353,6 +372,13 @@ const TRANSLATIONS = {
     '只能上传 style.css 文件': 'Only style.css files are allowed',
     '保存 CSS': 'Save CSS',
     '删除自定义 CSS': 'Delete Custom CSS',
+
+    // ===== 自定义 CSS 警告模态框 =====
+    '警告': 'Warning',
+    '若上传的 style.css 存在问题，将导致整个论坛界面样式错乱，甚至无法正常使用。': 'If the uploaded style.css has issues, it may break the entire forum layout.',
+    '请确保 CSS 文件是完整的、经过测试的版本。如出现问题，可点击「删除自定义 CSS」恢复默认样式。': 'Please ensure the CSS file is complete and tested. If problems occur, click "Delete Custom CSS" to restore default styles.',
+    '我了解，继续上传': 'I understand, continue upload',
+    '取消': 'Cancel',
 
     // ===== 友情链接 =====
     '链接名称': 'Link Name',
@@ -413,12 +439,14 @@ const TRANSLATIONS = {
     '用户主页': 'User Profile',
     '用户不存在': 'User not found',
     '这个人很懒，什么都没写': 'This user is lazy, nothing written',
-    '加入于': 'Joined',
+    '加入': 'Joined',
+    '于': '',
     '发了': 'Posted',
     '个帖子': ' posts',
     '帖': ' posts',
     '发私信': 'Send Message',
     '还没有发帖': 'No posts yet',
+    '加入 ': 'Joined ',
 
     // ===== 私信 =====
     '私信': 'Messages',
