@@ -129,14 +129,11 @@ export default function ReplyList({ postId, onRefresh }) {
       <div id="replyArea" ref={replyAreaRef} style={{ marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
         <h3 style={{ fontSize: 16, marginBottom: 12 }}><Icon name="message" size={16} /> 发表回复</h3>
         {replyTo && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, padding: '6px 10px', background: 'var(--primary-light)', color: 'var(--primary)', borderRadius: 6, fontSize: 13 }}>
-            <Icon name="reply" size={13} /> 正在回复 <strong>@{replyTo}</strong>
-            <button
-              onClick={() => setReplyTo(null)}
-              style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)', fontSize: 12 }}
-            >
-              取消
-            </button>
+          <div className="reply-preview-bar">
+            <Icon name="reply" size={13} />
+            <span>回复</span>
+            <strong>@{replyTo}</strong>
+            <button className="reply-preview-cancel" onClick={() => setReplyTo(null)}>取消</button>
           </div>
         )}
         <textarea
