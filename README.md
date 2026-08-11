@@ -101,7 +101,7 @@ npm start
 mkdir -p uploads && chmod 755 uploads
 ```
 
-## ☁️ Serverless 部署（Vercel / Cloudflare Pages）
+## ☁️ Serverless 部署（Vercel / Cloudflare Workers）
 
 Forumlify 的 Next.js 版本天然支持 serverless 部署。与传统部署相比需要处理三件事：
 
@@ -142,18 +142,46 @@ vercel        # 首次会要求登录并配置环境变量
 
 > 注意：不传图片的话 S3 变量可以留空；后续要传图时再到 Vercel 项目设置 → Environment Variables 补上即可，无需重新部署。
 
-### Cloudflare Pages 部署
+### Cloudflare Workers 部署（一键）
+
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https%3A%2F%2Fgithub.com%2Flezi-fun%2Fforumlify-deploy)
+
+点击上方按钮，Cloudflare 会自动导入部署模板仓库（[lezi-fun/forumlify-deploy](https://github.com/lezi-fun/forumlify-deploy)，默认分支 `next`），在 Workers 面板确认后即完成部署。
+
+#### 面板手动部署（Git 集成）
+
+1. 打开 Cloudflare 控制台 → **Workers & Pages** → **Create** → **Connect to Git**
+2. 选择 `lezi-fun/forumlify-deploy` 仓库（或你 fork 的副本），分支选 `next`
+3. **构建设置**：
+   - Build command: `npx opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion`
+   - 部署命令由 OpenNext 自动处理（`wrangler deploy`）
+4. **环境变量**（Settings → Variables and Secrets，设为 **Secrets**）：按上方表格配置 `DATABASE_URL`、`JWT_SECRET`、`S3_*`
+5. 保存并部署。完成后会得到 `https://<name>.<subdomain>.workers.dev` 地址
+
+#### 命令行部署
 
 ```bash
-# 构建命令：npm run build
-# 输出目录：.vercel/output（需安装 @cloudflare/next-on-pages）
-npx @cloudflare/next-on-pages
+# 需要 Node.js 20+，安装依赖后：
+npx opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion
+
+# 部署前先配置 wrangler 认证（三选一）：
+#   wrangler login                        # 浏览器登录
+#   CLOUDFLARE_API_TOKEN=<token>          # API Token
+#   CLOUDFLARE_API_KEY + CLOUDFLARE_API_EMAIL  # Global API Key
+export CLOUDFLARE_ACCOUNT_ID=<account_id>
+
+# 设置环境变量（Secret）
+echo 'postgresql://...' | npx wrangler secret put DATABASE_URL
+echo 'your-jwt-secret' | npx wrangler secret put JWT_SECRET
+# ... 其余 S3_* 同理
+
+npx opennextjs-cloudflare deploy
 ```
 
-在 Cloudflare Pages 控制台创建项目时选择 **Direct Upload** 或连接 Git 仓库，然后：
-
-1. **构建设置**：Build command 填 `npm run build`，Build output directory 填 `.vercel/output/static`
-2. **环境变量**：在 Settings → Environment variables 中配置上表的 `DATABASE_URL`、`JWT_SECRET`（和可选的 `S3_*`）
+> 注意：OpenNext 使用 R2 增量缓存，首次部署前需创建缓存桶：
+> `npx wrangler r2 bucket create forumlify-opennext-cache`
+>
+> `--dangerouslyUseUnsupportedNextVersion` 是因为 Next.js 14 已超出官方 2 年支持期，功能不受影响。
 
 > 提示：`next.config.js` 中的 `output: 'standalone'` 仅在设置了 `DOCKER=1` 环境变量时启用，serverless 平台会自动跳过。
 
