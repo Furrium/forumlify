@@ -56,7 +56,7 @@ docker-compose up -d
 
 #### 环境要求
 
-- Node.js 18+
+- Node.js 20+
 - PostgreSQL 13+
 
 #### 步骤

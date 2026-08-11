@@ -7,7 +7,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const { rateLimit } = require('express-rate-limit');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
 const multer = require('multer');
@@ -1526,10 +1526,14 @@ app.use((err, req, res, next) => {
 //  启动服务器
 // ============================================================
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log('========================================');
-  console.log('  🌊 Forumlify 已启动');
-  console.log('  📡 http://localhost:' + PORT);
-  console.log('  📡 API: http://localhost:' + PORT + '/api');
-  console.log('========================================');
-});
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log('========================================');
+    console.log('  🌊 Forumlify 已启动');
+    console.log('  📡 http://localhost:' + PORT);
+    console.log('  📡 API: http://localhost:' + PORT + '/api');
+    console.log('========================================');
+  });
+}
+
+module.exports = { app, pool };
