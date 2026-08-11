@@ -140,14 +140,14 @@ export default function PostDetail({ postId, initialPost = null }) {
               </span>
               <span className="post-time">{time}</span>
               {post.edited_at && (
-                <span style={{ fontSize: 12, color: 'var(--text-light)', marginLeft: 8 }}>
+                <span className="post-edited-state" style={{ fontSize: 12, color: 'var(--text-light)', marginLeft: 8 }}>
                   （已编辑 {new Date(post.edited_at).toLocaleString('zh-CN')}）
                 </span>
               )}
               {post.is_pinned && (
-                <span style={{ fontSize: 12, color: 'var(--primary)', marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="pin" size={12} /> 置顶</span>
+                <span className="post-pin-state" style={{ fontSize: 12, color: 'var(--primary)', marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="pin" size={12} /> 置顶</span>
               )}
-              <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
+              <div className="post-detail-controls" style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
                 {currentUser && currentUser.role === 'admin' && (
                   <button className="btn-sm btn-secondary" style={{ padding: '4px 10px' }} onClick={handleTogglePin}>
                     <Icon name="pin" size={12} /> {post.is_pinned ? '取消置顶' : '置顶'}
@@ -174,7 +174,7 @@ export default function PostDetail({ postId, initialPost = null }) {
               </div>
             )}
             {post.signature && (
-              <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid var(--border-light)', fontSize: 12, color: 'var(--text-secondary)' }} dangerouslySetInnerHTML={{ __html: renderMarkdown(post.signature) }} />
+              <div className="post-detail-signature" style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid var(--border-light)', fontSize: 12, color: 'var(--text-secondary)' }} dangerouslySetInnerHTML={{ __html: renderMarkdown(post.signature) }} />
             )}
           </div>
           <ReplyList postId={postId} onRefresh={load} />

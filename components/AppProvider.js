@@ -7,6 +7,34 @@ import { API, getTheme, setToken, getToken } from '@/lib/api';
 
 const AppContext = createContext(null);
 
+const POST_TRANSITION_PARTS = [
+  ['.post-avatar', 'post-avatar'],
+  ['.post-username', 'post-author'],
+  ['.post-title', 'post-heading'],
+  ['.post-time', 'post-time'],
+  ['.post-content', 'post-body'],
+  ['.post-images', 'post-feed-media'],
+  ['.post-pin-state', 'post-pin-state'],
+  ['.post-edited-state', 'post-edited-state'],
+  ['.post-actions', 'post-feed-actions'],
+];
+
+function namePostTransitionParts(card) {
+  if (!card) return [];
+  return POST_TRANSITION_PARTS.flatMap(([selector, name]) => {
+    const element = card.querySelector(selector);
+    if (!element) return [];
+    element.style.viewTransitionName = name;
+    return [element];
+  });
+}
+
+function clearPostTransitionParts(elements) {
+  elements.forEach((element) => {
+    element.style.viewTransitionName = '';
+  });
+}
+
 function stageSharedGeometry(transition, { name, duration, moveOffset }) {
   transition.ready.then(() => {
     const groupAnimation = document.getAnimations().find(
@@ -221,8 +249,7 @@ export default function AppProvider({ children, cachedName = '' }) {
     let targetCard = currentPostId
       ? Array.from(document.querySelectorAll('[data-post-id]')).find((element) => element.dataset.postId === String(currentPostId))
       : null;
-    let targetTitle = null;
-    let targetTime = null;
+    let targetParts = [];
     document.documentElement.classList.add('home-view-transition');
     if (targetCard) document.documentElement.classList.add('returning-home');
 
@@ -231,17 +258,14 @@ export default function AppProvider({ children, cachedName = '' }) {
       targetCard = currentPostId
         ? Array.from(document.querySelectorAll('[data-post-id]')).find((element) => element.dataset.postId === String(currentPostId))
         : null;
-      targetTitle = targetCard?.querySelector('.post-title');
-      targetTime = targetCard?.querySelector('.post-time');
       if (targetCard) targetCard.style.viewTransitionName = 'post-expand';
-      if (targetTitle) targetTitle.style.viewTransitionName = 'post-heading';
-      if (targetTime) targetTime.style.viewTransitionName = 'post-time';
+      targetParts = namePostTransitionParts(targetCard);
     });
     stageSharedGeometry(transition, { name: 'post-expand', duration: 480, moveOffset: 0.72 });
+    stageSharedGeometry(transition, { name: 'post-body', duration: 480, moveOffset: 0.72 });
     const clearTargetNames = () => {
       if (targetCard) targetCard.style.viewTransitionName = '';
-      if (targetTitle) targetTitle.style.viewTransitionName = '';
-      if (targetTime) targetTime.style.viewTransitionName = '';
+      clearPostTransitionParts(targetParts);
     };
     transition.ready.then(clearTargetNames, clearTargetNames);
     transition.finished.finally(() => {
@@ -268,20 +292,17 @@ export default function AppProvider({ children, cachedName = '' }) {
       return;
     }
 
-    const sourceTitle = sourceElement.querySelector('.post-title');
-    const sourceTime = sourceElement.querySelector('.post-time');
     sourceElement.style.viewTransitionName = 'post-expand';
-    if (sourceTitle) sourceTitle.style.viewTransitionName = 'post-heading';
-    if (sourceTime) sourceTime.style.viewTransitionName = 'post-time';
+    const sourceParts = namePostTransitionParts(sourceElement);
     document.documentElement.classList.add('post-view-transition');
     const transition = document.startViewTransition(() => {
       flushSync(commitNavigation);
     });
     stageSharedGeometry(transition, { name: 'post-expand', duration: 960, moveOffset: 0.62 });
+    stageSharedGeometry(transition, { name: 'post-body', duration: 960, moveOffset: 0.62 });
     const clearSourceNames = () => {
       sourceElement.style.viewTransitionName = '';
-      if (sourceTitle) sourceTitle.style.viewTransitionName = '';
-      if (sourceTime) sourceTime.style.viewTransitionName = '';
+      clearPostTransitionParts(sourceParts);
     };
     transition.ready.then(clearSourceNames, clearSourceNames);
     transition.finished.finally(() => {

@@ -140,7 +140,7 @@ export default function Feed({ onOpenModal, onReport }) {
                   <div key={p.id} className="post-card" data-post-id={p.id} style={{ cursor: 'pointer' }}
                     onClick={(e) => openPost(p.id, e.currentTarget, p)}>
                 {p.is_pinned && (
-                  <div style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600, marginBottom: 4 }}><Icon name="pin" size={12} /> {t('feed.pinned')}</div>
+                  <div className="post-pin-state" style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600, marginBottom: 4 }}><Icon name="pin" size={12} /> {t('feed.pinned')}</div>
                 )}
                 <div className="post-header">
                   <img src={p.avatar_url || avatar(p.username)} className="post-avatar" alt="" />
@@ -153,7 +153,7 @@ export default function Feed({ onOpenModal, onReport }) {
                   </span>
                   <span className="post-time">{time}</span>
                   {p.edited_at && (
-                    <span style={{ fontSize: 11, color: 'var(--text-light)', marginLeft: 6 }}>{t('feed.deleted')}</span>
+                    <span className="post-edited-state" style={{ fontSize: 11, color: 'var(--text-light)', marginLeft: 6 }}>{t('feed.deleted')}</span>
                   )}
                 </div>
                 <div className="post-title">{p.title || t('feed.noTitle')}</div>

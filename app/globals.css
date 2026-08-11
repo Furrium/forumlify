@@ -920,6 +920,46 @@ html.home-view-transition.returning-home #pagePost .post-page-header h2 {
   view-transition-name: post-heading;
 }
 
+html.post-view-transition #pagePost .post-detail-card .post-avatar,
+html.home-view-transition.returning-home #pagePost .post-detail-card .post-avatar {
+  view-transition-name: post-avatar;
+}
+
+html.post-view-transition #pagePost .post-detail-card .post-username,
+html.home-view-transition.returning-home #pagePost .post-detail-card .post-username {
+  view-transition-name: post-author;
+}
+
+html.post-view-transition #pagePost .post-detail-card > .post-content,
+html.home-view-transition.returning-home #pagePost .post-detail-card > .post-content {
+  view-transition-name: post-body;
+}
+
+html.post-view-transition #pagePost .post-detail-card > .post-images,
+html.home-view-transition.returning-home #pagePost .post-detail-card > .post-images {
+  view-transition-name: post-detail-media;
+}
+
+html.post-view-transition #pagePost .post-detail-card .post-pin-state,
+html.home-view-transition.returning-home #pagePost .post-detail-card .post-pin-state {
+  view-transition-name: post-pin-state;
+}
+
+html.post-view-transition #pagePost .post-detail-card .post-edited-state,
+html.home-view-transition.returning-home #pagePost .post-detail-card .post-edited-state {
+  view-transition-name: post-edited-state;
+}
+
+html.post-view-transition #pagePost .post-detail-controls,
+html.home-view-transition.returning-home #pagePost .post-detail-controls {
+  view-transition-name: post-detail-controls;
+}
+
+html.post-view-transition #pagePost .post-detail-signature,
+html.home-view-transition.returning-home #pagePost .post-detail-signature {
+  view-transition-name: post-detail-signature;
+}
+
 html.post-view-transition .post-card .post-title,
 html.home-view-transition.returning-home .post-card .post-title {
   display: block;
@@ -945,6 +985,24 @@ html.post-view-transition::view-transition-group(post-sidebar) {
 html.post-view-transition::view-transition-group(post-heading) {
   animation-duration: 0.64s;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.post-view-transition::view-transition-group(post-avatar),
+html.post-view-transition::view-transition-group(post-author),
+html.post-view-transition::view-transition-group(post-pin-state),
+html.post-view-transition::view-transition-group(post-edited-state) {
+  animation-duration: 0.68s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.post-view-transition::view-transition-group(post-body) {
+  animation-duration: 0.96s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.post-view-transition::view-transition-image-pair(post-body),
+html.home-view-transition.returning-home::view-transition-image-pair(post-body) {
+  overflow: clip;
 }
 
 html.post-view-transition::view-transition-group(post-time) {
@@ -994,6 +1052,44 @@ html.post-view-transition::view-transition-new(post-time) {
   animation: sharedTimeIn 0.2s 0.38s ease-out both;
 }
 
+html.post-view-transition::view-transition-old(post-avatar),
+html.post-view-transition::view-transition-old(post-author),
+html.post-view-transition::view-transition-old(post-pin-state),
+html.post-view-transition::view-transition-old(post-edited-state) {
+  animation: sharedPartMorphOut 0.68s ease-out both;
+}
+
+html.post-view-transition::view-transition-new(post-avatar),
+html.post-view-transition::view-transition-new(post-author),
+html.post-view-transition::view-transition-new(post-pin-state),
+html.post-view-transition::view-transition-new(post-edited-state) {
+  animation: sharedPartMorphIn 0.68s ease-out both;
+}
+
+html.post-view-transition::view-transition-old(post-feed-actions) {
+  animation: feedOnlyPartOut 0.28s 0.24s ease-out both;
+}
+
+html.post-view-transition::view-transition-old(post-body) {
+  animation: bodySourceOut 0.08s 0.56s ease-out both;
+}
+
+html.post-view-transition::view-transition-new(post-body) {
+  animation: bodyTargetIn 0.1s 0.59s ease-out both;
+  object-fit: none;
+  object-position: left top;
+}
+
+html.post-view-transition::view-transition-old(post-feed-media) {
+  animation: feedOnlyPartOut 0.24s 0.32s ease-out both;
+}
+
+html.post-view-transition::view-transition-new(post-detail-controls),
+html.post-view-transition::view-transition-new(post-detail-signature),
+html.post-view-transition::view-transition-new(post-detail-media) {
+  animation: detailOnlyPartIn 0.22s 0.62s ease-out both;
+}
+
 html.post-view-transition::view-transition-old(post-sidebar) {
   animation: sharedSidebarOut 0.2s 0.42s ease-out both;
 }
@@ -1025,7 +1121,12 @@ html.home-view-transition.returning-home::view-transition-group(post-expand) {
 
 html.home-view-transition.returning-home::view-transition-group(post-sidebar),
 html.home-view-transition.returning-home::view-transition-group(post-heading),
-html.home-view-transition.returning-home::view-transition-group(post-time) {
+html.home-view-transition.returning-home::view-transition-group(post-time),
+html.home-view-transition.returning-home::view-transition-group(post-avatar),
+html.home-view-transition.returning-home::view-transition-group(post-author),
+html.home-view-transition.returning-home::view-transition-group(post-body),
+html.home-view-transition.returning-home::view-transition-group(post-pin-state),
+html.home-view-transition.returning-home::view-transition-group(post-edited-state) {
   animation-duration: 0.48s;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1054,6 +1155,41 @@ html.home-view-transition.returning-home::view-transition-old(post-sidebar) {
 html.home-view-transition.returning-home::view-transition-new(post-time),
 html.home-view-transition.returning-home::view-transition-new(post-sidebar) {
   animation: sharedTimeIn 0.14s 0.26s ease-out both;
+}
+
+html.home-view-transition.returning-home::view-transition-old(post-avatar),
+html.home-view-transition.returning-home::view-transition-old(post-author),
+html.home-view-transition.returning-home::view-transition-old(post-pin-state),
+html.home-view-transition.returning-home::view-transition-old(post-edited-state) {
+  animation: sharedPartMorphOut 0.42s ease-out both;
+}
+
+html.home-view-transition.returning-home::view-transition-new(post-avatar),
+html.home-view-transition.returning-home::view-transition-new(post-author),
+html.home-view-transition.returning-home::view-transition-new(post-pin-state),
+html.home-view-transition.returning-home::view-transition-new(post-edited-state) {
+  animation: sharedPartMorphIn 0.42s ease-out both;
+}
+
+html.home-view-transition.returning-home::view-transition-old(post-detail-controls),
+html.home-view-transition.returning-home::view-transition-old(post-detail-signature),
+html.home-view-transition.returning-home::view-transition-old(post-detail-media) {
+  animation: feedOnlyPartOut 0.18s ease-out both;
+}
+
+html.home-view-transition.returning-home::view-transition-new(post-feed-actions),
+html.home-view-transition.returning-home::view-transition-new(post-feed-media) {
+  animation: detailOnlyPartIn 0.18s 0.26s ease-out both;
+}
+
+html.home-view-transition.returning-home::view-transition-old(post-body) {
+  animation: bodySourceOut 0.1s 0.35s ease-out both;
+  object-fit: none;
+  object-position: left top;
+}
+
+html.home-view-transition.returning-home::view-transition-new(post-body) {
+  animation: bodyTargetIn 0.1s 0.38s ease-out both;
 }
 
 @keyframes feedViewFadeOut {
@@ -1101,6 +1237,36 @@ html.home-view-transition.returning-home::view-transition-new(post-sidebar) {
 @keyframes sharedTitleMorphIn {
   0%, 62% { opacity: 0; }
   100% { opacity: 1; }
+}
+
+@keyframes sharedPartMorphOut {
+  0%, 66% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes sharedPartMorphIn {
+  0%, 58% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes feedOnlyPartOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes detailOnlyPartIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bodySourceOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes bodyTargetIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes sharedTimeOut {
