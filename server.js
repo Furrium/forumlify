@@ -81,6 +81,44 @@ app.use(['/api/auth/login', '/api/auth/register', '/api/auth/reset-password'], a
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function parsePagination(query, { defaultLimit = 20, maxLimit = 100, maxPage = 10000 } = {}) {
+  const page = query.page === undefined ? 1 : Number(query.page);
+  const limit = query.limit === undefined ? defaultLimit : Number(query.limit);
+  if (!Number.isInteger(page) || page < 1 || page > maxPage ||
+      !Number.isInteger(limit) || limit < 1 || limit > maxLimit) {
+    return null;
+  }
+  return { page, limit, offset: (page - 1) * limit };
+}
+
+function isText(value, { min = 0, max }) {
+  return typeof value === 'string' && value.trim().length >= min && value.length <= max;
+}
+
+function normalizeEmail(value) {
+  if (typeof value !== 'string') return null;
+  const email = value.trim().toLowerCase();
+  return email.length <= 255 && EMAIL_PATTERN.test(email) ? email : null;
+}
+
+function normalizeHttpUrl(value) {
+  if (typeof value !== 'string' || value.length > 2048) return null;
+  try {
+    const url = new URL(value);
+    return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+app.param('id', (req, res, next, value) => {
+  if (!UUID_PATTERN.test(value)) return res.status(400).json({ error: '无效的ID' });
+  return next();
+});
+
 // 确保上传目录存在
 if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
@@ -151,8 +189,8 @@ app.get('/api/settings', async (req, res) => {
 // 更新论坛设置（管理员）
 app.put('/api/settings', auth, admin, async (req, res) => {
   const { forum_name } = req.body;
-  if (!forum_name || forum_name.trim().length === 0) {
-    return res.status(400).json({ error: '论坛名称不能为空' });
+  if (!isText(forum_name, { min: 1, max: 100 })) {
+    return res.status(400).json({ error: '论坛名称长度应为1到100个字符' });
   }
   try {
     await pool.query(
@@ -174,11 +212,13 @@ app.put('/api/settings', auth, admin, async (req, res) => {
 app.post('/api/auth/register', async (req, res) => {
   const { email, password, username } = req.body;
 
-  if (!email || !password || !username) {
-    return res.status(400).json({ error: '请填写完整信息' });
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!normalizedEmail || !isText(username, { min: 1, max: 20 })) {
+    return res.status(400).json({ error: '请输入有效邮箱和1到20个字符的用户名' });
   }
-  if (password.length < 6) {
-    return res.status(400).json({ error: '密码至少6位' });
+  if (!isText(password, { min: 6, max: 128 })) {
+    return res.status(400).json({ error: '密码长度应为6到128个字符' });
   }
 
   try {
@@ -193,7 +233,7 @@ app.post('/api/auth/register', async (req, res) => {
       `INSERT INTO users (email, password_hash, username, avatar_url, role, signature)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, username, avatar_url, role, signature, created_at`,
-      [email, hash, username, avatar, role, '']
+      [normalizedEmail, hash, username.trim(), avatar, role, '']
     );
 
     res.json({
@@ -213,12 +253,14 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!normalizedEmail || !isText(password, { min: 1, max: 128 })) {
     return res.status(400).json({ error: '请填写邮箱和密码' });
   }
 
   try {
-    const r = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const r = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [normalizedEmail]);
     const user = r.rows[0];
 
     if (!user) {
@@ -275,10 +317,11 @@ app.get('/api/auth/me', auth, async (req, res) => {
 // 获取用户列表（支持分页和按用户名搜索）- 管理员专用
 app.get('/api/users', auth, admin, async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const offset = (page - 1) * limit;
-    const search = req.query.search || '';
+    const pagination = parsePagination(req.query);
+    if (!pagination) return res.status(400).json({ error: '分页参数无效' });
+    const { page, limit, offset } = pagination;
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    if (search.length > 100) return res.status(400).json({ error: '搜索关键词过长' });
 
     let whereClause = '';
     const params = [];
@@ -326,6 +369,9 @@ app.get('/api/users', auth, admin, async (req, res) => {
 
 // 获取单个用户公开信息（无需登录）
 app.get('/api/users/profile/:username', async (req, res) => {
+  if (!isText(req.params.username, { min: 1, max: 20 })) {
+    return res.status(400).json({ error: '用户名无效' });
+  }
   try {
     const r = await pool.query(
       'SELECT id, username, avatar_url, bio, role, signature, created_at FROM users WHERE username = $1',
@@ -369,6 +415,11 @@ app.put('/api/users/:id', auth, async (req, res) => {
   if (userId !== req.user.id) {
     return res.status(403).json({ error: '无权限修改他人资料' });
   }
+  if (!isText(username, { min: 1, max: 20 }) ||
+      (bio !== undefined && !isText(bio, { max: 1000 })) ||
+      (signature !== undefined && !isText(signature, { max: 500 }))) {
+    return res.status(400).json({ error: '资料字段长度无效' });
+  }
 
   try {
     await pool.query(
@@ -394,13 +445,16 @@ app.put('/api/users/:id/avatar', auth, async (req, res) => {
     return res.status(403).json({ error: '无权限修改他人头像' });
   }
 
-  if (!avatar_url) {
-    return res.status(400).json({ error: '请提供头像地址' });
+  const normalizedAvatar = typeof avatar_url === 'string' && /^\/uploads\/[A-Za-z0-9._-]{1,255}$/.test(avatar_url)
+    ? avatar_url
+    : normalizeHttpUrl(avatar_url);
+  if (!normalizedAvatar) {
+    return res.status(400).json({ error: '请提供有效头像地址' });
   }
 
   try {
-    await pool.query('UPDATE users SET avatar_url = $1 WHERE id = $2', [avatar_url, userId]);
-    res.json({ success: true, avatar_url });
+    await pool.query('UPDATE users SET avatar_url = $1 WHERE id = $2', [normalizedAvatar, userId]);
+    res.json({ success: true, avatar_url: normalizedAvatar });
   } catch (err) {
     res.status(500).json({ error: '更新失败，请稍后重试' });
   }
@@ -421,8 +475,8 @@ app.put('/api/users/:id/password', auth, async (req, res) => {
   if (!oldPassword || !newPassword) {
     return res.status(400).json({ error: '请填写完整信息' });
   }
-  if (newPassword.length < 6) {
-    return res.status(400).json({ error: '新密码至少6位' });
+  if (!isText(oldPassword, { min: 1, max: 128 }) || !isText(newPassword, { min: 6, max: 128 })) {
+    return res.status(400).json({ error: '密码长度无效' });
   }
 
   try {
@@ -453,7 +507,8 @@ app.put('/api/users/:id/email', auth, async (req, res) => {
   if (userId !== req.user.id) {
     return res.status(403).json({ error: '无权限' });
   }
-  if (!password || !newEmail) {
+  const normalizedEmail = normalizeEmail(newEmail);
+  if (!isText(password, { min: 1, max: 128 }) || !normalizedEmail) {
     return res.status(400).json({ error: '请填写完整信息' });
   }
 
@@ -468,12 +523,12 @@ app.put('/api/users/:id/email', auth, async (req, res) => {
       return res.status(400).json({ error: '密码错误' });
     }
 
-    const existing = await pool.query('SELECT id FROM users WHERE email = $1 AND id != $2', [newEmail, userId]);
+    const existing = await pool.query('SELECT id FROM users WHERE LOWER(email) = LOWER($1) AND id != $2', [normalizedEmail, userId]);
     if (existing.rows.length > 0) {
       return res.status(400).json({ error: '邮箱已被占用' });
     }
 
-    await pool.query('UPDATE users SET email = $1 WHERE id = $2', [newEmail, userId]);
+    await pool.query('UPDATE users SET email = $1 WHERE id = $2', [normalizedEmail, userId]);
 
     res.json({ success: true });
   } catch (err) {
@@ -488,9 +543,12 @@ app.put('/api/users/:id/email', auth, async (req, res) => {
 // 获取帖子列表（支持分页和用户筛选，置顶优先）
 app.get('/api/posts', async (req, res) => {
   const sort = req.query.sort === 'hot' ? 'updated_at' : 'created_at';
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 20;
-  const offset = (page - 1) * limit;
+  const pagination = parsePagination(req.query);
+  if (!pagination) return res.status(400).json({ error: '分页参数无效' });
+  const { page, limit, offset } = pagination;
+  if (req.query.user_id && !UUID_PATTERN.test(req.query.user_id)) {
+    return res.status(400).json({ error: '用户ID无效' });
+  }
 
   try {
     let query = `
@@ -560,8 +618,11 @@ app.get('/api/posts/:id', async (req, res) => {
 app.post('/api/posts', auth, async (req, res) => {
   const { title, content, images } = req.body;
 
-  if (!content || content.trim().length === 0) {
-    return res.status(400).json({ error: '请填写内容' });
+  if (!isText(content, { min: 1, max: 50000 }) ||
+      (title !== undefined && !isText(title, { max: 200 })) ||
+      (images !== undefined && (!Array.isArray(images) || images.length > 6 ||
+        images.some(image => typeof image !== 'string' || image.length > 2048)))) {
+    return res.status(400).json({ error: '帖子字段长度或图片数量无效' });
   }
 
   try {
@@ -569,7 +630,7 @@ app.post('/api/posts', auth, async (req, res) => {
       `INSERT INTO posts (user_id, title, content, images)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [req.user.id, title || '无标题', content, images || []]
+      [req.user.id, title?.trim() || '无标题', content.trim(), images || []]
     );
     res.json(r.rows[0]);
   } catch (err) {
@@ -582,8 +643,9 @@ app.put('/api/posts/:id', auth, async (req, res) => {
   const { title, content } = req.body;
   const postId = req.params.id;
 
-  if (!content || content.trim().length === 0) {
-    return res.status(400).json({ error: '请填写内容' });
+  if (!isText(content, { min: 1, max: 50000 }) ||
+      (title !== undefined && !isText(title, { max: 200 }))) {
+    return res.status(400).json({ error: '帖子字段长度无效' });
   }
 
   try {
@@ -597,7 +659,7 @@ app.put('/api/posts/:id', auth, async (req, res) => {
 
     const r = await pool.query(
       `UPDATE posts SET title = $1, content = $2, edited_at = NOW() WHERE id = $3 RETURNING *`,
-      [title || '无标题', content, postId]
+      [title?.trim() || '无标题', content.trim(), postId]
     );
     res.json(r.rows[0]);
   } catch (err) {
@@ -694,8 +756,8 @@ app.get('/api/posts/:id/replies', async (req, res) => {
 app.post('/api/posts/:id/replies', auth, async (req, res) => {
   const { content } = req.body;
 
-  if (!content || content.trim().length === 0) {
-    return res.status(400).json({ error: '请填写回复内容' });
+  if (!isText(content, { min: 1, max: 10000 })) {
+    return res.status(400).json({ error: '回复内容长度应为1到10000个字符' });
   }
 
   try {
@@ -703,7 +765,7 @@ app.post('/api/posts/:id/replies', auth, async (req, res) => {
       `INSERT INTO replies (post_id, user_id, content)
        VALUES ($1, $2, $3)
        RETURNING *`,
-      [req.params.id, req.user.id, content]
+      [req.params.id, req.user.id, content.trim()]
     );
     await pool.query('UPDATE posts SET updated_at = NOW() WHERE id = $1', [req.params.id]);
 
@@ -774,8 +836,8 @@ app.get('/api/reports', auth, admin, async (req, res) => {
 app.post('/api/reports', auth, async (req, res) => {
   const { post_id, reason } = req.body;
 
-  if (!post_id || !reason) {
-    return res.status(400).json({ error: '请填写完整信息' });
+  if (!UUID_PATTERN.test(post_id || '') || !isText(reason, { min: 1, max: 100 })) {
+    return res.status(400).json({ error: '帖子ID或举报原因无效' });
   }
 
   try {
@@ -790,7 +852,7 @@ app.post('/api/reports', auth, async (req, res) => {
     await pool.query(
       `INSERT INTO reports (post_id, reporter_id, reason)
        VALUES ($1, $2, $3)`,
-      [post_id, req.user.id, reason]
+      [post_id, req.user.id, reason.trim()]
     );
     res.json({ success: true });
   } catch (err) {
@@ -880,9 +942,10 @@ app.get('/api/links', async (req, res) => {
 // 添加友情链接（管理员）
 app.post('/api/links', auth, admin, async (req, res) => {
   const { title, url } = req.body;
+  const normalizedUrl = normalizeHttpUrl(url);
 
-  if (!title || !url) {
-    return res.status(400).json({ error: '请填写完整信息' });
+  if (!isText(title, { min: 1, max: 100 }) || !normalizedUrl) {
+    return res.status(400).json({ error: '链接名称或地址无效' });
   }
 
   try {
@@ -890,7 +953,7 @@ app.post('/api/links', auth, admin, async (req, res) => {
       `INSERT INTO friendly_links (title, url)
        VALUES ($1, $2)
        RETURNING *`,
-      [title, url]
+      [title.trim(), normalizedUrl]
     );
     res.json(r.rows[0]);
   } catch (err) {
@@ -935,9 +998,9 @@ app.get('/api/stats', async (req, res) => {
 // 获取事件日志（管理员）—— 支持分页
 app.get('/api/event-logs', auth, admin, async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const offset = (page - 1) * limit;
+    const pagination = parsePagination(req.query);
+    if (!pagination) return res.status(400).json({ error: '分页参数无效' });
+    const { page, limit, offset } = pagination;
 
     // 查询总数
     const countResult = await pool.query('SELECT COUNT(*) FROM event_logs');
@@ -969,11 +1032,14 @@ app.get('/api/event-logs', auth, admin, async (req, res) => {
 // 记录事件
 app.post('/api/event-logs', auth, async (req, res) => {
   const { action } = req.body;
+  if (!isText(action, { min: 1, max: 50 })) {
+    return res.status(400).json({ error: '操作类型无效' });
+  }
   try {
     await pool.query(
       `INSERT INTO event_logs (user_id, action, ip)
        VALUES ($1, $2, $3)`,
-      [req.user.id, action, req.ip || '0.0.0.0']
+      [req.user.id, action.trim(), req.ip || '0.0.0.0']
     );
     res.json({ success: true });
   } catch (err) {
@@ -1020,7 +1086,10 @@ const CUSTOM_CSS_DIR = path.join(__dirname, 'uploads/custom');
 if (!fs.existsSync(CUSTOM_CSS_DIR)) fs.mkdirSync(CUSTOM_CSS_DIR, { recursive: true });
 
 // 保存自定义 CSS（管理员）
-const cssUpload = multer({ dest: 'uploads/temp/' });
+const cssUpload = multer({
+  dest: 'uploads/temp/',
+  limits: { fileSize: 256 * 1024, files: 1 },
+});
 app.post('/api/admin/custom-css', auth, admin, cssUpload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: '请选择文件' });
@@ -1105,8 +1174,8 @@ app.get('/api/conversations', auth, async (req, res) => {
 // 获取或创建会话
 app.post('/api/conversations', auth, async (req, res) => {
   const { other_user_id } = req.body;
-  if (!other_user_id) {
-    return res.status(400).json({ error: '缺少对方用户ID' });
+  if (!UUID_PATTERN.test(other_user_id || '')) {
+    return res.status(400).json({ error: '对方用户ID无效' });
   }
   if (other_user_id === req.user.id) {
     return res.status(400).json({ error: '不能与自己私信' });
@@ -1180,8 +1249,8 @@ app.post('/api/conversations/:id/messages', auth, async (req, res) => {
   const conversationId = req.params.id;
   const { content } = req.body;
 
-  if (!content || content.trim().length === 0) {
-    return res.status(400).json({ error: '请填写消息内容' });
+  if (!isText(content, { min: 1, max: 10000 })) {
+    return res.status(400).json({ error: '消息长度应为1到10000个字符' });
   }
 
   try {
@@ -1198,7 +1267,7 @@ app.post('/api/conversations/:id/messages', auth, async (req, res) => {
       INSERT INTO messages (conversation_id, sender_id, content)
       VALUES ($1, $2, $3)
       RETURNING *
-    `, [conversationId, req.user.id, content]);
+    `, [conversationId, req.user.id, content.trim()]);
 
     await pool.query(`
       UPDATE conversations SET last_message_at = NOW()
@@ -1258,6 +1327,9 @@ app.get('/api/custom-pages', async (req, res) => {
 
 // 获取单个自定义页面（公开）
 app.get('/api/custom-pages/:name', async (req, res) => {
+  if (!/^[a-zA-Z0-9\-_]{1,50}$/.test(req.params.name)) {
+    return res.status(400).json({ error: '页面名称无效' });
+  }
   try {
     const r = await pool.query(
       'SELECT id, name, title, content FROM custom_pages WHERE name = $1 AND enabled = true',
@@ -1287,18 +1359,17 @@ app.get('/api/admin/custom-pages', auth, admin, async (req, res) => {
 // 创建自定义页面（管理员）
 app.post('/api/admin/custom-pages', auth, admin, async (req, res) => {
   const { name, title, content } = req.body;
-  if (!name || !title || !content) {
-    return res.status(400).json({ error: '请填写完整信息' });
-  }
-  if (!/^[a-zA-Z0-9\-_]+$/.test(name)) {
-    return res.status(400).json({ error: '页面名称只允许字母、数字、短横线和下划线' });
+  if (!/^[a-zA-Z0-9\-_]{1,50}$/.test(name || '') ||
+      !isText(title, { min: 1, max: 100 }) ||
+      !isText(content, { min: 1, max: 100000 })) {
+    return res.status(400).json({ error: '页面名称、标题或内容长度无效' });
   }
   try {
     const r = await pool.query(
       `INSERT INTO custom_pages (name, title, content)
        VALUES ($1, $2, $3)
        RETURNING *`,
-      [name, title, content]
+      [name, title.trim(), content]
     );
     res.json(r.rows[0]);
   } catch (err) {
@@ -1314,13 +1385,18 @@ app.post('/api/admin/custom-pages', auth, admin, async (req, res) => {
 app.put('/api/admin/custom-pages/:id', auth, admin, async (req, res) => {
   const { title, content, enabled } = req.body;
   const id = req.params.id;
+  if (!isText(title, { min: 1, max: 100 }) ||
+      !isText(content, { min: 1, max: 100000 }) ||
+      typeof enabled !== 'boolean') {
+    return res.status(400).json({ error: '页面标题、内容或状态无效' });
+  }
   try {
     const r = await pool.query(
       `UPDATE custom_pages
        SET title = $1, content = $2, enabled = $3, updated_at = NOW()
        WHERE id = $4
        RETURNING *`,
-      [title, content, enabled, id]
+      [title.trim(), content, enabled, id]
     );
     if (r.rows.length === 0) {
       return res.status(404).json({ error: '页面不存在' });
@@ -1442,16 +1518,15 @@ app.get('/api/auth/recovery-codes/count', auth, async (req, res) => {
 // 重置密码（使用恢复码）
 app.post('/api/auth/reset-password', async (req, res) => {
   const { email, recoveryCode, newPassword } = req.body;
+  const normalizedEmail = normalizeEmail(email);
 
-  if (!email || !recoveryCode || !newPassword) {
+  if (!normalizedEmail || !isText(recoveryCode, { min: 1, max: 64 }) ||
+      !isText(newPassword, { min: 6, max: 128 })) {
     return res.status(400).json({ error: '请填写完整信息' });
-  }
-  if (newPassword.length < 6) {
-    return res.status(400).json({ error: '密码至少6位' });
   }
 
   try {
-    const user = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    const user = await pool.query('SELECT id FROM users WHERE LOWER(email) = LOWER($1)', [normalizedEmail]);
     if (user.rows.length === 0) {
       return res.status(404).json({ error: '用户不存在' });
     }
@@ -1512,6 +1587,10 @@ app.get('*', (req, res) => {
 
 app.use((err, req, res, next) => {
   if (res.headersSent) return next(err);
+  if (err instanceof multer.MulterError) {
+    const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+    return res.status(status).json({ error: '上传文件超过限制或格式无效' });
+  }
   if (err.type === 'entity.too.large') {
     return res.status(413).json({ error: '请求内容过大' });
   }
