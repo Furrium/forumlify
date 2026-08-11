@@ -1466,7 +1466,6 @@ html.home-view-transition.returning-home::view-transition-new(post-body) {
   align-items: center;
   gap: 10px;
   margin-bottom: 6px;
-  flex-wrap: wrap;
 }
 .reply-avatar {
   width: 28px;
@@ -3173,3 +3172,10 @@ a.btn-secondary {
 }
 
 
+
+/* ===== 窄屏：回复操作按钮灵活换行 ===== */
+@media (max-width: 480px) {
+  .reply-header {
+    flex-wrap: wrap;
+  }
+}
