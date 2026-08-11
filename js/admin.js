@@ -20,11 +20,11 @@ function renderAdminReports() {
       const postTitle = r.post_title || '无标题';
       html += `
         <div class="report-item">
-          <div><strong>${r.reporter_name || '匿名'}</strong> 举报了帖子</div>
-          <div style="font-size:13px;color:#64748b;margin:4px 0;">原因：${r.reason}</div>
-          <div style="font-size:13px;color:#64748b;margin:4px 0;">帖子：${postTitle} — ${(r.post_content || '').substring(0, 30)}${(r.post_content || '').length > 30 ? '...' : ''}</div>
-          <div style="font-size:13px;font-weight:600;">状态：${statusMap[r.status] || r.status}</div>
-          ${r.handler_name ? `<div style="font-size:12px;color:#94a3b8;">处理人：${r.handler_name}${r.handler_note ? ' (' + r.handler_note + ')' : ''}</div>` : ''}
+          <div><strong>${escapeHTML(r.reporter_name || '匿名')}</strong> 举报了帖子</div>
+          <div style="font-size:13px;color:#64748b;margin:4px 0;">原因：${escapeHTML(r.reason)}</div>
+          <div style="font-size:13px;color:#64748b;margin:4px 0;">帖子：${escapeHTML(postTitle)} — ${escapeHTML((r.post_content || '').substring(0, 30))}${(r.post_content || '').length > 30 ? '...' : ''}</div>
+          <div style="font-size:13px;font-weight:600;">状态：${statusMap[r.status] || escapeHTML(r.status)}</div>
+          ${r.handler_name ? `<div style="font-size:12px;color:#94a3b8;">处理人：${escapeHTML(r.handler_name)}${r.handler_note ? ' (' + escapeHTML(r.handler_note) + ')' : ''}</div>` : ''}
           ${r.status === 'pending' ? `
             <div class="report-actions">
               <button class="btn-sm btn-danger" data-reportid="${r.id}" data-action="approve">
@@ -40,7 +40,7 @@ function renderAdminReports() {
         </div>
       `;
     });
-    container.innerHTML = html;
+    container.innerHTML = sanitizeHTML(html);
     container.querySelectorAll('[data-action]').forEach(btn => {
       btn.addEventListener('click', function() {
         const id = this.dataset.reportid;
@@ -49,12 +49,6 @@ function renderAdminReports() {
         const note = action === 'approve' ? '已删除违规帖子' : '举报不成立';
         if (action === 'approve' && !confirm('确定要删除该帖子并标记举报为已处理吗？')) return;
         API.updateReport(id, status, note).then(() => {
-          if (action === 'approve') {
-            const report = reports.find(r => r.id === id);
-            if (report && report.post_id) {
-              API.deletePost(report.post_id).catch(() => {});
-            }
-          }
           renderAdminReports();
         }).catch(err => alert('操作失败：' + err.message));
       });
@@ -88,7 +82,7 @@ function renderAdminUsers(page = 1, search = '') {
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
         <span style="font-size:13px;color:#94a3b8;">共 <strong>${pagination.total}</strong> 位用户</span>
         <div style="display:flex;gap:6px;">
-          <input type="text" id="userSearchInput" placeholder="搜索用户名..." value="${search}" 
+          <input type="text" id="userSearchInput" placeholder="搜索用户名..." value="${escapeHTML(search)}"
                  style="padding:6px 12px;border:1px solid var(--border);border-radius:4px;font-size:13px;background:var(--bg);color:var(--text);" />
           <button id="userSearchBtn" class="btn-sm btn-primary" style="padding:6px 14px;">搜索</button>
           <button id="userClearSearchBtn" class="btn-sm btn-secondary" style="padding:6px 14px;">清空</button>
@@ -117,9 +111,9 @@ function renderAdminUsers(page = 1, search = '') {
           <tr style="border-bottom:1px solid #f1f5f9;${isCurrentUser ? 'background:var(--primary-bg);' : ''}">
             <td style="padding:10px 12px;">
               <div style="display:flex;align-items:center;gap:8px;">
-                <img src="${u.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.username) + '&background=6366f1&color=fff&size=64'}" 
+                <img src="${escapeHTML(safeURL(u.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.username) + '&background=6366f1&color=fff&size=64', { image: true }))}"
                      style="width:28px;height:28px;border-radius:50%;object-fit:cover;" />
-                <span style="font-weight:500;">${u.username}</span>
+                <span style="font-weight:500;">${escapeHTML(u.username)}</span>
                 ${isCurrentUser ? '<span style="font-size:11px;color:#94a3b8;background:#eef2ff;padding:1px 8px;border-radius:4px;">你</span>' : ''}
               </div>
             </td>
@@ -193,7 +187,7 @@ function renderAdminUsers(page = 1, search = '') {
       `;
     }
 
-    container.innerHTML = html;
+    container.innerHTML = sanitizeHTML(html);
 
     // 绑定分页按钮事件
     container.querySelectorAll('.users-page-btn:not([disabled])').forEach(btn => {
@@ -285,8 +279,8 @@ function renderAdminLogs(page = 1) {
       html += `
         <tr style="border-bottom:1px solid #f1f5f9;">
           <td style="padding:6px 0;">${new Date(l.created_at).toLocaleString('zh-CN')}</td>
-          <td style="padding:6px 0;">${l.username || '系统'}</td>
-          <td style="padding:6px 0;">${l.action}</td>
+          <td style="padding:6px 0;">${escapeHTML(l.username || '系统')}</td>
+          <td style="padding:6px 0;">${escapeHTML(l.action)}</td>
         </tr>
       `;
     });
@@ -340,7 +334,7 @@ function renderAdminLogs(page = 1) {
       `;
     }
 
-    container.innerHTML = html;
+    container.innerHTML = sanitizeHTML(html);
 
     // 绑定分页按钮事件
     container.querySelectorAll('.logs-page-btn:not([disabled])').forEach(btn => {
@@ -383,7 +377,7 @@ function renderAdminLinks() {
       links.forEach(l => {
         html += `
           <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;">
-            <span><a href="${l.url}" target="_blank" style="color:#6366f1;text-decoration:none;">${l.title}</a></span>
+            <span><a href="${escapeHTML(safeURL(l.url, { allowRelative: false }))}" target="_blank" rel="noopener noreferrer" style="color:#6366f1;text-decoration:none;">${escapeHTML(l.title)}</a></span>
             <button class="btn-sm btn-danger" data-linkid="${l.id}" style="background:rgba(239,68,68,0.08);border:1.5px solid #ef4444;color:#1a1a2e;padding:2px 10px;border-radius:6px;transition:all 0.2s;cursor:pointer;font-size:12px;font-weight:500;">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               删除
@@ -391,7 +385,7 @@ function renderAdminLinks() {
           </div>
         `;
       });
-      ul.innerHTML = html;
+      ul.innerHTML = sanitizeHTML(html);
       ul.querySelectorAll('[data-linkid]').forEach(btn => {
         btn.addEventListener('click', function() {
           if (!confirm('确定删除该链接吗？')) return;
@@ -624,9 +618,9 @@ function loadCustomPageList() {
     pages.forEach(p => {
       html += `
         <tr style="border-bottom:1px solid var(--border-light);">
-          <td style="padding:8px 12px;"><code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px;">${p.name}</code></td>
-          <td style="padding:8px 12px;">${p.title}</td>
-          <td style="padding:8px 12px;"><code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px;">?custom=${p.name}</code></td>
+          <td style="padding:8px 12px;"><code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px;">${escapeHTML(p.name)}</code></td>
+          <td style="padding:8px 12px;">${escapeHTML(p.title)}</td>
+          <td style="padding:8px 12px;"><code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px;">?custom=${escapeHTML(p.name)}</code></td>
           <td style="padding:8px 12px;"><span style="color:${p.enabled ? '#22c55e' : '#ef4444'};">${p.enabled ? `${getIcon('success')} 启用` : `${getIcon('error')} 禁用`}</span></td>
           <td style="padding:8px 12px;text-align:center;display:flex;gap:6px;justify-content:center;">
             <button class="btn-sm btn-secondary" data-id="${p.id}" data-action="edit">${getIcon('edit')}</button>
@@ -636,7 +630,7 @@ function loadCustomPageList() {
       `;
     });
     html += '</tbody></table></div>';
-    container.innerHTML = html;
+    container.innerHTML = sanitizeHTML(html);
 
     container.querySelectorAll('[data-action="edit"]').forEach(btn => {
       btn.addEventListener('click', function() {
@@ -673,13 +667,13 @@ function openCustomPageEditor(page) {
       <h2 style="margin-bottom:16px;">${isEdit ? getIcon('edit') + ' 编辑页面' : getIcon('add') + ' 添加页面'}</h2>
       <div style="margin-bottom:12px;">
         <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">页面名称</label>
-        <input type="text" id="editorPageName" value="${isEdit ? page.name : ''}" ${isEdit ? 'readonly style="background:var(--border-light);color:var(--text-light);"' : ''}
+        <input type="text" id="editorPageName" value="${isEdit ? escapeHTML(page.name) : ''}" ${isEdit ? 'readonly style="background:var(--border-light);color:var(--text-light);"' : ''}
                placeholder="about (用于 URL: ?custom=about)" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
         ${isEdit ? '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">⚠️ 名称不可修改</div>' : '<div style="font-size:12px;color:var(--text-light);margin-top:2px;">只允许字母、数字、短横线和下划线</div>'}
       </div>
       <div style="margin-bottom:12px;">
         <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">导航栏显示名称</label>
-        <input type="text" id="editorPageTitle" value="${isEdit ? page.title : ''}"
+        <input type="text" id="editorPageTitle" value="${isEdit ? escapeHTML(page.title) : ''}"
                placeholder="关于我们" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
       </div>
       <div style="margin-bottom:12px;">
@@ -691,7 +685,7 @@ function openCustomPageEditor(page) {
       </div>
       <div style="margin-bottom:12px;">
         <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">页面内容（HTML + CSS + JS）</label>
-        <textarea id="editorContent" rows="12" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:13px;font-family:monospace;background:var(--bg);color:var(--text);resize:vertical;">${isEdit ? page.content : ''}</textarea>
+        <textarea id="editorContent" rows="12" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:13px;font-family:monospace;background:var(--bg);color:var(--text);resize:vertical;">${isEdit ? escapeHTML(page.content) : ''}</textarea>
         <div style="font-size:12px;color:var(--text-light);margin-top:2px;">支持 HTML、CSS（&lt;style&gt;）、JS（&lt;script&gt;），内容会在独立的沙盒中渲染</div>
       </div>
       <button id="editorSaveBtn" class="btn-primary" style="padding:10px 24px;width:100%;">保存</button>

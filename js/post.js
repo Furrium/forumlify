@@ -49,26 +49,17 @@ async function renderPostDetail(postId) {
     if (post.images && post.images.length > 0) {
       imagesHtml = '<div class="post-images">';
       post.images.forEach(img => {
-        imagesHtml += '<img src="' + img + '" class="post-image" onclick="openImageViewer(this.src)" style="cursor:pointer;" />';
+        imagesHtml += '<img src="' + escapeHTML(safeURL(img, { image: true })) + '" class="post-image" style="cursor:pointer;" />';
       });
       imagesHtml += '</div>';
     }
 
-    let renderedContent = post.content || '';
-    try {
-      if (typeof marked !== 'undefined' && marked.parse) {
-        renderedContent = marked.parse(renderedContent);
-      } else {
-        renderedContent = renderedContent.replace(/\n/g, '<br>');
-      }
-    } catch (e) {
-      renderedContent = renderedContent.replace(/\n/g, '<br>');
-    }
+    const renderedContent = renderMarkdown(post.content || '');
 
     // 签名渲染
     let signatureHtml = '';
     if (post.signature) {
-      const sigContent = marked ? marked.parse(post.signature) : post.signature;
+      const sigContent = renderMarkdown(post.signature);
       signatureHtml = `
         <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border-light);font-size:12px;color:var(--text-secondary);">
           ${sigContent}
@@ -79,8 +70,8 @@ async function renderPostDetail(postId) {
     let html = `
       <div class="post-detail-card">
         <div class="post-header">
-          <img src="${avatar}" class="post-avatar" />
-          <span class="post-username" style="cursor:pointer;color:var(--primary);" onclick="switchPage('user','${username}')">${username}</span>
+          <img src="${escapeHTML(safeURL(avatar, { image: true }))}" class="post-avatar" />
+          <span class="post-username" data-username="${escapeHTML(username)}" style="cursor:pointer;color:var(--primary);">${escapeHTML(username)}</span>
           <span class="post-time">${time}</span>
           ${post.edited_at ? `<span style="font-size:12px;color:var(--text-light);margin-left:8px;">（已编辑 ${new Date(post.edited_at).toLocaleString('zh-CN')}）</span>` : ''}
           ${post.is_pinned ? '<span style="font-size:12px;color:var(--primary);margin-left:8px;">📌 置顶</span>' : ''}
@@ -120,27 +111,39 @@ async function renderPostDetail(postId) {
         html += `
           <div class="reply-item" data-replyid="${r.id}">
             <div class="reply-header">
-              <img src="${rAvatar}" class="reply-avatar" />
-              <span class="reply-username" style="cursor:pointer;color:var(--primary);" onclick="switchPage('user','${rUsername}')">${rUsername}</span>
+              <img src="${escapeHTML(safeURL(rAvatar, { image: true }))}" class="reply-avatar" />
+              <span class="reply-username" data-username="${escapeHTML(rUsername)}" style="cursor:pointer;color:var(--primary);">${escapeHTML(rUsername)}</span>
               <span class="reply-time">${rTime}</span>
-              ${currentUser && currentUser.id === r.user_id ? `<button class="btn-sm btn-danger reply-delete-btn" data-replyid="${r.id}">
+              ${currentUser && (currentUser.id === r.user_id || currentUser.role === 'admin') ? `<button class="btn-sm btn-danger reply-delete-btn" data-replyid="${r.id}">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 删除
               </button>` : ''}
             </div>
-            <div class="reply-content">${(r.content || '').replace(/\n/g, '<br>')}</div>
+            <div class="reply-content">${renderPlainText(r.content || '')}</div>
           </div>
         `;
       });
     }
 
     html += '</div>';
-    container.innerHTML = html;
+    container.innerHTML = sanitizeHTML(html);
 
     replyArea.style.display = 'block';
     document.getElementById('replyContent').value = '';
     document.getElementById('replyCaptchaInput').value = '';
     refreshCaptcha('reply');
+
+    container.querySelectorAll('.post-username, .reply-username').forEach(usernameEl => {
+      usernameEl.addEventListener('click', function() {
+        switchPage('user', this.dataset.username);
+      });
+    });
+
+    container.querySelectorAll('.post-image').forEach(image => {
+      image.addEventListener('click', function() {
+        openImageViewer(this.src);
+      });
+    });
 
     // 置顶按钮
     const pinBtn = document.getElementById('pinPostBtn');
@@ -210,7 +213,7 @@ async function renderPostDetail(postId) {
     currentPostId = postId;
 
   } catch (err) {
-    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px 0;">加载失败：' + err.message +
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px 0;">加载失败：' + escapeHTML(err.message) +
       '</div>';
     replyArea.style.display = 'none';
   }
