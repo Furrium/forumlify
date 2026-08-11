@@ -7,9 +7,11 @@ import { verifyCaptcha } from '@/lib/captcha';
 export async function GET(req, { params }) {
   try {
     const r = await pool.query(
-      `SELECT r.*, u.username, u.avatar_url
+      `SELECT r.*, u.username, u.avatar_url,
+              rt.username AS reply_to_username
        FROM replies r
        JOIN users u ON r.user_id = u.id
+       LEFT JOIN users rt ON r.reply_to_username = rt.username
        WHERE r.post_id = $1
        ORDER BY r.created_at ASC`,
       [(await params).id]
@@ -25,7 +27,7 @@ export async function POST(req, { params }) {
   if (!user) {
     return Response.json({ error: '请先登录' }, { status: 401 });
   }
-  const { content, captcha_id, captcha_answer, captcha_sig } = await req.json();
+  const { content, captcha_id, captcha_answer, captcha_sig, reply_to_username } = await req.json();
   if (!content || content.trim().length === 0) {
     return Response.json({ error: '请填写回复内容' }, { status: 400 });
   }
@@ -35,10 +37,10 @@ export async function POST(req, { params }) {
   }
   try {
     const r = await pool.query(
-      `INSERT INTO replies (post_id, user_id, content)
-       VALUES ($1, $2, $3)
+      `INSERT INTO replies (post_id, user_id, content, reply_to_username)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [(await params).id, user.id, content]
+      [(await params).id, user.id, content, reply_to_username || null]
     );
     await pool.query('UPDATE posts SET updated_at = NOW() WHERE id = $1', [(await params).id]);
     return Response.json(r.rows[0]);

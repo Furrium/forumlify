@@ -51,7 +51,7 @@ export default function ReplyList({ postId, onRefresh }) {
     if (!captcha || !captchaInput.trim()) { toast('请填写验证码', 'warning'); return; }
     try {
       // 答案由服务端 HMAC 校验
-      await API.createReply(postId, content.trim(), { id: captcha.id, answer: captchaInput.trim(), sig: captcha.sig });
+      await API.createReply(postId, content.trim(), { id: captcha.id, answer: captchaInput.trim(), sig: captcha.sig }, replyTo);
       API.logEvent('create_reply').catch(() => {});
       setContent('');
       setCaptchaInput('');
@@ -88,7 +88,7 @@ export default function ReplyList({ postId, onRefresh }) {
           replies.map((r) => {
             const rTime = r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '';
             return (
-              <div key={r.id} className="reply-item">
+              <div key={r.id} className="reply-item" data-username={r.username}>
                 <div className="reply-header">
                   <img src={r.avatar_url || avatar(r.username)} className="reply-avatar" alt="" />
                   <span
@@ -109,6 +109,17 @@ export default function ReplyList({ postId, onRefresh }) {
                   )}
                 </div>
                 <div className="reply-content" dangerouslySetInnerHTML={{ __html: renderMarkdown(r.content) }} />
+                {r.reply_to_username && (
+                  <div
+                    className="reply-to-indicator"
+                    onClick={() => {
+                      const target = document.querySelector(`.reply-item[data-username="${r.reply_to_username}"]`);
+                      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                  >
+                    <Icon name="reply" size={11} /> 正在回复 <strong>@{r.reply_to_username}</strong>
+                  </div>
+                )}
               </div>
             );
           })

@@ -3098,3 +3098,25 @@ a.btn-secondary {
 @media (hover: none) {
   .reply-btn { opacity: 0.8; }
 }
+
+/* ===== 回复指示器（Discourse 风格：正在回复 @xxx） ===== */
+.reply-to-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.reply-to-indicator .icon {
+  stroke: var(--text-light);
+}
+.reply-to-indicator:hover {
+  color: var(--primary);
+}
+.reply-to-indicator strong {
+  color: var(--primary);
+  font-weight: 600;
+}
