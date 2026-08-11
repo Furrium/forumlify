@@ -7,10 +7,10 @@ async function renderUserProfile(username) {
   container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
 
   try {
-   const user = await apiFetch('/users/profile/' + encodeURIComponent(username));
-    const user = users && users.length > 0 ? users[0] : null;
-
-    if (!user) {
+    // 使用公开接口 /users/profile/:username
+    const user = await apiFetch('/users/profile/' + encodeURIComponent(username));
+    
+    if (user.error || !user.id) {
       container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px 0;">用户不存在</div>';
       return;
     }
