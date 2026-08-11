@@ -1,5 +1,6 @@
 // 全局布局
 import './globals.css';
+import { cookies, headers } from 'next/headers';
 import CustomCssLoader from '@/components/CustomCssLoader';
 import { ToastProvider } from '@/components/Toast';
 import I18nInit from '@/components/I18nInit';
@@ -12,9 +13,26 @@ export const metadata = {
   description: 'Forumlify - 简洁优雅的现代社区系统',
 };
 
-export default function RootLayout({ children }) {
+// cookies()/headers() 是动态 API：禁止静态优化
+export const dynamic = 'force-dynamic';
+
+export default async function RootLayout({ children }) {
+  // 语言检测：用户配置 cookie 优先，否则按浏览器 Accept-Language
+  let lng = 'zh';
+  try {
+    const cookieStore = await cookies();
+    const saved = cookieStore.get('forumlify-lang')?.value;
+    if (saved === 'en' || saved === 'zh') {
+      lng = saved;
+    } else {
+      const hdrs = await headers();
+      const accept = (hdrs.get('accept-language') || '').toLowerCase();
+      if (accept.startsWith('en')) lng = 'en';
+    }
+  } catch (e) { /* 默认 zh */ }
+
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html lang={lng === 'en' ? 'en' : 'zh-CN'} suppressHydrationWarning>
       <head>
       </head>
       <body>
@@ -31,7 +49,7 @@ export default function RootLayout({ children }) {
           // React 状态渲染，SSR/客户端一致，无 hydration mismatch
         })();` }} />
         <ToastProvider>
-          <I18nInit />
+          <I18nInit lng={lng} />
           <CustomCssLoader />
           {children}
         </ToastProvider>
