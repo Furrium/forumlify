@@ -27,7 +27,14 @@ export default function AppProvider({ children }) {
   const [sort, setSort] = useState('latest');
   const [refreshKey, setRefreshKey] = useState(0);
   const [ready, setReady] = useState(false); // 初始加载完成标记（控制加载页/淡入）
-  const [forumNameLoaded, setForumNameLoaded] = useState(false); // 已从服务器收到论坛名
+  // 有缓存论坛名即视为"已加载"（第二次访问立即显示缓存名，不必等服务器）；
+  // 首次访问无缓存 → 等服务器返回后才显示名字
+  const [forumNameLoaded, setForumNameLoaded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !!localStorage.getItem('forumlify-forum-name');
+    }
+    return false;
+  });
   const loadedRef = useRef(false);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
