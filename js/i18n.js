@@ -1,9 +1,11 @@
 // ============================================================
-//  🌍 国际化（自动检测浏览器语言）
+//  🌍 国际化外挂脚本（不修改任何源文件）
+//  默认英文，支持 URL 参数 ?lang=zh / ?lang=en
 // ============================================================
 
 const TRANSLATIONS = {
   'zh': {
+    // ===== 导航 =====
     '登录': '登录',
     '注册': '注册',
     '消息': '消息',
@@ -13,6 +15,15 @@ const TRANSLATIONS = {
     '亮色模式': '亮色模式',
     '退出': '退出',
     '暂无链接': '暂无链接',
+    '举报': '举报',
+    '用户': '用户',
+    '日志': '日志',
+    '友链': '友链',
+    '自定义 CSS': '自定义 CSS',
+    '论坛设置': '论坛设置',
+    '自定义页面': '自定义页面',
+
+    // ===== 帖子 =====
     '最新发布': '最新发布',
     '最新回复': '最新回复',
     '发布新帖': '发布新帖',
@@ -21,25 +32,44 @@ const TRANSLATIONS = {
     '发布帖子': '发布帖子',
     '加载中...': '加载中...',
     '还没有帖子，快来发布第一条吧！': '还没有帖子，快来发布第一条吧！',
+    '暂无帖子': '暂无帖子',
+    '删除': '删除',
+    '编辑': '编辑',
+    '置顶': '置顶',
+    '取消置顶': '取消置顶',
+    '已编辑': '已编辑',
+    '匿名': '匿名',
+    '无标题': '无标题',
+
+    // ===== 帖子详情 =====
     '帖子详情': '帖子详情',
     '发表回复': '发表回复',
     '提交回复': '提交回复',
     '还没有回复，快来抢沙发吧 🛋️': '还没有回复，快来抢沙发吧 🛋️',
     '回复': '回复',
+
+    // ===== 统计 =====
     '社区统计': '社区统计',
     '主题': '主题',
     '帖子': '帖子',
     '用户': '用户',
     '友情链接': '友情链接',
+
+    // ===== 登录/注册 =====
+    '登录': '登录',
     '邮箱': '邮箱',
     '密码': '密码',
     '忘记密码？': '忘记密码？',
+    '注册': '注册',
     '用户名': '用户名',
     '密码（至少6位）': '密码（至少6位）',
     '请先登录': '请先登录',
+
+    // ===== 管理后台 =====
     '举报记录': '举报记录',
     '用户列表': '用户列表',
     '操作日志': '操作日志',
+    '友情链接': '友情链接',
     '自定义CSS': '自定义CSS',
     '论坛名称设置': '论坛名称设置',
     '自定义页面': '自定义页面',
@@ -47,6 +77,8 @@ const TRANSLATIONS = {
     '待处理': '待处理',
     '已删除': '已删除',
     '已驳回': '已驳回',
+
+    // ===== 设置页面 =====
     '个人资料': '个人资料',
     '安全设置': '安全设置',
     '恢复码': '恢复码',
@@ -58,8 +90,12 @@ const TRANSLATIONS = {
     '新邮箱': '新邮箱',
     '查看恢复码': '查看恢复码',
     '重新生成': '重新生成',
+
+    // ===== 恢复码 =====
     '复制全部': '复制全部',
     '我已保存': '我已保存',
+
+    // ===== 自定义页面 =====
     '添加页面': '添加页面',
     '页面名称': '页面名称',
     '导航栏显示名称': '导航栏显示名称',
@@ -69,6 +105,8 @@ const TRANSLATIONS = {
     '页面内容': '页面内容',
     '保存': '保存',
     '编辑页面': '编辑页面',
+
+    // ===== 提示 =====
     '保存成功！': '保存成功！',
     '保存失败': '保存失败',
     '操作失败': '操作失败',
@@ -78,6 +116,8 @@ const TRANSLATIONS = {
     '确定要删除该帖子吗？': '确定要删除该帖子吗？',
     '举报已提交': '举报已提交',
     '修改成功': '修改成功',
+
+    // ===== 举报 =====
     '举报了帖子': '举报了帖子',
     '原因：': '原因：',
     '帖子：': '帖子：',
@@ -85,6 +125,8 @@ const TRANSLATIONS = {
     '处理人：': '处理人：',
     '删除帖子': '删除帖子',
     '驳回举报': '驳回举报',
+
+    // ===== 用户 =====
     '共': '共',
     '位用户': '位用户',
     '搜索用户名...': '搜索用户名...',
@@ -95,14 +137,20 @@ const TRANSLATIONS = {
     '不可操作自己': '不可操作自己',
     '设为普通用户': '设为普通用户',
     '设为管理员': '设为管理员',
+
+    // ===== 日志 =====
     '暂无日志': '暂无日志',
     '时间': '时间',
     '操作': '操作',
     '条日志': '条日志',
+
+    // ===== 重置密码 =====
     '重置密码': '重置密码',
     '输入你的邮箱和一个未使用的恢复码': '输入你的邮箱和一个未使用的恢复码',
     '恢复码（格式：ABCD-1234-EFGH-5678）': '恢复码（格式：ABCD-1234-EFGH-5678）',
     '新密码（至少6位）': '新密码（至少6位）',
+
+    // ===== 用户主页 =====
     '用户主页': '用户主页',
     '用户不存在': '用户不存在',
     '这个人很懒，什么都没写': '这个人很懒，什么都没写',
@@ -111,11 +159,15 @@ const TRANSLATIONS = {
     '个帖子': '个帖子',
     '发私信': '发私信',
     '还没有发帖': '还没有发帖',
+
+    // ===== 私信 =====
     '私信': '私信',
     '暂无私信': '暂无私信',
     '还没有消息，打个招呼吧': '还没有消息，打个招呼吧',
     '输入消息...': '输入消息...',
     '发送': '发送',
+
+    // ===== Toast =====
     '请选择图片文件': '请选择图片文件',
     '图片不能超过 5MB': '图片不能超过 5MB',
     '上传中...': '上传中...',
@@ -131,6 +183,8 @@ const TRANSLATIONS = {
     '密码修改成功！': '密码修改成功！',
     '邮箱修改成功！': '邮箱修改成功！',
     '重置成功！请登录': '重置成功！请登录',
+
+    // ===== 其他 =====
     '返回': '返回',
     '点击或拖拽上传图片': '点击或拖拽上传图片',
     '支持 JPG、PNG、GIF、WebP，单张最大 5MB': '支持 JPG、PNG、GIF、WebP，单张最大 5MB',
@@ -139,11 +193,8 @@ const TRANSLATIONS = {
     '请填写内容': '请填写内容',
     '发布成功！': '发布成功！',
     '发布失败': '发布失败',
-    '匿名': '匿名',
-    '无标题': '无标题',
-    '已编辑': '已编辑',
-    '置顶': '置顶',
-    '取消置顶': '取消置顶',
+
+    // ===== 举报原因 =====
     '垃圾广告': '垃圾广告',
     '人身攻击': '人身攻击',
     '违法内容': '违法内容',
@@ -151,10 +202,13 @@ const TRANSLATIONS = {
     '其他': '其他',
     '请选择举报原因：': '请选择举报原因：',
     '提交举报': '提交举报',
+
+    // ===== 论坛名称 =====
     '论坛名称': '论坛名称',
-    '暂无帖子': '暂无帖子',
   },
+
   'en': {
+    // ===== 导航 =====
     '登录': 'Login',
     '注册': 'Register',
     '消息': 'Messages',
@@ -164,6 +218,15 @@ const TRANSLATIONS = {
     '亮色模式': 'Light Mode',
     '退出': 'Logout',
     '暂无链接': 'No links',
+    '举报': 'Reports',
+    '用户': 'Users',
+    '日志': 'Logs',
+    '友链': 'Links',
+    '自定义 CSS': 'Custom CSS',
+    '论坛设置': 'Forum Settings',
+    '自定义页面': 'Custom Pages',
+
+    // ===== 帖子 =====
     '最新发布': 'Latest',
     '最新回复': 'Recent',
     '发布新帖': 'New Post',
@@ -172,25 +235,44 @@ const TRANSLATIONS = {
     '发布帖子': 'Publish',
     '加载中...': 'Loading...',
     '还没有帖子，快来发布第一条吧！': 'No posts yet. Be the first!',
+    '暂无帖子': 'No posts',
+    '删除': 'Delete',
+    '编辑': 'Edit',
+    '置顶': 'Pin',
+    '取消置顶': 'Unpin',
+    '已编辑': 'Edited',
+    '匿名': 'Anonymous',
+    '无标题': 'Untitled',
+
+    // ===== 帖子详情 =====
     '帖子详情': 'Post Details',
     '发表回复': 'Reply',
     '提交回复': 'Submit Reply',
     '还没有回复，快来抢沙发吧 🛋️': 'No replies yet. Be the first!',
     '回复': 'Reply',
+
+    // ===== 统计 =====
     '社区统计': 'Community Stats',
     '主题': 'Topics',
     '帖子': 'Posts',
     '用户': 'Users',
     '友情链接': 'Links',
+
+    // ===== 登录/注册 =====
+    '登录': 'Login',
     '邮箱': 'Email',
     '密码': 'Password',
     '忘记密码？': 'Forgot Password?',
+    '注册': 'Register',
     '用户名': 'Username',
     '密码（至少6位）': 'Password (min 6 chars)',
     '请先登录': 'Please login first',
+
+    // ===== 管理后台 =====
     '举报记录': 'Reports',
     '用户列表': 'Users',
     '操作日志': 'Logs',
+    '友情链接': 'Links',
     '自定义CSS': 'Custom CSS',
     '论坛名称设置': 'Forum Settings',
     '自定义页面': 'Custom Pages',
@@ -198,6 +280,8 @@ const TRANSLATIONS = {
     '待处理': 'Pending',
     '已删除': 'Approved',
     '已驳回': 'Rejected',
+
+    // ===== 设置页面 =====
     '个人资料': 'Profile',
     '安全设置': 'Security',
     '恢复码': 'Recovery Codes',
@@ -209,8 +293,12 @@ const TRANSLATIONS = {
     '新邮箱': 'New Email',
     '查看恢复码': 'View Recovery Codes',
     '重新生成': 'Regenerate',
+
+    // ===== 恢复码 =====
     '复制全部': 'Copy All',
     '我已保存': 'Saved',
+
+    // ===== 自定义页面 =====
     '添加页面': 'Add Page',
     '页面名称': 'Page Name',
     '导航栏显示名称': 'Display Name',
@@ -220,6 +308,8 @@ const TRANSLATIONS = {
     '页面内容': 'Page Content',
     '保存': 'Save',
     '编辑页面': 'Edit Page',
+
+    // ===== 提示 =====
     '保存成功！': 'Saved!',
     '保存失败': 'Save failed',
     '操作失败': 'Operation failed',
@@ -229,6 +319,8 @@ const TRANSLATIONS = {
     '确定要删除该帖子吗？': 'Delete this post?',
     '举报已提交': 'Report submitted',
     '修改成功': 'Updated',
+
+    // ===== 举报 =====
     '举报了帖子': 'reported a post',
     '原因：': 'Reason: ',
     '帖子：': 'Post: ',
@@ -236,6 +328,8 @@ const TRANSLATIONS = {
     '处理人：': 'Handler: ',
     '删除帖子': 'Delete Post',
     '驳回举报': 'Reject',
+
+    // ===== 用户 =====
     '共': 'Total',
     '位用户': 'users',
     '搜索用户名...': 'Search username...',
@@ -246,14 +340,20 @@ const TRANSLATIONS = {
     '不可操作自己': 'Cannot modify yourself',
     '设为普通用户': 'Set as User',
     '设为管理员': 'Set as Admin',
+
+    // ===== 日志 =====
     '暂无日志': 'No logs',
     '时间': 'Time',
     '操作': 'Action',
     '条日志': 'logs',
+
+    // ===== 重置密码 =====
     '重置密码': 'Reset Password',
     '输入你的邮箱和一个未使用的恢复码': 'Enter your email and an unused recovery code',
     '恢复码（格式：ABCD-1234-EFGH-5678）': 'Recovery code (format: ABCD-1234-EFGH-5678)',
     '新密码（至少6位）': 'New password (min 6 chars)',
+
+    // ===== 用户主页 =====
     '用户主页': 'User Profile',
     '用户不存在': 'User not found',
     '这个人很懒，什么都没写': 'This user is lazy, nothing written',
@@ -262,11 +362,15 @@ const TRANSLATIONS = {
     '个帖子': 'posts',
     '发私信': 'Send Message',
     '还没有发帖': 'No posts yet',
+
+    // ===== 私信 =====
     '私信': 'Messages',
     '暂无私信': 'No messages',
     '还没有消息，打个招呼吧': 'No messages yet. Say hi!',
     '输入消息...': 'Type a message...',
     '发送': 'Send',
+
+    // ===== Toast =====
     '请选择图片文件': 'Please select an image',
     '图片不能超过 5MB': 'Image must be under 5MB',
     '上传中...': 'Uploading...',
@@ -282,6 +386,8 @@ const TRANSLATIONS = {
     '密码修改成功！': 'Password updated!',
     '邮箱修改成功！': 'Email updated!',
     '重置成功！请登录': 'Reset successful! Please login',
+
+    // ===== 其他 =====
     '返回': 'Back',
     '点击或拖拽上传图片': 'Click or drag to upload image',
     '支持 JPG、PNG、GIF、WebP，单张最大 5MB': 'Supports JPG, PNG, GIF, WebP, max 5MB',
@@ -290,11 +396,8 @@ const TRANSLATIONS = {
     '请填写内容': 'Please enter content',
     '发布成功！': 'Posted!',
     '发布失败': 'Post failed',
-    '匿名': 'Anonymous',
-    '无标题': 'Untitled',
-    '已编辑': 'Edited',
-    '置顶': 'Pin',
-    '取消置顶': 'Unpin',
+
+    // ===== 举报原因 =====
     '垃圾广告': 'Spam',
     '人身攻击': 'Abuse',
     '违法内容': 'Illegal',
@@ -302,8 +405,9 @@ const TRANSLATIONS = {
     '其他': 'Other',
     '请选择举报原因：': 'Select a reason:',
     '提交举报': 'Submit Report',
+
+    // ===== 论坛名称 =====
     '论坛名称': 'Forum Name',
-    '暂无帖子': 'No posts',
   }
 };
 
@@ -312,7 +416,7 @@ const TRANSLATIONS = {
 // ============================================================
 
 function detectLanguage() {
-  // URL 参数优先（方便测试）
+  // URL 参数优先
   const urlParams = new URLSearchParams(window.location.search);
   const langParam = urlParams.get('lang');
   if (langParam && TRANSLATIONS[langParam]) return langParam;
@@ -391,18 +495,14 @@ function applyTranslation() {
 // ============================================================
 //  初始化
 // ============================================================
-document.addEventListener('DOMContentLoaded', function() {
-  // 先隐藏 body
-  document.body.style.opacity = '0';
 
+document.addEventListener('DOMContentLoaded', function() {
+  document.body.style.opacity = '0';
   setTimeout(function() {
-    // 加载论坛名称
     if (typeof loadForumName === 'function') {
       loadForumName();
     }
-    // 翻译
     applyTranslation();
-    // 淡入显示
     document.body.style.transition = 'opacity 0.2s ease';
     document.body.style.opacity = '1';
   }, 200);
