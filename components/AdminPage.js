@@ -2,6 +2,7 @@
 
 // 管理后台：侧边栏布局（对齐上游 main 分支）
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Icon } from './Icons';
 import AdminReports from './admin/AdminReports';
 import AdminUsers from './admin/AdminUsers';
@@ -12,22 +13,23 @@ import AdminCustomPages from './admin/AdminCustomPages';
 import AdminCustomCss from './admin/AdminCustomCss';
 
 const NAV = [
-  { key: 'reports', label: '举报', icon: 'shieldAlert' },
-  { key: 'users', label: '用户', icon: 'users' },
-  { key: 'logs', label: '日志', icon: 'file' },
-  { key: 'links', label: '友链', icon: 'link' },
-  { key: 'settings', label: '论坛设置', icon: 'settings' },
-  { key: 'custom', label: '自定义页面', icon: 'file' },
-  { key: 'css', label: '自定义CSS', icon: 'file' },
+  { key: 'reports', labelKey: 'admin.reports', icon: 'shieldAlert' },
+  { key: 'users', labelKey: 'admin.users', icon: 'users' },
+  { key: 'logs', labelKey: 'admin.logs', icon: 'file' },
+  { key: 'links', labelKey: 'admin.links', icon: 'link' },
+  { key: 'settings', labelKey: 'admin.forumSettings', icon: 'settings' },
+  { key: 'custom', labelKey: 'admin.customPages', icon: 'file' },
+  { key: 'css', labelKey: 'admin.customCss', icon: 'file' },
 ];
 
 export default function AdminPage() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState('reports');
 
   return (
     <div className="page-slide active">
       <div className="page-header" style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
-        <h2><Icon name="shieldAlert" size={20} /> 管理后台</h2>
+        <h2><Icon name="shieldAlert" size={20} /> {t('admin.title')}</h2>
       </div>
       <div className="admin-layout" style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
         <aside className="admin-sidebar">
@@ -41,7 +43,7 @@ export default function AdminPage() {
                 onClick={(e) => { e.preventDefault(); setTab(n.key); }}
               >
                 <span className="nav-icon"><Icon name={n.icon} size={18} /></span>
-                {n.label}
+                {t(n.labelKey)}
               </a>
             ))}
           </nav>
