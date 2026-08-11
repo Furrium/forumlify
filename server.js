@@ -24,16 +24,27 @@ const PORT = process.env.PORT || CONFIG.SERVER_PORT || 3000;
 const DEFAULT_JWT_SECRET = 'forumlify-secret-key-change-me-in-production';
 const JWT_SECRET = process.env.JWT_SECRET || DEFAULT_JWT_SECRET;
 
-if (process.env.NODE_ENV === 'production' && JWT_SECRET === DEFAULT_JWT_SECRET) {
-  throw new Error('JWT_SECRET must be set to a unique value in production');
+if (process.env.NODE_ENV === 'production') {
+  if (JWT_SECRET === DEFAULT_JWT_SECRET || JWT_SECRET.length < 32) {
+    throw new Error('JWT_SECRET must contain at least 32 unique characters in production');
+  }
+  if (!process.env.DATABASE_URL && !process.env.PGHOST) {
+    throw new Error('DATABASE_URL or PGHOST must be configured in production');
+  }
 }
 
 // ============================================================
 //  数据库
 // ============================================================
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://forumlify:123456@localhost:5432/forumlify',
-});
+const pool = new Pool(process.env.DATABASE_URL
+  ? { connectionString: process.env.DATABASE_URL }
+  : {
+      host: process.env.PGHOST || 'localhost',
+      port: Number(process.env.PGPORT || 5432),
+      user: process.env.PGUSER || 'forumlify',
+      password: process.env.PGPASSWORD || '123456',
+      database: process.env.PGDATABASE || 'forumlify',
+    });
 
 // ============================================================
 //  中间件
@@ -1492,6 +1503,19 @@ app.post('/api/auth/reset-password', async (req, res) => {
 //  托管公开前端文件
 // ============================================================
 
+app.get('/health/live', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+app.get('/health/ready', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'ready' });
+  } catch (error) {
+    res.status(503).json({ status: 'not_ready' });
+  }
+});
+
 app.use('/js', express.static(path.join(__dirname, 'js'), {
   dotfiles: 'deny',
   fallthrough: false,
@@ -1526,10 +1550,68 @@ app.use((err, req, res, next) => {
 //  启动服务器
 // ============================================================
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log('========================================');
-  console.log('  🌊 Forumlify 已启动');
-  console.log('  📡 http://localhost:' + PORT);
-  console.log('  📡 API: http://localhost:' + PORT + '/api');
-  console.log('========================================');
-});
+let server = null;
+let shuttingDown = false;
+
+function startServer() {
+  if (server) return server;
+
+  server = app.listen(PORT, '0.0.0.0', () => {
+    console.log('========================================');
+    console.log('  🌊 Forumlify 已启动');
+    console.log('  📡 http://localhost:' + PORT);
+    console.log('  📡 API: http://localhost:' + PORT + '/api');
+    console.log('========================================');
+  });
+  return server;
+}
+
+function shutdown(signal, { exitProcess = true } = {}) {
+  if (shuttingDown) return Promise.resolve();
+  shuttingDown = true;
+  console.log(`${signal} received, shutting down gracefully`);
+
+  return new Promise((resolve, reject) => {
+    const forceExit = exitProcess
+      ? setTimeout(() => process.exit(1), 10000)
+      : null;
+    if (forceExit) forceExit.unref();
+
+    const finish = async error => {
+      try {
+        await pool.end();
+        if (error) throw error;
+        resolve();
+      } catch (shutdownError) {
+        reject(shutdownError);
+      } finally {
+        if (forceExit) clearTimeout(forceExit);
+        server = null;
+        shuttingDown = false;
+      }
+    };
+
+    if (server) server.close(finish);
+    else finish();
+  }).finally(() => {
+    if (exitProcess) process.exitCode = 0;
+  });
+}
+
+if (require.main === module) {
+  startServer();
+  process.on('SIGTERM', () => {
+    shutdown('SIGTERM').catch(error => {
+      console.error('Graceful shutdown failed:', error);
+      process.exitCode = 1;
+    });
+  });
+  process.on('SIGINT', () => {
+    shutdown('SIGINT').catch(error => {
+      console.error('Graceful shutdown failed:', error);
+      process.exitCode = 1;
+    });
+  });
+}
+
+module.exports = { app, pool, startServer, shutdown };
