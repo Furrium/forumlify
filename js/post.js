@@ -49,7 +49,7 @@ async function renderPostDetail(postId) {
     if (post.images && post.images.length > 0) {
       imagesHtml = '<div class="post-images">';
       post.images.forEach(img => {
-        imagesHtml += '<img src="' + escapeHTML(safeURL(img, { image: true })) + '" class="post-image" style="cursor:pointer;" />';
+        imagesHtml += '<img src="' + escapeHTML(safeURL(img, { image: true })) + '" class="post-image" alt="帖子图片" role="button" tabindex="0" style="cursor:pointer;" />';
       });
       imagesHtml += '</div>';
     }
@@ -70,8 +70,8 @@ async function renderPostDetail(postId) {
     let html = `
       <div class="post-detail-card">
         <div class="post-header">
-          <img src="${escapeHTML(safeURL(avatar, { image: true }))}" class="post-avatar" />
-          <span class="post-username" data-username="${escapeHTML(username)}" style="cursor:pointer;color:var(--primary);">${escapeHTML(username)}</span>
+          <img src="${escapeHTML(safeURL(avatar, { image: true }))}" class="post-avatar" alt="${escapeHTML(username)} 的头像" />
+          <span class="post-username" data-username="${escapeHTML(username)}" role="button" tabindex="0" style="cursor:pointer;color:var(--primary);">${escapeHTML(username)}</span>
           <span class="post-time">${time}</span>
           ${post.edited_at ? `<span style="font-size:12px;color:var(--text-light);margin-left:8px;">（已编辑 ${new Date(post.edited_at).toLocaleString('zh-CN')}）</span>` : ''}
           ${post.is_pinned ? '<span style="font-size:12px;color:var(--primary);margin-left:8px;">📌 置顶</span>' : ''}
@@ -111,8 +111,8 @@ async function renderPostDetail(postId) {
         html += `
           <div class="reply-item" data-replyid="${r.id}">
             <div class="reply-header">
-              <img src="${escapeHTML(safeURL(rAvatar, { image: true }))}" class="reply-avatar" />
-              <span class="reply-username" data-username="${escapeHTML(rUsername)}" style="cursor:pointer;color:var(--primary);">${escapeHTML(rUsername)}</span>
+              <img src="${escapeHTML(safeURL(rAvatar, { image: true }))}" class="reply-avatar" alt="${escapeHTML(rUsername)} 的头像" />
+              <span class="reply-username" data-username="${escapeHTML(rUsername)}" role="button" tabindex="0" style="cursor:pointer;color:var(--primary);">${escapeHTML(rUsername)}</span>
               <span class="reply-time">${rTime}</span>
               ${currentUser && (currentUser.id === r.user_id || currentUser.role === 'admin') ? `<button class="btn-sm btn-danger reply-delete-btn" data-replyid="${r.id}">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -134,12 +134,14 @@ async function renderPostDetail(postId) {
     refreshCaptcha('reply');
 
     container.querySelectorAll('.post-username, .reply-username').forEach(usernameEl => {
+      makeKeyboardActivatable(usernameEl);
       usernameEl.addEventListener('click', function() {
         switchPage('user', this.dataset.username);
       });
     });
 
     container.querySelectorAll('.post-image').forEach(image => {
+      makeKeyboardActivatable(image);
       image.addEventListener('click', function() {
         openImageViewer(this.src);
       });

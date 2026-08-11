@@ -38,7 +38,7 @@ function renderFeed() {
       if (p.images && p.images.length > 0) {
         imagesHtml = '<div class="post-images">';
         p.images.forEach(img => {
-          imagesHtml += '<img src="' + escapeHTML(safeURL(img, { image: true })) + '" class="post-image" style="cursor:pointer;" />';
+          imagesHtml += '<img src="' + escapeHTML(safeURL(img, { image: true })) + '" class="post-image" alt="帖子图片" role="button" tabindex="0" style="cursor:pointer;" />';
         });
         imagesHtml += '</div>';
       }
@@ -61,8 +61,8 @@ function renderFeed() {
         <div class="post-card" data-postid="${p.id}" style="cursor:pointer;">
           ${p.is_pinned ? '<div style="font-size:12px;color:var(--primary);font-weight:600;margin-bottom:4px;">📌 置顶</div>' : ''}
           <div class="post-header">
-            <img src="${escapeHTML(safeURL(avatar, { image: true }))}" class="post-avatar" />
-            <span class="post-username" data-username="${escapeHTML(username)}" style="cursor:pointer;color:var(--primary);">${escapeHTML(username)}</span>
+            <img src="${escapeHTML(safeURL(avatar, { image: true }))}" class="post-avatar" alt="${escapeHTML(username)} 的头像" />
+            <span class="post-username" data-username="${escapeHTML(username)}" role="button" tabindex="0" style="cursor:pointer;color:var(--primary);">${escapeHTML(username)}</span>
             <span class="post-time">${time}</span>
             ${p.edited_at ? '<span style="font-size:11px;color:var(--text-light);margin-left:6px;">（已编辑）</span>' : ''}
           </div>
@@ -168,6 +168,7 @@ function renderFeed() {
     });
 
     container.querySelectorAll('.post-username').forEach(username => {
+      makeKeyboardActivatable(username);
       username.addEventListener('click', function(e) {
         e.stopPropagation();
         switchPage('user', this.dataset.username);
@@ -175,6 +176,7 @@ function renderFeed() {
     });
 
     container.querySelectorAll('.post-image').forEach(image => {
+      makeKeyboardActivatable(image);
       image.addEventListener('click', function(e) {
         e.stopPropagation();
         openImageViewer(this.src);

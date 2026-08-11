@@ -10,6 +10,9 @@ function showToast(message, type = 'success', duration = 3000) {
 
   const toast = document.createElement('div');
   toast.className = 'toast ' + type;
+  toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+  toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
+  toast.setAttribute('aria-atomic', 'true');
 
   const icons = {
     success: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
@@ -35,6 +38,112 @@ function showToast(message, type = 'success', duration = 3000) {
 }
 let currentPage = 'feed';
 let currentPageNum = 1;
+
+function makeKeyboardActivatable(element) {
+  if (!element || element.dataset.keyboardReady === 'true') return;
+  element.dataset.keyboardReady = 'true';
+  element.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      element.click();
+    }
+  });
+}
+
+function setupAccessibleModals() {
+  let returnFocusTo = null;
+
+  function enhanceModal(modal) {
+    if (!modal?.classList?.contains('modal') || modal.dataset.a11yReady === 'true') return;
+    modal.dataset.a11yReady = 'true';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-hidden', modal.classList.contains('active') ? 'false' : 'true');
+
+    const content = modal.querySelector('.modal-content');
+    if (content) content.tabIndex = -1;
+
+    const heading = modal.querySelector('h1, h2, h3');
+    if (heading) {
+      if (!heading.id) heading.id = modal.id ? modal.id + 'Title' : 'dialogTitle' + Date.now();
+      modal.setAttribute('aria-labelledby', heading.id);
+    }
+
+    modal.querySelectorAll('.close').forEach(close => {
+      close.setAttribute('role', 'button');
+      close.setAttribute('tabindex', '0');
+      close.setAttribute('aria-label', '关闭对话框');
+      makeKeyboardActivatable(close);
+    });
+
+    if (modal.classList.contains('active')) {
+      returnFocusTo = document.activeElement;
+      requestAnimationFrame(() => content?.focus());
+    }
+  }
+
+  document.querySelectorAll('.modal').forEach(enhanceModal);
+  const observer = new MutationObserver(mutations => {
+    for (const mutation of mutations) {
+      if (mutation.type === 'childList') {
+        mutation.addedNodes.forEach(node => {
+          if (node.nodeType !== Node.ELEMENT_NODE) return;
+          if (node.matches?.('.modal')) enhanceModal(node);
+          node.querySelectorAll?.('.modal').forEach(enhanceModal);
+        });
+      }
+      if (mutation.type === 'attributes' && mutation.target.classList.contains('modal')) {
+        const modal = mutation.target;
+        const isOpen = modal.classList.contains('active');
+        modal.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+        if (isOpen) {
+          returnFocusTo = document.activeElement;
+          requestAnimationFrame(() => modal.querySelector('.modal-content')?.focus());
+        } else if (returnFocusTo?.isConnected) {
+          returnFocusTo.focus();
+          returnFocusTo = null;
+        }
+      }
+    }
+  });
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class']
+  });
+
+  document.addEventListener('keydown', event => {
+    const activeModal = Array.from(document.querySelectorAll('.modal.active')).at(-1);
+    if (!activeModal) return;
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      activeModal.classList.remove('active');
+      return;
+    }
+
+    if (event.key === 'Tab') {
+      const focusable = Array.from(activeModal.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )).filter(element => element.offsetParent !== null);
+      if (focusable.length === 0) {
+        event.preventDefault();
+        activeModal.querySelector('.modal-content')?.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+  });
+}
 
 function renderNav() {
   const authBtns = document.getElementById('authButtons');
@@ -1080,6 +1189,13 @@ function openImageViewer(imageUrl) {
 // ============================================================
 async function init() {
   applyTheme();
+  setupAccessibleModals();
+  document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(field => {
+    if (!field.hasAttribute('aria-label')) field.setAttribute('aria-label', field.placeholder);
+  });
+  document.querySelectorAll('#dropdownMenu a').forEach(item => {
+    item.setAttribute('role', 'menuitem');
+  });
 
   document.getElementById('forumName').textContent = CONFIG.FORUM_NAME || 'Forumlify';
 
@@ -1144,12 +1260,17 @@ async function init() {
     });
   }
 
-  document.getElementById('avatarImg').addEventListener('click', function(e) {
+  const avatarTrigger = document.getElementById('avatarImg');
+  makeKeyboardActivatable(avatarTrigger);
+  avatarTrigger.addEventListener('click', function(e) {
     e.stopPropagation();
-    document.getElementById('dropdownMenu').classList.toggle('show');
+    const menu = document.getElementById('dropdownMenu');
+    const expanded = menu.classList.toggle('show');
+    this.setAttribute('aria-expanded', String(expanded));
   });
   document.addEventListener('click', function() {
     document.getElementById('dropdownMenu').classList.remove('show');
+    avatarTrigger.setAttribute('aria-expanded', 'false');
   });
 
   document.querySelectorAll('[data-page]').forEach(el => {
@@ -1171,7 +1292,9 @@ async function init() {
     });
   });
 
-  document.getElementById('forumName').addEventListener('click', function() {
+  const forumName = document.getElementById('forumName');
+  makeKeyboardActivatable(forumName);
+  forumName.addEventListener('click', function() {
     switchPage('feed');
   });
 
@@ -1258,6 +1381,9 @@ async function init() {
   document.getElementById('regCaptchaQuestion').addEventListener('click', function() {
     refreshCaptcha('reg');
   });
+  ['postCaptchaQuestion', 'regCaptchaQuestion', 'replyCaptchaQuestion'].forEach(id => {
+    makeKeyboardActivatable(document.getElementById(id));
+  });
 
   // ===== 拖拽上传 =====
   const dropZone = document.getElementById('dropZone');
@@ -1265,6 +1391,7 @@ async function init() {
   const dropZoneText = document.getElementById('dropZoneText');
 
   if (dropZone && fileInput) {
+    makeKeyboardActivatable(dropZone);
     dropZone.addEventListener('click', function() {
       fileInput.click();
     });

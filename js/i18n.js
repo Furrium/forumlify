@@ -577,12 +577,15 @@ function detectLanguage() {
 }
 
 let currentLang = detectLanguage();
+let translationObserver = null;
 
 function setLanguage(lang) {
-  if (!TRANSLATIONS[lang]) return;
-  currentLang = lang;
+  if (!TRANSLATIONS[lang] || lang === currentLang) return;
   localStorage.setItem('forumlify-lang', lang);
-  applyTranslation();
+  const url = new URL(window.location.href);
+  url.searchParams.set('lang', lang);
+  window.history.replaceState(window.history.state, '', url);
+  window.location.reload();
 }
 
 function t(key) {
@@ -626,16 +629,18 @@ function applyTranslation() {
   walk(document.body);
 
   // 监听动态内容
-  const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      for (const node of mutation.addedNodes) {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          walk(node);
+  if (!translationObserver) {
+    translationObserver = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            walk(node);
+          }
         }
       }
-    }
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
+    });
+    translationObserver.observe(document.body, { childList: true, subtree: true });
+  }
 }
 
 // ============================================================
@@ -643,13 +648,11 @@ function applyTranslation() {
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-  document.body.style.opacity = '0';
-  setTimeout(function() {
-    if (typeof loadForumName === 'function') {
-      loadForumName();
-    }
-    applyTranslation();
-    document.body.style.transition = 'opacity 0.2s ease';
-    document.body.style.opacity = '1';
-  }, 200);
+  document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+  const selector = document.getElementById('languageSelect');
+  if (selector) {
+    selector.value = currentLang;
+    selector.addEventListener('change', event => setLanguage(event.target.value));
+  }
+  applyTranslation();
 });

@@ -24,7 +24,7 @@ async function renderUserProfile(username) {
 
     let html = `
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:32px;text-align:center;">
-        <img src="${escapeHTML(safeURL(avatar, { image: true }))}" style="width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);" />
+        <img src="${escapeHTML(safeURL(avatar, { image: true }))}" alt="${escapeHTML(user.username)} 的头像" style="width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);" />
         <h2 style="margin:16px 0 4px;font-size:24px;">${escapeHTML(user.username)}</h2>
         <p style="color:var(--text-secondary);font-size:14px;">${escapeHTML(user.bio || '这个人很懒，什么都没写')}</p>
         <div style="display:flex;justify-content:center;gap:32px;margin-top:16px;font-size:14px;color:var(--text-secondary);flex-wrap:wrap;">
@@ -48,7 +48,7 @@ async function renderUserProfile(username) {
       posts.forEach(p => {
         const time = p.created_at ? new Date(p.created_at).toLocaleString('zh-CN') : '';
         html += `
-          <div class="post-card" data-postid="${escapeHTML(p.id)}" style="cursor:pointer;">
+          <div class="post-card" data-postid="${escapeHTML(p.id)}" role="link" tabindex="0" style="cursor:pointer;">
             <div class="post-title" style="font-size:16px;font-weight:600;">${escapeHTML(p.title || '无标题')}</div>
             <div class="post-content" style="font-size:14px;color:var(--text-secondary);">${escapeHTML((p.content || '').substring(0, 100))}${(p.content || '').length > 100 ? '...' : ''}</div>
             <div style="font-size:12px;color:var(--text-light);margin-top:8px;">${time}</div>
@@ -60,6 +60,7 @@ async function renderUserProfile(username) {
     container.innerHTML = sanitizeHTML(html);
 
     container.querySelectorAll('.post-card[data-postid]').forEach(card => {
+      makeKeyboardActivatable(card);
       card.addEventListener('click', function() {
         switchToPost(this.dataset.postid);
       });
