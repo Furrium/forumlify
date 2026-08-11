@@ -46,11 +46,11 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="page-slide active" style={{ overflow: 'hidden', height: '100vh' }}>
-      <div className="page-header" style={{ width: '100%' }}>
+    <div className="page-slide active" style={{ overflow: 'hidden', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="page-header" style={{ width: '100%', flexShrink: 0 }}>
         <h2><Icon name="settings" size={20} /> {t('settings.title')}</h2>
       </div>
-      <div className="settings-layout" style={{ width: '100%', display: 'flex', gap: 28, alignItems: 'flex-start' }}>
+      <div className="settings-layout" style={{ width: '100%', display: 'flex', gap: 28, alignItems: 'flex-start', flex: 1, minHeight: 0 }}>
         <aside className="settings-sidebar" style={{ width: 200, flexShrink: 0 }}>
           <nav className="settings-nav">
             {NAV.map((n) => (
@@ -67,12 +67,13 @@ export default function SettingsPage() {
             ))}
           </nav>
         </aside>
-        <main className="settings-content" id="settingsContent" style={{ overflow: 'hidden', padding: 0 }}>
+        <main className="settings-content" id="settingsContent" style={{ overflow: 'hidden', padding: 0, alignSelf: 'stretch', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <div
             ref={scrollRef}
             onScroll={handleScroll}
             style={{
-              height: '70vh',
+              flex: 1,
+              minHeight: 0,
               overflowY: 'auto',
               scrollSnapType: 'y mandatory',
               scrollBehavior: 'smooth',
