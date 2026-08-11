@@ -18,7 +18,6 @@ document.getElementById('loginSubmit').addEventListener('click', async () => {
     document.getElementById('loginPassword').value = '';
     if (result.user) {
       currentUser = result.user;
-      API.logEvent('login').catch(() => {});
       renderNav();
       if (currentPage === 'admin' && currentUser.role !== 'admin') {
         switchPage('feed');
@@ -63,7 +62,6 @@ document.getElementById('registerSubmit').addEventListener('click', async () => 
   try {
     await API.login(email, password);
     currentUser = await API.getMe();
-    API.logEvent('register').catch(() => {});
     renderNav();
 
     if (currentPage === 'admin' && currentUser.role !== 'admin') {

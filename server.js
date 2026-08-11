@@ -81,6 +81,68 @@ app.use(['/api/auth/login', '/api/auth/register', '/api/auth/reset-password'], a
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
+const AUDIT_ACTIONS = new Map([
+  ['POST /api/auth/register', 'register'],
+  ['POST /api/auth/login', 'login'],
+  ['PUT /api/settings', 'update_settings'],
+  ['PUT /api/users/:id/role', 'update_user_role'],
+  ['PUT /api/users/:id', 'update_profile'],
+  ['PUT /api/users/:id/avatar', 'update_avatar'],
+  ['PUT /api/users/:id/password', 'change_password'],
+  ['PUT /api/users/:id/email', 'change_email'],
+  ['POST /api/posts', 'create_post'],
+  ['PUT /api/posts/:id', 'update_post'],
+  ['DELETE /api/posts/:id', 'delete_post'],
+  ['PUT /api/posts/:id/pin', 'toggle_post_pin'],
+  ['POST /api/posts/:id/replies', 'create_reply'],
+  ['DELETE /api/replies/:id', 'delete_reply'],
+  ['POST /api/reports', 'create_report'],
+  ['PUT /api/reports/:id', 'handle_report'],
+  ['POST /api/links', 'create_link'],
+  ['DELETE /api/links/:id', 'delete_link'],
+  ['POST /api/upload', 'upload_image'],
+  ['POST /api/admin/custom-css', 'upload_custom_css'],
+  ['DELETE /api/admin/custom-css', 'delete_custom_css'],
+  ['POST /api/conversations', 'create_conversation'],
+  ['POST /api/conversations/:id/messages', 'send_message'],
+  ['POST /api/admin/custom-pages', 'create_custom_page'],
+  ['PUT /api/admin/custom-pages/:id', 'update_custom_page'],
+  ['DELETE /api/admin/custom-pages/:id', 'delete_custom_page'],
+  ['POST /api/auth/recovery-codes/generate', 'rotate_recovery_codes'],
+  ['POST /api/auth/reset-password', 'reset_password'],
+]);
+
+function auditMetadata(req) {
+  const metadata = {};
+  for (const [key, value] of Object.entries(req.params || {})) {
+    if (typeof value === 'string' && value.length <= 100) metadata[key] = value;
+  }
+  for (const key of ['post_id', 'other_user_id', 'role', 'status']) {
+    const value = req.body?.[key];
+    if (typeof value === 'string' && value.length <= 100) metadata[key] = value;
+  }
+  return { ...metadata, ...(req.auditMetadata || {}) };
+}
+
+app.use((req, res, next) => {
+  res.on('finish', () => {
+    if (res.statusCode < 200 || res.statusCode >= 300 || !req.route?.path) return;
+    const routePath = Array.isArray(req.route.path) ? req.route.path[0] : req.route.path;
+    const action = AUDIT_ACTIONS.get(`${req.method} ${routePath}`);
+    if (!action) return;
+
+    const userId = req.auditUserId || req.user?.id || null;
+    const ip = String(req.ip || req.socket?.remoteAddress || '').slice(0, 45);
+    const userAgent = String(req.get('user-agent') || '').slice(0, 1000);
+    pool.query(
+      `INSERT INTO event_logs (user_id, action, ip, method, path, user_agent, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)`,
+      [userId, action, ip, req.method, req.originalUrl.slice(0, 2000), userAgent, JSON.stringify(auditMetadata(req))]
+    ).catch(error => console.error('Failed to write audit log:', error));
+  });
+  next();
+});
+
 // 确保上传目录存在
 if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
@@ -196,6 +258,9 @@ app.post('/api/auth/register', async (req, res) => {
       [email, hash, username, avatar, role, '']
     );
 
+    req.auditUserId = r.rows[0].id;
+    req.auditMetadata = { role: r.rows[0].role };
+
     res.json({
       user: r.rows[0],
       message: isFirstUser ? '🎉 你是第一个用户，已自动设为管理员！' : '注册成功'
@@ -229,6 +294,8 @@ app.post('/api/auth/login', async (req, res) => {
     if (!valid) {
       return res.status(401).json({ error: '邮箱或密码错误' });
     }
+
+    req.auditUserId = user.id;
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
@@ -963,21 +1030,6 @@ app.get('/api/event-logs', auth, admin, async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: '服务器错误' });
-  }
-});
-
-// 记录事件
-app.post('/api/event-logs', auth, async (req, res) => {
-  const { action } = req.body;
-  try {
-    await pool.query(
-      `INSERT INTO event_logs (user_id, action, ip)
-       VALUES ($1, $2, $3)`,
-      [req.user.id, action, req.ip || '0.0.0.0']
-    );
-    res.json({ success: true });
-  } catch (err) {
-    res.json({ success: true });
   }
 });
 
