@@ -1,7 +1,7 @@
 'use client';
 
 // 回复列表 + 发表回复表单
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { API } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
@@ -21,6 +21,19 @@ export default function ReplyList({ postId, onRefresh }) {
   const [content, setContent] = useState('');
   const [captcha, setCaptcha] = useState(null);
   const [captchaInput, setCaptchaInput] = useState('');
+  // 正在回复的用户（hover 回复按钮 → 回填到回复框）
+  const [replyTo, setReplyTo] = useState(null);
+  const replyAreaRef = useRef(null);
+  const replyInputRef = useRef(null);
+
+  // 点击"回复"：记录目标用户，滚动到回复框并聚焦
+  const startReply = (username) => {
+    setReplyTo(username);
+    setTimeout(() => {
+      replyAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      replyInputRef.current?.focus();
+    }, 120);
+  };
 
   const load = useCallback(async () => {
     try {
@@ -42,6 +55,7 @@ export default function ReplyList({ postId, onRefresh }) {
       API.logEvent('create_reply').catch(() => {});
       setContent('');
       setCaptchaInput('');
+      setReplyTo(null);
       API.getCaptcha().then((c) => setCaptcha(c)).catch(() => {});
       load();
       onRefresh();
@@ -85,6 +99,9 @@ export default function ReplyList({ postId, onRefresh }) {
                     {r.username || '匿名用户'}
                   </span>
                   <span className="reply-time">{rTime}</span>
+                  <button className="btn-sm btn-secondary reply-btn" onClick={() => startReply(r.username)}>
+                    <Icon name="reply" size={12} /> 回复
+                  </button>
                   {currentUser && (currentUser.id === r.user_id || currentUser.role === 'admin') && (
                     <button className="btn-sm btn-danger reply-delete-btn" onClick={() => handleDelete(r.id)}>
                       <Icon name="trash" size={12} /> 删除
@@ -98,9 +115,21 @@ export default function ReplyList({ postId, onRefresh }) {
         )}
       </div>
 
-      <div id="replyArea" style={{ marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+      <div id="replyArea" ref={replyAreaRef} style={{ marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
         <h3 style={{ fontSize: 16, marginBottom: 12 }}><Icon name="message" size={16} /> 发表回复</h3>
+        {replyTo && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, padding: '6px 10px', background: 'var(--primary-light)', color: 'var(--primary)', borderRadius: 6, fontSize: 13 }}>
+            <Icon name="reply" size={13} /> 正在回复 <strong>@{replyTo}</strong>
+            <button
+              onClick={() => setReplyTo(null)}
+              style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)', fontSize: 12 }}
+            >
+              取消
+            </button>
+          </div>
+        )}
         <textarea
+          ref={replyInputRef}
           rows={3}
           placeholder="写下你的回复..."
           style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 14, fontFamily: 'inherit', resize: 'vertical', background: 'var(--bg)', color: 'var(--text)' }}

@@ -3073,3 +3073,17 @@ a.btn-secondary {
     white-space: nowrap;
   }
 }
+
+/* ===== 回复操作按钮：悬停显示 ===== */
+.reply-btn {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.reply-item:hover .reply-btn,
+.reply-item:focus-within .reply-btn {
+  opacity: 1;
+}
+/* 触屏设备（无 hover）：始终显示 */
+@media (hover: none) {
+  .reply-btn { opacity: 1; }
+}
