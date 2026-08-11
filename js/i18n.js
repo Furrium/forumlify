@@ -101,6 +101,8 @@ const TRANSLATIONS = {
 
     // ===== 恢复码 =====
     '用于忘记密码时重置账户。每个恢复码只能使用一次。': '用于忘记密码时重置账户。每个恢复码只能使用一次。',
+    '请妥善保存以下恢复码。当你忘记密码时，可以使用它们重置密码。': '请妥善保存以下恢复码。当你忘记密码时，可以使用它们重置密码。',
+    '每个恢复码只能使用一次。': '每个恢复码只能使用一次。',
     '剩余 0 个可用恢复码': '剩余 0 个可用恢复码',
     '剩余 1 个可用恢复码': '剩余 1 个可用恢复码',
     '剩余 2 个可用恢复码': '剩余 2 个可用恢复码',
@@ -163,6 +165,13 @@ const TRANSLATIONS = {
     '你举报的帖子已被管理员删除': '你举报的帖子已被管理员删除',
     '你举报的帖子已被管理员驳回': '你举报的帖子已被管理员驳回',
     '管理员把你的帖子置顶了': '管理员把你的帖子置顶了',
+
+    // ===== Toast =====
+    '已复制到剪贴板': '已复制到剪贴板',
+
+    // ===== 发帖/上传 =====
+    '点击或拖拽上传图片': '点击或拖拽上传图片',
+    '支持 JPG、PNG、GIF、WebP，单张最大 5MB': '支持 JPG、PNG、GIF、WebP，单张最大 5MB',
 
     // ===== 提示 =====
     '保存成功！': '保存成功！',
@@ -234,7 +243,7 @@ const TRANSLATIONS = {
     '输入消息...': '输入消息...',
     '发送': '发送',
 
-    // ===== Toast =====
+    // ===== Toast 通用 =====
     '请选择图片文件': '请选择图片文件',
     '图片不能超过 5MB': '图片不能超过 5MB',
     '上传中...': '上传中...',
@@ -253,8 +262,6 @@ const TRANSLATIONS = {
 
     // ===== 其他 =====
     '返回': '返回',
-    '点击或拖拽上传图片': '点击或拖拽上传图片',
-    '支持 JPG、PNG、GIF、WebP，单张最大 5MB': '支持 JPG、PNG、GIF、WebP，单张最大 5MB',
     '答案': '答案',
     '请填写内容': '请填写内容',
     '发布成功！': '发布成功！',
@@ -370,6 +377,8 @@ const TRANSLATIONS = {
 
     // ===== 恢复码 =====
     '用于忘记密码时重置账户。每个恢复码只能使用一次。': 'Used to reset your password if you forget it. Each recovery code can only be used once.',
+    '请妥善保存以下恢复码。当你忘记密码时，可以使用它们重置密码。': 'Please save these recovery codes. You can use them to reset your password if you forget it.',
+    '每个恢复码只能使用一次。': 'Each recovery code can only be used once.',
     '剩余 0 个可用恢复码': '0 recovery codes available',
     '剩余 1 个可用恢复码': '1 recovery code available',
     '剩余 2 个可用恢复码': '2 recovery codes available',
@@ -432,6 +441,13 @@ const TRANSLATIONS = {
     '你举报的帖子已被管理员删除': 'The post you reported has been deleted',
     '你举报的帖子已被管理员驳回': 'The post you reported has been rejected',
     '管理员把你的帖子置顶了': 'An admin pinned your post',
+
+    // ===== Toast =====
+    '已复制到剪贴板': 'Copied to clipboard',
+
+    // ===== 发帖/上传 =====
+    '点击或拖拽上传图片': 'Click or drag to upload image',
+    '支持 JPG、PNG、GIF、WebP，单张最大 5MB': 'Supports JPG, PNG, GIF, WebP, max 5MB',
 
     // ===== 提示 =====
     '保存成功！': 'Saved!',
@@ -503,7 +519,7 @@ const TRANSLATIONS = {
     '输入消息...': 'Type a message...',
     '发送': 'Send',
 
-    // ===== Toast =====
+    // ===== Toast 通用 =====
     '请选择图片文件': 'Please select an image',
     '图片不能超过 5MB': 'Image must be under 5MB',
     '上传中...': 'Uploading...',
@@ -522,8 +538,6 @@ const TRANSLATIONS = {
 
     // ===== 其他 =====
     '返回': 'Back',
-    '点击或拖拽上传图片': 'Click or drag to upload image',
-    '支持 JPG、PNG、GIF、WebP，单张最大 5MB': 'Supports JPG, PNG, GIF, WebP, max 5MB',
     '答案': 'Answer',
     '请填写内容': 'Please enter content',
     '发布成功！': 'Posted!',
