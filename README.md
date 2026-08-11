@@ -18,8 +18,8 @@
 ### Docker 部署（推荐）
 
 ```
-git clone https://github.com/furrium/forumlify-express.git
-cd forumlify-express
+git clone https://github.com/furrium/forumlify.git
+cd forumlify
 docker-compose up -d
 ```
 
@@ -45,8 +45,8 @@ docker-compose up -d
 1. **克隆并安装依赖**
 
 ```bash
-git clone https://github.com/furrium/forumlify-express.git
-cd forumlify-express
+git clone https://github.com/furrium/forumlify.git
+cd forumlify
 npm install
 ```
 
@@ -95,7 +95,7 @@ mkdir -p uploads && chmod 755 uploads
 ## 📁 项目结构
 
 ```
-forumlify-express/
+forumlify/
 ├── index.html          # 前端页面
 ├── style.css           # 全局样式
 ├── Dockerfile          # Docker 镜像构建文件
