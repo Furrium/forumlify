@@ -34,7 +34,7 @@ function HomeInner() {
     <div className="app-fade-in">
       <Navbar onOpenModal={openModal} />
       <ChatManager />
-      <div className="app-container">
+      <div id="app">
         <Sidebar />
         <Feed onOpenModal={openModal} onReport={openReport} />
       </div>
