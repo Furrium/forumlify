@@ -1,14 +1,19 @@
 // POST /api/auth/register
 import bcrypt from 'bcryptjs';
 import pool from '@/lib/db';
+import { verifyCaptcha } from '@/lib/captcha';
 
 export async function POST(req) {
-  const { email, password, username } = await req.json();
+  const { email, password, username, captcha_id, captcha_answer, captcha_sig } = await req.json();
   if (!email || !password || !username) {
     return Response.json({ error: '请填写完整信息' }, { status: 400 });
   }
   if (password.length < 6) {
     return Response.json({ error: '密码至少6位' }, { status: 400 });
+  }
+  // 服务端验证码校验（ENABLE_CAPTCHA 关闭时跳过）
+  if (process.env.ENABLE_CAPTCHA !== 'false' && !verifyCaptcha(captcha_id, captcha_answer, captcha_sig)) {
+    return Response.json({ error: '验证码错误，请重新计算' }, { status: 400 });
   }
   try {
     const countResult = await pool.query('SELECT COUNT(*) FROM users');

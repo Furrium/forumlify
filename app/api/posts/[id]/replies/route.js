@@ -2,6 +2,7 @@
 import pool from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { jsonWithEtag } from '@/lib/http-cache';
+import { verifyCaptcha } from '@/lib/captcha';
 
 export async function GET(req, { params }) {
   try {
@@ -24,9 +25,13 @@ export async function POST(req, { params }) {
   if (!user) {
     return Response.json({ error: '请先登录' }, { status: 401 });
   }
-  const { content } = await req.json();
+  const { content, captcha_id, captcha_answer, captcha_sig } = await req.json();
   if (!content || content.trim().length === 0) {
     return Response.json({ error: '请填写回复内容' }, { status: 400 });
+  }
+  // 服务端验证码校验（ENABLE_CAPTCHA 关闭时跳过）
+  if (process.env.ENABLE_CAPTCHA !== 'false' && !verifyCaptcha(captcha_id, captcha_answer, captcha_sig)) {
+    return Response.json({ error: '验证码错误，请重新计算' }, { status: 400 });
   }
   try {
     const r = await pool.query(

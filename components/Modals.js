@@ -3,7 +3,7 @@
 // 登录/注册/举报 模态框
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { API, generateCaptcha } from '@/lib/api';
+import { API } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
 import CaptchaImage from './CaptchaImage';
@@ -28,8 +28,11 @@ export default function Modals({ modal, onClose, reportPostId }) {
   // 举报表单
   const [reportReason, setReportReason] = useState('spam');
 
+  // 打开注册弹窗时从服务器获取验证码挑战（HMAC 签名）
   useEffect(() => {
-    if (modal === 'register') setRegCaptcha(generateCaptcha());
+    if (modal === 'register') {
+      API.getCaptcha().then((c) => setRegCaptcha(c)).catch(() => {});
+    }
   }, [modal]);
 
   if (!modal) return null;
@@ -57,14 +60,13 @@ export default function Modals({ modal, onClose, reportPostId }) {
   const handleRegister = async () => {
     if (!regUsername.trim() || !regEmail.trim() || !regPassword) { toast('请填写完整信息', 'warning'); return; }
     if (regPassword.length < 6) { toast('密码至少6位', 'warning'); return; }
-    if (!regCaptcha || parseInt(regCaptchaInput) !== regCaptcha.answer) {
-      toast('验证码错误，请重新计算', 'warning');
-      setRegCaptcha(generateCaptcha());
-      setRegCaptchaInput('');
+    if (!regCaptcha || !regCaptchaInput.trim()) {
+      toast('请填写验证码', 'warning');
       return;
     }
     try {
-      await register(regEmail.trim(), regPassword, regUsername.trim());
+      // 答案由服务端 HMAC 校验，前端不对比答案
+      await register(regEmail.trim(), regPassword, regUsername.trim(), { id: regCaptcha.id, answer: regCaptchaInput.trim(), sig: regCaptcha.sig });
       onClose();
       setRegUsername('');
       setRegEmail('');
@@ -74,6 +76,9 @@ export default function Modals({ modal, onClose, reportPostId }) {
       refresh();
     } catch (err) {
       toast('注册失败：' + err.message, 'error');
+      // 失败后刷新验证码
+      API.getCaptcha().then((c) => setRegCaptcha(c)).catch(() => {});
+      setRegCaptchaInput('');
     }
   };
 
@@ -113,7 +118,7 @@ export default function Modals({ modal, onClose, reportPostId }) {
             <input type="password" placeholder={t('auth.passwordHint')} value={regPassword} onChange={(e) => setRegPassword(e.target.value)} />
             <div className="captcha-row" style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '12px 0' }}>
               {regCaptcha ? (
-                <CaptchaImage captcha={regCaptcha} onRefresh={() => { setRegCaptcha(generateCaptcha()); setRegCaptchaInput(''); }} />
+                <CaptchaImage captcha={regCaptcha} onRefresh={() => { API.getCaptcha().then((c) => setRegCaptcha(c)).catch(() => {}); setRegCaptchaInput(''); }} />
               ) : (
                 <span style={{ color: 'var(--text-light)' }}>{t('newPost.captchaLoading')}</span>
               )}

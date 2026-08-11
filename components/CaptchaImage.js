@@ -38,7 +38,7 @@ export default function CaptchaImage({ captcha, onRefresh }) {
     }
 
     // 算式文字（每个字符轻微旋转/位移，增加识别难度）
-    const text = captcha.question.replace(' = ?', '');
+    const text = (captcha.text || captcha.question || '').replace(' = ?', '');
     const chars = text.split('');
     const fontSize = Math.floor(H * 0.52);
     const step = W / (chars.length + 1);

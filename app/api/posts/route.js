@@ -2,6 +2,7 @@
 import pool from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { jsonWithEtag } from '@/lib/http-cache';
+import { verifyCaptcha } from '@/lib/captcha';
 
 // 避免 GET 被静态优化导致写方法 405（动态接口，不能缓存）
 export const dynamic = 'force-dynamic';
@@ -11,9 +12,12 @@ export async function GET(req) {
   const url = new URL(req.url);
   const sort = url.searchParams.get('sort') === 'hot' ? 'updated_at' : 'created_at';
   const userId = url.searchParams.get('user_id');
-  const page = parseInt(url.searchParams.get('page')) || 1;
-  const limit = parseInt(url.searchParams.get('limit')) || 20;
-  const offset = (page - 1) * limit;
+  const page = Math.max(1, parseInt(url.searchParams.get('page')) || 1);
+  // 分页边界：limit 封顶 50，page 封顶 10000（防深分页 DoS）
+  const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit')) || 20));
+  const maxPage = Math.max(1, Math.ceil(200000 / limit));
+  const safePage = Math.min(page, maxPage);
+  const offset = (safePage - 1) * limit;
 
   try {
     const params = [];
@@ -54,9 +58,13 @@ export async function POST(req) {
   if (!user) {
     return Response.json({ error: '请先登录' }, { status: 401 });
   }
-  const { title, content, images } = await req.json();
+  const { title, content, images, captcha_id, captcha_answer, captcha_sig } = await req.json();
   if (!content || content.trim().length === 0) {
     return Response.json({ error: '请填写内容' }, { status: 400 });
+  }
+  // 服务端验证码校验（ENABLE_CAPTCHA 关闭时跳过）
+  if (process.env.ENABLE_CAPTCHA !== 'false' && !verifyCaptcha(captcha_id, captcha_answer, captcha_sig)) {
+    return Response.json({ error: '验证码错误，请重新计算' }, { status: 400 });
   }
   try {
     const r = await pool.query(

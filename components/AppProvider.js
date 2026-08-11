@@ -400,8 +400,8 @@ export default function AppProvider({ children, cachedName = '' }) {
     return result;
   }, []);
 
-  const register = useCallback(async (email, password, username) => {
-    const result = await API.register(email, password, username);
+  const register = useCallback(async (email, password, username, captcha) => {
+    const result = await API.register(email, password, username, captcha);
     const loginResult = await API.login(email, password);
     if (loginResult.user) {
       setCurrentUser(loginResult.user);

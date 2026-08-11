@@ -3,7 +3,7 @@
 // 发帖页
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { API, generateCaptcha, uploadImage } from '@/lib/api';
+import { API, uploadImage } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
 import { useToast } from './Toast';
@@ -21,7 +21,7 @@ export default function NewPost() {
   const [captchaInput, setCaptchaInput] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  useEffect(() => { setCaptcha(generateCaptcha()); }, []);
+  useEffect(() => { API.getCaptcha().then((c) => setCaptcha(c)).catch(() => {}); }, []);
 
   const handleFiles = async (files) => {
     setUploading(true);
@@ -67,14 +67,10 @@ export default function NewPost() {
       return;
     }
     if (!content.trim()) { toast('请填写内容', 'error'); return; }
-    if (!captcha || parseInt(captchaInput) !== captcha.answer) {
-      toast('验证码错误，请重新计算', 'error');
-      setCaptcha(generateCaptcha());
-      setCaptchaInput('');
-      return;
-    }
+    if (!captcha || !captchaInput.trim()) { toast('请填写验证码', 'error'); return; }
     try {
-      await API.createPost(title.trim() || '无标题', content.trim(), images);
+      // 答案由服务端 HMAC 校验
+      await API.createPost(title.trim() || '无标题', content.trim(), images, { id: captcha.id, answer: captchaInput.trim(), sig: captcha.sig });
       API.logEvent('create_post').catch(() => {});
       toast('发布成功', 'success');
       navigate('feed');
@@ -133,7 +129,7 @@ export default function NewPost() {
         />
         <div className="captcha-row" style={{ margin: '12px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
           {captcha ? (
-            <CaptchaImage captcha={captcha} onRefresh={() => { setCaptcha(generateCaptcha()); setCaptchaInput(''); }} />
+            <CaptchaImage captcha={captcha} onRefresh={() => { API.getCaptcha().then((c) => setCaptcha(c)).catch(() => {}); setCaptchaInput(''); }} />
           ) : (
             <span style={{ color: 'var(--text-light)' }}>{t('newPost.captchaLoading')}</span>
           )}

@@ -2,7 +2,7 @@
 
 // 回复列表 + 发表回复表单
 import { useEffect, useState, useCallback } from 'react';
-import { API, generateCaptcha } from '@/lib/api';
+import { API } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
 import { renderMarkdown } from '@/lib/markdown';
@@ -30,27 +30,25 @@ export default function ReplyList({ postId, onRefresh }) {
   }, [postId]);
 
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { setCaptcha(generateCaptcha()); }, [postId]);
+  useEffect(() => { API.getCaptcha().then((c) => setCaptcha(c)).catch(() => {}); }, [postId]);
 
   const handleSubmit = async () => {
     if (!currentUser) { toast('请先登录', 'warning'); return; }
     if (!content.trim()) { toast('请填写回复内容', 'warning'); return; }
-    if (!captcha || parseInt(captchaInput) !== captcha.answer) {
-      toast('验证码错误，请重新计算', 'warning');
-      setCaptcha(generateCaptcha());
-      setCaptchaInput('');
-      return;
-    }
+    if (!captcha || !captchaInput.trim()) { toast('请填写验证码', 'warning'); return; }
     try {
-      await API.createReply(postId, content.trim());
+      // 答案由服务端 HMAC 校验
+      await API.createReply(postId, content.trim(), { id: captcha.id, answer: captchaInput.trim(), sig: captcha.sig });
       API.logEvent('create_reply').catch(() => {});
       setContent('');
       setCaptchaInput('');
-      setCaptcha(generateCaptcha());
+      API.getCaptcha().then((c) => setCaptcha(c)).catch(() => {});
       load();
       onRefresh();
     } catch (err) {
       toast('回复失败：' + err.message, 'error');
+      API.getCaptcha().then((c) => setCaptcha(c)).catch(() => {});
+      setCaptchaInput('');
     }
   };
 
@@ -112,7 +110,7 @@ export default function ReplyList({ postId, onRefresh }) {
         />
         <div className="captcha-row" style={{ margin: '10px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
           {captcha ? (
-            <CaptchaImage captcha={captcha} onRefresh={() => { setCaptcha(generateCaptcha()); setCaptchaInput(''); }} />
+            <CaptchaImage captcha={captcha} onRefresh={() => { API.getCaptcha().then((c) => setCaptcha(c)).catch(() => {}); setCaptchaInput(''); }} />
           ) : (
             <span style={{ color: 'var(--text-light)' }}>验证码加载中...</span>
           )}
