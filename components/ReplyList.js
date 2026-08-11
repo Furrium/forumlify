@@ -94,6 +94,12 @@ export default function ReplyList({ postId, onRefresh }) {
   // 正在回复的目标回复对象（用于显示 @用户名）
   const replyToObj = replyTo ? replies.find((x) => x.id === replyTo) : null;
 
+  // 回复折叠：默认只显示最近 5 条，更多则显示"继续此消息串"
+  const SHOW_N = 5;
+  const [showAllReplies, setShowAllReplies] = useState(false);
+  const visibleReplies = showAllReplies ? replies : replies.slice(-SHOW_N);
+  const hiddenCount = replies.length - visibleReplies.length;
+
   return (
     <>
       <div className="post-reply-count" style={{ marginTop: 20, fontSize: 14, color: '#64748b' }}>
@@ -103,7 +109,7 @@ export default function ReplyList({ postId, onRefresh }) {
         {replies.length === 0 ? (
           <div style={{ color: '#94a3b8', padding: '20px 0', textAlign: 'center' }}><Icon name="message" size={16} /> 还没有回复，快来发表第一条回复吧</div>
         ) : (
-          replies.map((r) => {
+          visibleReplies.map((r) => {
             const rTime = r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '';
             const nestDepth = Math.min(replyDepths[r.id] || 0, 5);
             return (
@@ -142,6 +148,11 @@ export default function ReplyList({ postId, onRefresh }) {
               </div>
             );
           })
+        )}
+        {hiddenCount > 0 && (
+          <button className="reply-show-more" onClick={() => setShowAllReplies(true)}>
+            <Icon name="chevronDown" size={13} /> 继续此消息串（还有 {hiddenCount} 条回复）
+          </button>
         )}
       </div>
 
