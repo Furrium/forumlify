@@ -222,7 +222,7 @@ app.get('/api/auth/me', auth, async (req, res) => {
 //  用户管理（支持分页和搜索）
 // ============================================================
 
-// 获取用户列表（支持分页和按用户名搜索）
+// 获取用户列表（支持分页和按用户名搜索）- 管理员专用
 app.get('/api/users', auth, admin, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -265,6 +265,26 @@ app.get('/api/users', auth, admin, async (req, res) => {
         totalPages: Math.ceil(total / limit)
       }
     });
+  } catch (err) {
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// ============================================================
+//  用户公开接口（无需登录）- 用于用户主页
+// ============================================================
+
+// 获取单个用户公开信息（无需登录）
+app.get('/api/users/profile/:username', async (req, res) => {
+  try {
+    const r = await pool.query(
+      'SELECT id, username, avatar_url, bio, role, signature, created_at FROM users WHERE username = $1',
+      [req.params.username]
+    );
+    if (r.rows.length === 0) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+    res.json(r.rows[0]);
   } catch (err) {
     res.status(500).json({ error: '服务器错误' });
   }
