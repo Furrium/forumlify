@@ -73,6 +73,8 @@ const TRANSLATIONS = {
     '待处理': '待处理',
     '已删除': '已删除',
     '已驳回': '已驳回',
+    '角色': '角色',
+    '注册时间': '注册时间',
 
     // ===== 设置页面 =====
     '个人资料': '个人资料',
@@ -108,6 +110,23 @@ const TRANSLATIONS = {
     '页面内容': '页面内容',
     '保存': '保存',
     '编辑页面': '编辑页面',
+    '只允许字母、数字、短横线和下划线': '只允许字母、数字、短横线和下划线',
+    '用于 URL: ?custom=': '用于 URL: ?custom=',
+    '页面内容（HTML + CSS + JS）': '页面内容（HTML + CSS + JS）',
+    '支持 HTML、CSS（<style>）、JS（<script>），内容会在独立的沙盒中渲染': '支持 HTML、CSS（<style>）、JS（<script>），内容会在独立的沙盒中渲染',
+
+    // ===== 自定义 CSS =====
+    '自定义 CSS': '自定义 CSS',
+    '上传 style.css 覆盖默认样式，自定义论坛外观。': '上传 style.css 覆盖默认样式，自定义论坛外观。',
+    '点击或拖拽上传 style.css': '点击或拖拽上传 style.css',
+    '只能上传 style.css 文件': '只能上传 style.css 文件',
+    '保存 CSS': '保存 CSS',
+    '删除自定义 CSS': '删除自定义 CSS',
+
+    // ===== 友情链接 =====
+    '链接名称': '链接名称',
+    '链接地址': '链接地址',
+    '添加': '添加',
 
     // ===== 提示 =====
     '保存成功！': '保存成功！',
@@ -119,6 +138,12 @@ const TRANSLATIONS = {
     '确定要删除该帖子吗？': '确定要删除该帖子吗？',
     '举报已提交': '举报已提交',
     '修改成功': '修改成功',
+    '加载失败': '加载失败',
+    '加载失败：': '加载失败：',
+    '请填写完整信息': '请填写完整信息',
+    '请输入页面名称': '请输入页面名称',
+    '请输入导航栏显示名称': '请输入导航栏显示名称',
+    '请输入页面内容': '请输入页面内容',
 
     // ===== 举报 =====
     '举报了帖子': '举报了帖子',
@@ -279,6 +304,8 @@ const TRANSLATIONS = {
     '待处理': 'Pending',
     '已删除': 'Approved',
     '已驳回': 'Rejected',
+    '角色': 'Role',
+    '注册时间': 'Registered',
 
     // ===== 设置页面 =====
     '个人资料': 'Profile',
@@ -314,6 +341,23 @@ const TRANSLATIONS = {
     '页面内容': 'Page Content',
     '保存': 'Save',
     '编辑页面': 'Edit Page',
+    '只允许字母、数字、短横线和下划线': 'Only letters, numbers, hyphens and underscores allowed',
+    '用于 URL: ?custom=': 'Used in URL: ?custom=',
+    '页面内容（HTML + CSS + JS）': 'Page Content (HTML + CSS + JS)',
+    '支持 HTML、CSS（<style>）、JS（<script>），内容会在独立的沙盒中渲染': 'Supports HTML, CSS (<style>), JS (<script>). Rendered in an isolated sandbox.',
+
+    // ===== 自定义 CSS =====
+    '自定义 CSS': 'Custom CSS',
+    '上传 style.css 覆盖默认样式，自定义论坛外观。': 'Upload style.css to override default styles and customize the forum appearance.',
+    '点击或拖拽上传 style.css': 'Click or drag to upload style.css',
+    '只能上传 style.css 文件': 'Only style.css files are allowed',
+    '保存 CSS': 'Save CSS',
+    '删除自定义 CSS': 'Delete Custom CSS',
+
+    // ===== 友情链接 =====
+    '链接名称': 'Link Name',
+    '链接地址': 'Link URL',
+    '添加': 'Add',
 
     // ===== 提示 =====
     '保存成功！': 'Saved!',
@@ -325,6 +369,12 @@ const TRANSLATIONS = {
     '确定要删除该帖子吗？': 'Delete this post?',
     '举报已提交': 'Report submitted',
     '修改成功': 'Updated',
+    '加载失败': 'Load failed',
+    '加载失败：': 'Load failed: ',
+    '请填写完整信息': 'Please fill in all fields',
+    '请输入页面名称': 'Please enter a page name',
+    '请输入导航栏显示名称': 'Please enter a display name',
+    '请输入页面内容': 'Please enter page content',
 
     // ===== 举报 =====
     '举报了帖子': 'reported a post',
