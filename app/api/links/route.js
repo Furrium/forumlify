@@ -1,15 +1,16 @@
 // GET /api/links, POST /api/links
 import pool from '@/lib/db';
 import { getUser, requireAdmin } from '@/lib/auth';
+import { jsonWithEtag } from '@/lib/http-cache';
 
 // 避免 GET 被静态优化导致写方法 405（动态接口，不能缓存）
 export const dynamic = 'force-dynamic';
 
 
-export async function GET() {
+export async function GET(req) {
   try {
     const r = await pool.query('SELECT * FROM friendly_links ORDER BY sort_order');
-    return Response.json(r.rows);
+    return jsonWithEtag(req, r.rows);
   } catch {
     return Response.json({ error: '服务器错误' }, { status: 500 });
   }

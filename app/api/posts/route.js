@@ -1,6 +1,7 @@
 // GET /api/posts, POST /api/posts — 支持 ?sort= & ?user_id= & 分页
 import pool from '@/lib/db';
 import { getUser } from '@/lib/auth';
+import { jsonWithEtag } from '@/lib/http-cache';
 
 // 避免 GET 被静态优化导致写方法 405（动态接口，不能缓存）
 export const dynamic = 'force-dynamic';
@@ -38,7 +39,7 @@ export async function GET(req) {
       LIMIT $${(await params).length + 1} OFFSET $${(await params).length + 2}
     `, [...params, limit, offset]);
 
-    return Response.json({
+    return jsonWithEtag(req, {
       data: r.rows,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
