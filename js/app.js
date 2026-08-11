@@ -1,0 +1,1299 @@
+// ============================================================
+//  🚀 主入口
+// ============================================================
+
+let currentUser = null;
+let currentPage = 'feed';
+let currentPageNum = 1;
+
+function renderNav() {
+  const authBtns = document.getElementById('authButtons');
+  const userDropdown = document.getElementById('userDropdown');
+  if (currentUser) {
+    authBtns.style.display = 'none';
+    userDropdown.style.display = 'block';
+    document.getElementById('avatarImg').src = currentUser.avatar_url ||
+      'https://ui-avatars.com/api/?name=U&background=6366f1&color=fff';
+    document.getElementById('adminEntry').style.display = currentUser.role === 'admin' ? 'block' : 'none';
+    updateUnreadBadge();
+  } else {
+    authBtns.style.display = 'flex';
+    userDropdown.style.display = 'none';
+  }
+}
+
+async function loadForumName() {
+  try {
+    const data = await API.getSettings();
+    const name = data.forum_name || CONFIG.FORUM_NAME || 'Forumlify';
+    document.getElementById('forumName').textContent = name;
+    document.title = name;
+    const titleEl = document.getElementById('pageTitle');
+    if (titleEl) titleEl.textContent = name;
+  } catch (e) {
+    const name = CONFIG.FORUM_NAME || 'Forumlify';
+    document.getElementById('forumName').textContent = name;
+    document.title = name;
+    const titleEl = document.getElementById('pageTitle');
+    if (titleEl) titleEl.textContent = name;
+  }
+}
+
+function switchPage(page, param) {
+  const url = new URL(window.location);
+
+  if (page === 'user' && param) {
+    url.searchParams.set('user', param);
+    url.searchParams.delete('page');
+    url.searchParams.delete('post');
+    window.history.pushState({ page: 'user', username: param }, '', url);
+    showUserPage(param);
+    return;
+  }
+
+  if (page === 'post' && param) {
+    url.searchParams.set('post', param);
+    url.searchParams.delete('page');
+    url.searchParams.delete('user');
+    window.history.pushState({ page: 'post', postId: param }, '', url);
+    showPostPage(param);
+    return;
+  }
+
+  if (page === 'custom' && param) {
+    url.searchParams.set('custom', param);
+    url.searchParams.delete('page');
+    url.searchParams.delete('post');
+    url.searchParams.delete('user');
+    window.history.pushState({ page: 'custom', custom: param }, '', url);
+    showCustomPage(param);
+    return;
+  }
+
+  if (page === 'feed') {
+    url.searchParams.delete('page');
+    url.searchParams.delete('post');
+    url.searchParams.delete('user');
+    url.searchParams.delete('custom');
+  } else {
+    url.searchParams.set('page', page);
+    url.searchParams.delete('post');
+    url.searchParams.delete('user');
+    url.searchParams.delete('custom');
+  }
+  window.history.pushState({ page: page }, '', url);
+
+  document.getElementById('app').style.display = 'none';
+  document.querySelectorAll('.page-slide').forEach(el => {
+    el.classList.remove('active', 'slide-out');
+  });
+
+  const customContainer = document.getElementById('customPageContainer');
+  if (customContainer) {
+    customContainer.classList.remove('active');
+    customContainer.style.display = 'none';
+  }
+
+  if (page === 'feed') {
+    document.getElementById('app').style.display = 'flex';
+    currentPage = 'feed';
+    renderFeed();
+    renderStats();
+    renderLinks();
+    return;
+  }
+
+  const pageMap = {
+    messages: 'pageMessages',
+    settings: 'pageSettings',
+    admin: 'pageAdmin',
+    new: 'pageNew'
+  };
+  const el = document.getElementById(pageMap[page]);
+  if (el) {
+    el.classList.add('active');
+    el.style.animation = 'none';
+    void el.offsetHeight;
+    el.style.animation = '';
+    currentPage = page;
+
+    if (page === 'admin') {
+      document.querySelectorAll('.admin-tab').forEach((t, i) => {
+        t.classList.toggle('active', i === 0);
+      });
+      renderAdminReports();
+    }
+    if (page === 'settings') {
+      renderSettingsPage('profile');
+    }
+    if (page === 'messages') {
+      renderMessagesPage();
+    }
+    if (page === 'new') {
+      document.getElementById('postTitle').value = '';
+      document.getElementById('postContent').value = '';
+      document.getElementById('imagePreview').innerHTML = '';
+      document.getElementById('fileInput').value = '';
+      document.getElementById('postCaptchaInput').value = '';
+      refreshCaptcha('post');
+      const dropText = document.getElementById('dropZoneText');
+      if (dropText) dropText.textContent = '点击或拖拽上传图片';
+    }
+  }
+}
+
+// ============================================================
+//  ✉️ 私信系统
+// ============================================================
+
+let currentChatUserId = null;
+let currentChatUsername = null;
+let currentConversationId = null;
+let messagePollInterval = null;
+
+async function updateUnreadBadge() {
+  const badge = document.getElementById('messageBadge');
+  if (!badge || !currentUser) return;
+  try {
+    const conversations = await API.getConversations();
+    const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+    if (totalUnread > 0) {
+      badge.style.display = 'inline-block';
+      badge.textContent = totalUnread > 99 ? '99+' : totalUnread;
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch (e) {}
+}
+
+function openMessageList() {
+  document.getElementById('messageListModal').classList.add('active');
+  renderMessageList();
+}
+
+function closeMessageList() {
+  document.getElementById('messageListModal').classList.remove('active');
+  if (messagePollInterval) {
+    clearInterval(messagePollInterval);
+    messagePollInterval = null;
+  }
+}
+
+async function renderMessageList() {
+  const container = document.getElementById('messageListContent');
+  container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
+
+  try {
+    const conversations = await API.getConversations();
+    if (conversations.length === 0) {
+      container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">暂无私信</div>';
+      return;
+    }
+    let html = '';
+    conversations.forEach(c => {
+      const unread = c.unread_count || 0;
+      const lastMsg = c.last_message || '暂无消息';
+      const time = c.last_message_time ? new Date(c.last_message_time).toLocaleString('zh-CN') : '';
+      html += `
+        <div class="message-list-item" style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s;" 
+             onclick="openChat('${c.id}', '${c.other_user_id}', '${c.other_username}')">
+          <img src="${c.other_avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.other_username) + '&background=6366f1&color=fff&size=64'}" 
+               style="width:40px;height:40px;border-radius:50%;object-fit:cover;" />
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-weight:600;">${c.other_username}</span>
+              <span style="font-size:12px;color:var(--text-light);">${time}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:13px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${lastMsg}</span>
+              ${unread > 0 ? `<span style="background:#ef4444;color:#fff;border-radius:50%;padding:2px 8px;font-size:11px;font-weight:600;">${unread}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
+  }
+}
+
+function openChat(conversationId, otherUserId, otherUsername) {
+  currentConversationId = conversationId;
+  currentChatUserId = otherUserId;
+  currentChatUsername = otherUsername;
+
+  document.getElementById('chatModal').classList.add('active');
+  document.getElementById('chatTitle').textContent = otherUsername;
+
+  renderMessages(conversationId);
+
+  if (messagePollInterval) clearInterval(messagePollInterval);
+  messagePollInterval = setInterval(() => {
+    if (currentConversationId) {
+      renderMessages(currentConversationId, true);
+    }
+  }, 3000);
+}
+
+function closeChat() {
+  document.getElementById('chatModal').classList.remove('active');
+  if (messagePollInterval) {
+    clearInterval(messagePollInterval);
+    messagePollInterval = null;
+  }
+  currentConversationId = null;
+  currentChatUserId = null;
+  currentChatUsername = null;
+  updateUnreadBadge();
+}
+
+async function renderMessages(conversationId, silent = false) {
+  const container = document.getElementById('chatMessages');
+  if (!silent) {
+    container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
+  }
+
+  try {
+    const messages = await API.getMessages(conversationId);
+    if (messages.length === 0) {
+      container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">还没有消息，打个招呼吧 👋</div>';
+      return;
+    }
+    let html = '';
+    messages.forEach(m => {
+      const isMine = m.sender_id === currentUser.id;
+      const time = m.created_at ? new Date(m.created_at).toLocaleString('zh-CN') : '';
+      html += `
+        <div style="display:flex;${isMine ? 'justify-content:flex-end;' : 'justify-content:flex-start;'} margin-bottom:12px;">
+          ${!isMine ? `<img src="${m.sender_avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(m.sender_username) + '&background=6366f1&color=fff&size=64'}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:8px;flex-shrink:0;" />` : ''}
+          <div style="max-width:70%;">
+            <div style="background:${isMine ? 'var(--primary)' : 'var(--surface)'};color:${isMine ? '#fff' : 'var(--text)'};padding:10px 14px;border-radius:12px;border:${isMine ? 'none' : '1px solid var(--border)'};word-break:break-word;">
+              ${m.content}
+            </div>
+            <div style="font-size:11px;color:var(--text-light);margin-top:4px;${isMine ? 'text-align:right;' : ''}">
+              ${time} ${isMine ? (m.is_read ? '✓✓' : '✓') : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+    container.scrollTop = container.scrollHeight;
+  } catch (err) {
+    if (!silent) {
+      container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
+    }
+  }
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const content = input.value.trim();
+  if (!content || !currentConversationId) return;
+
+  try {
+    await API.sendMessage(currentConversationId, content);
+    input.value = '';
+    renderMessages(currentConversationId);
+    updateUnreadBadge();
+    if (document.getElementById('messageListModal').classList.contains('active')) {
+      renderMessageList();
+    }
+  } catch (err) {
+    alert('发送失败：' + err.message);
+  }
+}
+
+async function openPrivateChat(otherUserId, otherUsername) {
+  try {
+    const result = await API.getOrCreateConversation(otherUserId);
+    currentConversationId = result.id;
+    currentChatUserId = otherUserId;
+    currentChatUsername = otherUsername;
+
+    document.getElementById('chatModal').classList.add('active');
+    document.getElementById('chatTitle').textContent = otherUsername;
+
+    renderMessages(currentConversationId);
+
+    if (messagePollInterval) clearInterval(messagePollInterval);
+    messagePollInterval = setInterval(() => {
+      if (currentConversationId) {
+        renderMessages(currentConversationId, true);
+      }
+    }, 3000);
+  } catch (err) {
+    alert('打开私信失败：' + err.message);
+  }
+}
+
+// ============================================================
+//  📸 图片上传（拖拽上传）
+// ============================================================
+
+function handleImageFiles(files) {
+  const preview = document.getElementById('imagePreview');
+  if (!preview) return;
+  for (let file of files) {
+    if (!file.type.startsWith('image/')) continue;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('图片 ' + file.name + ' 超过 5MB，请压缩后上传');
+      continue;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:4px;border:1px solid var(--border);';
+      preview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  }
+  const fileInput = document.getElementById('fileInput');
+  if (fileInput) fileInput.value = '';
+}
+
+// ============================================================
+//  📄 自定义页面导航
+// ============================================================
+
+let customPagesNav = [];
+
+async function loadCustomPagesNav() {
+  try {
+    const pages = await API.getCustomPages();
+    customPagesNav = pages;
+    renderCustomPagesNav();
+  } catch (e) {
+    customPagesNav = [];
+  }
+}
+
+function renderCustomPagesNav() {
+  const container = document.getElementById('customNavLinks');
+  if (!container) return;
+  container.innerHTML = '';
+
+  customPagesNav.forEach(page => {
+    const link = document.createElement('a');
+    link.href = '#';
+    link.dataset.custom = page.name;
+    link.textContent = page.title;
+    link.style.cssText = 'color:var(--text-secondary);text-decoration:none;font-size:14px;padding:4px 10px;border-radius:4px;transition:color 0.15s;';
+    link.addEventListener('mouseenter', function() {
+      this.style.color = 'var(--text)';
+    });
+    link.addEventListener('mouseleave', function() {
+      this.style.color = 'var(--text-secondary)';
+    });
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      switchPage('custom', page.name);
+    });
+    container.appendChild(link);
+  });
+}
+
+// ============================================================
+//  📄 自定义页面渲染
+// ============================================================
+
+function showCustomPage(pageName) {
+  document.getElementById('app').style.display = 'none';
+  document.querySelectorAll('.page-slide').forEach(el => {
+    el.classList.remove('active', 'slide-out');
+  });
+
+  let container = document.getElementById('customPageContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'customPageContainer';
+    container.className = 'page-slide';
+    container.style.cssText = 'display:none;position:fixed;inset:0;background:var(--bg);z-index:50;padding:84px 32px 40px;overflow-y:auto;transition:background 0.2s;';
+    document.body.appendChild(container);
+  }
+
+  container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
+  container.classList.add('active');
+  container.style.display = 'block';
+  currentPage = 'custom';
+
+  API.getCustomPage(pageName).then(page => {
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'width:100%;min-height:70vh;border:none;border-radius:8px;background:var(--surface);';
+    iframe.sandbox = 'allow-scripts allow-modals allow-same-origin';
+    iframe.srcdoc = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 24px;
+            background: var(--bg, #f6f8fc);
+            color: var(--text, #0a0e1a);
+          }
+          @media (prefers-color-scheme: dark) {
+            body { background: #0f1117; color: #e8edf5; }
+          }
+        </style>
+        ${page.content}
+      </head>
+      <body></body>
+      </html>
+    `;
+    container.innerHTML = '';
+    container.appendChild(iframe);
+
+    document.querySelectorAll('.custom-page-nav-link').forEach(el => {
+      el.style.color = el.dataset.custom === pageName ? 'var(--primary)' : 'var(--text-secondary)';
+    });
+  }).catch(err => {
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px 0;">页面加载失败：' + err.message + '</div>';
+  });
+}
+
+// ============================================================
+//  📩 消息页面
+// ============================================================
+
+async function renderMessagesPage() {
+  const container = document.getElementById('messagesContent');
+  if (!container) return;
+  container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">加载中...</div>';
+
+  try {
+    const notifications = await apiFetch('/notifications');
+    if (notifications.error) throw new Error(notifications.error);
+
+    if (notifications.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center;color:#94a3b8;padding:60px 0;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 16px;display:block;color:#94a3b8;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <p style="font-size:16px;">暂无消息</p>
+          <p style="font-size:13px;">当有人回复你的帖子或处理你的举报时，会在这里通知你</p>
+        </div>
+      `;
+      return;
+    }
+
+    await apiFetch('/notifications/read-all', { method: 'PUT' });
+
+    let html = '';
+    const typeMap = {
+      reply: '💬',
+      post_deleted: '🗑️',
+      report_handled: '🛡️',
+      system: '📢'
+    };
+    notifications.forEach(n => {
+      const icon = typeMap[n.type] || '📌';
+      const time = n.created_at ? new Date(n.created_at).toLocaleString('zh-CN') : '';
+      html += `
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border-light);background:var(--surface);border-radius:6px;margin-bottom:6px;">
+          <span style="font-size:20px;">${icon}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:14px;">${n.title}</div>
+            <div style="color:var(--text-secondary);font-size:13px;margin-top:2px;">${n.content}</div>
+            ${n.link ? `<a href="${n.link}" style="color:var(--primary);font-size:13px;text-decoration:none;margin-top:4px;display:inline-block;">查看详情 →</a>` : ''}
+            <div style="font-size:12px;color:var(--text-light);margin-top:4px;">${time}</div>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
+  }
+}
+
+// ============================================================
+//  ⚙️ 设置页面（含侧边栏）
+// ============================================================
+
+let currentSettingsTab = 'profile';
+
+async function renderSettingsPage(tab = 'profile') {
+  const container = document.getElementById('settingsContent');
+  if (!container) return;
+
+  // 更新侧边栏高亮
+  document.querySelectorAll('.settings-nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.settings-nav-item[data-settings-tab="${tab}"]`)?.classList.add('active');
+  currentSettingsTab = tab;
+
+  if (!currentUser) {
+    container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">请先登录</div>';
+    return;
+  }
+
+  const user = currentUser;
+
+  try {
+    const userPosts = await apiFetch('/posts?user_id=' + user.id);
+    const postCount = userPosts.data ? userPosts.data.length : 0;
+
+    let recoveryCount = 0;
+    try {
+      const countData = await API.getRecoveryCodesCount();
+      recoveryCount = countData.count || 0;
+    } catch (e) {}
+
+    if (tab === 'profile') {
+      container.innerHTML = `
+        <h3 style="margin-bottom:16px;text-align:center;">👤 个人资料</h3>
+
+        <!-- 头像 -->
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="position:relative;display:inline-block;">
+            <img id="avatarPreview" src="${user.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.username) + '&background=6366f1&color=fff&size=128'}" 
+                 style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);" />
+            <button id="avatarUploadBtn" style="position:absolute;bottom:0;right:0;background:var(--primary);color:#fff;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(99,102,241,0.4);">
+              📷
+            </button>
+          </div>
+          <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" />
+          <h2 style="margin:12px 0 4px;">${user.username}</h2>
+          <p style="color:var(--text-secondary);font-size:14px;">${user.bio || '这个人很懒，什么都没写'}</p>
+          <div style="display:flex;justify-content:center;gap:16px;margin-top:8px;font-size:13px;color:var(--text-secondary);flex-wrap:wrap;">
+            <span>📅 加入 ${user.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '未知'}</span>
+            <span>📝 ${postCount} 帖</span>
+            ${user.role === 'admin' ? '<span style="color:var(--primary);font-weight:600;">🛡️ 管理员</span>' : ''}
+          </div>
+          <div id="avatarUploadStatus" style="font-size:13px;margin-top:8px;"></div>
+        </div>
+
+        <!-- 基本资料 -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
+          <div style="margin-bottom:16px;">
+            <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">用户名</label>
+            <input type="text" id="settingsUsername" value="${user.username}" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">个人简介</label>
+            <textarea id="settingsBio" rows="3" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);resize:vertical;">${user.bio || ''}</textarea>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-weight:600;font-size:14px;display:block;margin-bottom:4px;">帖子签名</label>
+            <textarea id="settingsSignature" rows="2" placeholder="显示在每篇帖子底部，支持 Markdown" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:13px;background:var(--bg);color:var(--text);resize:vertical;font-family:inherit;">${user.signature || ''}</textarea>
+            <div style="font-size:12px;color:var(--text-light);margin-top:2px;">用 --- 分隔，支持 Markdown</div>
+          </div>
+          <button id="settingsSaveBtn" class="btn-primary" style="width:100%;padding:10px;">保存设置</button>
+        </div>
+      `;
+
+      // ===== 头像上传 =====
+      const avatarBtn = document.getElementById('avatarUploadBtn');
+      const avatarInput = document.getElementById('avatarFileInput');
+      const avatarPreview = document.getElementById('avatarPreview');
+      const statusEl = document.getElementById('avatarUploadStatus');
+
+      if (avatarBtn && avatarInput) {
+        avatarBtn.addEventListener('click', function() {
+          avatarInput.click();
+        });
+
+        avatarInput.addEventListener('change', async function() {
+          const file = this.files[0];
+          if (!file) return;
+          if (!file.type.startsWith('image/')) {
+            statusEl.textContent = '❌ 请选择图片文件';
+            statusEl.style.color = '#ef4444';
+            return;
+          }
+          if (file.size > 5 * 1024 * 1024) {
+            statusEl.textContent = '❌ 图片不能超过 5MB';
+            statusEl.style.color = '#ef4444';
+            return;
+          }
+
+          statusEl.textContent = '⏳ 上传中...';
+          statusEl.style.color = 'var(--text-secondary)';
+
+          try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const uploadRes = await fetch(CONFIG.API_BASE_URL + '/upload', {
+              method: 'POST',
+              headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('forumlify-token')
+              },
+              body: formData
+            });
+            const uploadData = await uploadRes.json();
+            if (uploadData.error) throw new Error(uploadData.error);
+
+            const avatarUrl = uploadData.url;
+
+            const updateRes = await API.updateAvatar(user.id, avatarUrl);
+            if (updateRes.error) throw new Error(updateRes.error);
+
+            currentUser.avatar_url = avatarUrl;
+            avatarPreview.src = avatarUrl;
+            statusEl.textContent = '✅ 头像更新成功！';
+            statusEl.style.color = '#22c55e';
+            renderNav();
+
+          } catch (err) {
+            statusEl.textContent = '❌ ' + err.message;
+            statusEl.style.color = '#ef4444';
+          }
+        });
+      }
+
+      // ===== 保存设置（含签名） =====
+      document.getElementById('settingsSaveBtn').addEventListener('click', async function() {
+        const username = document.getElementById('settingsUsername').value.trim();
+        const bio = document.getElementById('settingsBio').value.trim();
+        const signature = document.getElementById('settingsSignature').value.trim();
+        if (!username) { alert('用户名不能为空'); return; }
+        try {
+          await API.updateProfile(user.id, username, bio, signature);
+          currentUser.username = username;
+          currentUser.bio = bio;
+          currentUser.signature = signature;
+          alert('保存成功！');
+          renderNav();
+          renderSettingsPage('profile');
+        } catch (err) {
+          alert('保存失败：' + err.message);
+        }
+      });
+    }
+
+    else if (tab === 'security') {
+      container.innerHTML = `
+        <h3 style="margin-bottom:16px;text-align:center;">🔒 安全设置</h3>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
+          <h4 style="font-size:14px;margin-bottom:12px;">修改密码</h4>
+          <div style="margin-bottom:12px;">
+            <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">当前密码</label>
+            <input type="password" id="changeOldPassword" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
+          </div>
+          <div style="margin-bottom:12px;">
+            <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">新密码</label>
+            <input type="password" id="changeNewPassword" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
+          </div>
+          <button id="changePasswordBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">修改密码</button>
+          <div id="passwordChangeStatus" style="font-size:13px;margin-top:6px;color:var(--text-light);"></div>
+
+          <div style="border-top:1px solid var(--border);margin:16px 0;"></div>
+
+          <h4 style="font-size:14px;margin-bottom:12px;">修改邮箱</h4>
+          <div style="margin-bottom:12px;">
+            <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">当前密码（验证身份）</label>
+            <input type="password" id="changeEmailPassword" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
+          </div>
+          <div style="margin-bottom:12px;">
+            <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">新邮箱</label>
+            <input type="email" id="changeNewEmail" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:14px;background:var(--bg);color:var(--text);" />
+          </div>
+          <button id="changeEmailBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">修改邮箱</button>
+          <div id="emailChangeStatus" style="font-size:13px;margin-top:6px;color:var(--text-light);"></div>
+        </div>
+      `;
+
+      // ===== 修改密码 =====
+      document.getElementById('changePasswordBtn').addEventListener('click', async function() {
+        const oldPassword = document.getElementById('changeOldPassword').value;
+        const newPassword = document.getElementById('changeNewPassword').value;
+        const statusEl = document.getElementById('passwordChangeStatus');
+
+        if (!oldPassword || !newPassword) {
+          statusEl.textContent = '请填写完整信息';
+          statusEl.style.color = '#ef4444';
+          return;
+        }
+        if (newPassword.length < 6) {
+          statusEl.textContent = '新密码至少6位';
+          statusEl.style.color = '#ef4444';
+          return;
+        }
+
+        try {
+          await API.changePassword(oldPassword, newPassword);
+          document.getElementById('changeOldPassword').value = '';
+          document.getElementById('changeNewPassword').value = '';
+          statusEl.textContent = '✅ 密码修改成功！';
+          statusEl.style.color = '#22c55e';
+        } catch (err) {
+          statusEl.textContent = '❌ ' + err.message;
+          statusEl.style.color = '#ef4444';
+        }
+      });
+
+      // ===== 修改邮箱 =====
+      document.getElementById('changeEmailBtn').addEventListener('click', async function() {
+        const password = document.getElementById('changeEmailPassword').value;
+        const newEmail = document.getElementById('changeNewEmail').value;
+        const statusEl = document.getElementById('emailChangeStatus');
+
+        if (!password || !newEmail) {
+          statusEl.textContent = '请填写完整信息';
+          statusEl.style.color = '#ef4444';
+          return;
+        }
+
+        try {
+          await API.changeEmail(password, newEmail);
+          document.getElementById('changeEmailPassword').value = '';
+          document.getElementById('changeNewEmail').value = '';
+          currentUser.email = newEmail;
+          statusEl.textContent = '✅ 邮箱修改成功！';
+          statusEl.style.color = '#22c55e';
+        } catch (err) {
+          statusEl.textContent = '❌ ' + err.message;
+          statusEl.style.color = '#ef4444';
+        }
+      });
+    }
+
+    else if (tab === 'recovery') {
+      container.innerHTML = `
+        <h3 style="margin-bottom:16px;text-align:center;">🔑 恢复码</h3>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;">
+          <p style="font-size:14px;color:var(--text-secondary);margin-bottom:12px;">用于忘记密码时重置账户。每个恢复码只能使用一次。</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button id="viewRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">📋 查看恢复码</button>
+            <button id="regenerateRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">🔄 重新生成</button>
+          </div>
+          <div id="recoveryCodesStatus" style="font-size:13px;color:var(--text-light);margin-top:8px;">剩余 ${recoveryCount} 个可用恢复码</div>
+        </div>
+      `;
+
+      // ===== 恢复码管理 =====
+      const viewBtn = document.getElementById('viewRecoveryCodesBtn');
+      const regenBtn = document.getElementById('regenerateRecoveryCodesBtn');
+      const recoveryStatus = document.getElementById('recoveryCodesStatus');
+
+      if (viewBtn) {
+        viewBtn.addEventListener('click', async function() {
+          try {
+            const data = await API.generateRecoveryCodes();
+            showRecoveryCodesModal(data.codes);
+            const countData = await API.getRecoveryCodesCount();
+            if (recoveryStatus) recoveryStatus.textContent = '剩余 ' + (countData.count || 0) + ' 个可用恢复码';
+          } catch (err) {
+            alert('获取恢复码失败：' + err.message);
+          }
+        });
+      }
+
+      if (regenBtn) {
+        regenBtn.addEventListener('click', async function() {
+          if (!confirm('重新生成将替换所有旧的恢复码，确定继续吗？')) return;
+          try {
+            const data = await API.generateRecoveryCodes();
+            showRecoveryCodesModal(data.codes);
+            const countData = await API.getRecoveryCodesCount();
+            if (recoveryStatus) recoveryStatus.textContent = '剩余 ' + (countData.count || 0) + ' 个可用恢复码';
+          } catch (err) {
+            alert('重新生成失败：' + err.message);
+          }
+        });
+      }
+    }
+
+  } catch (err) {
+    container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px 0;">加载失败</div>';
+  }
+}
+
+// ============================================================
+//  设置页面侧边栏切换
+// ============================================================
+
+document.querySelector('.settings-nav')?.addEventListener('click', function(e) {
+  const tabLink = e.target.closest('.settings-nav-item');
+  if (!tabLink) return;
+  e.preventDefault();
+  const tab = tabLink.dataset.settingsTab;
+  if (!tab) return;
+  renderSettingsPage(tab);
+});
+
+// ============================================================
+//  ✏️ 编辑帖子模态框
+// ============================================================
+
+function openEditModal(postId, currentTitle, currentContent) {
+  const modal = document.createElement('div');
+  modal.className = 'modal active';
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:600px;">
+      <span class="close" style="position:absolute;top:12px;right:16px;font-size:24px;cursor:pointer;color:var(--text-light);">&times;</span>
+      <h2 style="margin-bottom:16px;">✏️ 编辑帖子</h2>
+      <input type="text" id="editPostTitle" value="${currentTitle || ''}" placeholder="标题" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:6px;font-size:15px;font-weight:600;margin-bottom:12px;font-family:inherit;background:var(--bg);color:var(--text);" />
+      <textarea id="editPostContent" rows="6" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:6px;font-size:15px;font-family:inherit;resize:vertical;background:var(--bg);color:var(--text);">${currentContent || ''}</textarea>
+      <button id="editPostSaveBtn" class="btn-primary" style="padding:10px 24px;margin-top:12px;width:100%;">保存修改</button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  modal.querySelector('.close').addEventListener('click', function() {
+    modal.remove();
+  });
+  modal.addEventListener('click', function(e) {
+    if (e.target === this) modal.remove();
+  });
+
+  modal.querySelector('#editPostSaveBtn').addEventListener('click', async function() {
+    const title = document.getElementById('editPostTitle').value.trim() || '无标题';
+    const content = document.getElementById('editPostContent').value.trim();
+    if (!content) { alert('请填写内容'); return; }
+
+    try {
+      await API.updatePost(postId, title, content);
+      modal.remove();
+      if (currentPage === 'post') {
+        renderPostDetail(currentPostId);
+      } else {
+        renderFeed();
+      }
+      alert('编辑成功！');
+    } catch (err) {
+      alert('编辑失败：' + err.message);
+    }
+  });
+}
+
+// ============================================================
+//  🔑 恢复码显示模态框
+// ============================================================
+
+function showRecoveryCodesModal(codes) {
+  let modal = document.getElementById('recoveryCodesModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'recoveryCodesModal';
+    modal.className = 'modal active';
+    modal.style.display = 'flex';
+    document.body.appendChild(modal);
+  }
+
+  let codesHtml = '';
+  codes.forEach((code, i) => {
+    codesHtml += `
+      <div style="display:flex;justify-content:space-between;padding:6px 12px;background:var(--bg);border-radius:4px;margin-bottom:4px;font-family:monospace;font-size:14px;letter-spacing:0.5px;">
+        <span>${String(i + 1).padStart(2, '0')}.</span>
+        <span>${code}</span>
+      </div>
+    `;
+  });
+
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:480px;">
+      <h2 style="margin-bottom:8px;">🔑 恢复码</h2>
+      <p style="font-size:14px;color:var(--text-secondary);margin-bottom:16px;">
+        请妥善保存以下恢复码。当你忘记密码时，可以使用它们重置密码。
+        <strong style="color:#ef4444;">每个恢复码只能使用一次。</strong>
+      </p>
+      <div style="margin-bottom:16px;">${codesHtml}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="copyRecoveryCodesBtn" class="btn-secondary" style="padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text);">📋 复制全部</button>
+        <button id="closeRecoveryCodesBtn" class="btn-primary" style="padding:8px 16px;">我已保存</button>
+      </div>
+      <div id="copyStatus" style="font-size:13px;margin-top:8px;color:var(--text-light);"></div>
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+  modal.classList.add('active');
+
+  document.getElementById('closeRecoveryCodesBtn').addEventListener('click', function() {
+    modal.remove();
+  });
+
+  document.getElementById('copyRecoveryCodesBtn').addEventListener('click', function() {
+    const text = codes.join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      document.getElementById('copyStatus').textContent = '✅ 已复制到剪贴板';
+    }).catch(() => {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      textarea.remove();
+      document.getElementById('copyStatus').textContent = '✅ 已复制到剪贴板';
+    });
+  });
+
+  modal.addEventListener('click', function(e) {
+    if (e.target === this) modal.remove();
+  });
+}
+
+// ============================================================
+//  🖼️ 图片查看器
+// ============================================================
+
+function openImageViewer(imageUrl) {
+  const existing = document.getElementById('imageViewerModal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'imageViewerModal';
+  modal.style.cssText = `
+    position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;animation:fadeIn 0.2s ease-out;
+  `;
+
+  const img = document.createElement('img');
+  img.src = imageUrl;
+  img.style.cssText = `
+    max-width:90vw;max-height:90vh;object-fit:contain;
+    border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.5);
+    cursor:default;user-select:none;
+  `;
+
+  modal.addEventListener('click', function(e) {
+    if (e.target === this) {
+      this.remove();
+    }
+  });
+
+  modal.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') this.remove();
+  });
+
+  modal.appendChild(img);
+  document.body.appendChild(modal);
+  modal.focus();
+}
+
+// 添加淡入动画
+(function() {
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
+// ============================================================
+//  🚀 初始化
+// ============================================================
+async function init() {
+  applyTheme();
+
+  document.getElementById('forumName').textContent = CONFIG.FORUM_NAME || 'Forumlify';
+
+  refreshCaptcha('reg');
+  refreshCaptcha('post');
+  refreshCaptcha('reply');
+
+  if (token) {
+    try {
+      const user = await API.getMe();
+      currentUser = user;
+      API.logEvent('login').catch(() => {});
+    } catch (e) {
+      token = null;
+      localStorage.removeItem('forumlify-token');
+    }
+  }
+  renderNav();
+  await loadForumName();
+  await loadCustomPagesNav();
+  renderStats();
+  renderLinks();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const postParam = urlParams.get('post');
+  const pageParam = urlParams.get('page');
+  const userParam = urlParams.get('user');
+  const postPageParam = urlParams.get('postpage');
+  const customParam = urlParams.get('custom');
+
+  if (postPageParam) {
+    currentPageNum = parseInt(postPageParam) || 1;
+  }
+
+  if (customParam) {
+    showCustomPage(customParam);
+  } else if (userParam) {
+    showUserPage(userParam);
+  } else if (postParam) {
+    showPostPage(postParam);
+  } else if (pageParam && ['messages', 'settings', 'admin', 'new'].includes(pageParam)) {
+    if (pageParam === 'admin' && currentUser?.role !== 'admin') {
+      switchPage('feed');
+    } else {
+      switchPage(pageParam);
+    }
+  } else {
+    switchPage('feed');
+  }
+
+  // ============================================================
+  //  绑定所有事件
+  // ============================================================
+
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleTheme(e);
+      document.getElementById('dropdownMenu').classList.remove('show');
+    });
+  }
+
+  document.getElementById('avatarImg').addEventListener('click', function(e) {
+    e.stopPropagation();
+    document.getElementById('dropdownMenu').classList.toggle('show');
+  });
+  document.addEventListener('click', function() {
+    document.getElementById('dropdownMenu').classList.remove('show');
+  });
+
+  document.querySelectorAll('[data-page]').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.preventDefault();
+      const page = this.dataset.page;
+      if (page === 'admin' && currentUser?.role !== 'admin') {
+        alert('无权限访问');
+        return;
+      }
+      document.getElementById('dropdownMenu').classList.remove('show');
+      switchPage(page);
+    });
+  });
+
+  document.querySelectorAll('.back-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      switchPage('feed');
+    });
+  });
+
+  document.getElementById('forumName').addEventListener('click', function() {
+    switchPage('feed');
+  });
+
+  // ===== 忘记密码 =====
+  const forgotLink = document.getElementById('forgotPasswordLink');
+  if (forgotLink) {
+    forgotLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.getElementById('forgotPasswordModal').classList.add('active');
+      document.getElementById('resetStatus').textContent = '';
+    });
+  }
+
+  document.getElementById('resetPasswordSubmit').addEventListener('click', async function() {
+    const email = document.getElementById('resetEmail').value.trim();
+    const code = document.getElementById('resetRecoveryCode').value.trim().toUpperCase();
+    const newPassword = document.getElementById('resetNewPassword').value;
+    const statusEl = document.getElementById('resetStatus');
+
+    if (!email || !code || !newPassword) {
+      statusEl.textContent = '请填写完整信息';
+      statusEl.style.color = '#ef4444';
+      return;
+    }
+    if (newPassword.length < 6) {
+      statusEl.textContent = '密码至少6位';
+      statusEl.style.color = '#ef4444';
+      return;
+    }
+
+    try {
+      await API.resetPassword(email, code, newPassword);
+      statusEl.textContent = '✅ 重置成功！请登录';
+      statusEl.style.color = '#22c55e';
+      setTimeout(() => {
+        document.getElementById('forgotPasswordModal').classList.remove('active');
+        document.getElementById('resetEmail').value = '';
+        document.getElementById('resetRecoveryCode').value = '';
+        document.getElementById('resetNewPassword').value = '';
+      }, 1500);
+    } catch (err) {
+      statusEl.textContent = '❌ ' + err.message;
+      statusEl.style.color = '#ef4444';
+    }
+  });
+
+  // ===== 发帖 =====
+  document.getElementById('fab').addEventListener('click', () => {
+    if (!currentUser) { alert('请先登录'); return; }
+    switchPage('new');
+  });
+
+  document.getElementById('postSubmit').addEventListener('click', async () => {
+    if (!currentUser || !currentUser.id) {
+      alert('请先登录');
+      switchPage('feed');
+      return;
+    }
+    const title = document.getElementById('postTitle').value.trim() || '无标题';
+    const content = document.getElementById('postContent').value.trim();
+    const captchaInput = document.getElementById('postCaptchaInput').value.trim();
+    const captchaAnswer = parseInt(document.getElementById('postCaptchaInput').dataset.answer);
+    if (!content) { alert('请填写内容'); return; }
+    if (parseInt(captchaInput) !== captchaAnswer) { alert('验证码错误，请重新计算'); refreshCaptcha('post'); return; }
+    const images = [];
+    document.querySelectorAll('#imagePreview img').forEach(img => {
+      images.push(img.src);
+    });
+    try {
+      await API.createPost(title, content, images);
+      API.logEvent('create_post').catch(() => {});
+      alert('发布成功！');
+      switchPage('feed');
+      renderFeed();
+      renderStats();
+    } catch (err) {
+      alert('发布失败：' + err.message);
+    }
+  });
+
+  document.getElementById('postCaptchaQuestion').addEventListener('click', function() {
+    refreshCaptcha('post');
+  });
+  document.getElementById('regCaptchaQuestion').addEventListener('click', function() {
+    refreshCaptcha('reg');
+  });
+
+  // ===== 拖拽上传 =====
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const dropZoneText = document.getElementById('dropZoneText');
+
+  if (dropZone && fileInput) {
+    dropZone.addEventListener('click', function() {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function() {
+      handleImageFiles(this.files);
+    });
+
+    dropZone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      this.style.borderColor = 'var(--primary)';
+      this.style.background = 'var(--primary-bg)';
+      if (dropZoneText) dropZoneText.textContent = '松开上传';
+    });
+
+    dropZone.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      this.style.borderColor = 'var(--border)';
+      this.style.background = 'var(--bg)';
+      if (dropZoneText) dropZoneText.textContent = '点击或拖拽上传图片';
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.style.borderColor = 'var(--border)';
+      this.style.background = 'var(--bg)';
+      if (dropZoneText) dropZoneText.textContent = '点击或拖拽上传图片';
+      handleImageFiles(e.dataTransfer.files);
+    });
+  }
+
+  // ===== 举报 =====
+  document.getElementById('reportSubmit').addEventListener('click', async () => {
+    if (!reportTargetPostId) return;
+    const reason = document.getElementById('reportReason').value;
+    try {
+      await API.createReport(reportTargetPostId, reason);
+      document.getElementById('reportModal').classList.remove('active');
+      alert('举报已提交，管理员将尽快处理');
+      reportTargetPostId = null;
+    } catch (err) {
+      alert('举报失败：' + err.message);
+    }
+  });
+
+  // ===== 模态框关闭 =====
+  document.querySelectorAll('.modal .close').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.getElementById(this.dataset.modal).classList.remove('active');
+    });
+  });
+  document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('active');
+    });
+  });
+
+  // ===== 前进后退 =====
+  window.addEventListener('popstate', function(e) {
+    const state = e.state || {};
+    const page = state.page || 'feed';
+    const postId = state.postId || null;
+    const username = state.username || null;
+    const custom = state.custom || null;
+    if (postId) {
+      showPostPage(postId);
+    } else if (username) {
+      showUserPage(username);
+    } else if (custom) {
+      showCustomPage(custom);
+    } else {
+      switchPage(page);
+    }
+  });
+
+  // ===== 私信按钮 =====
+  const messageBtn = document.getElementById('messageBtn');
+  if (messageBtn) {
+    const newBtn = messageBtn.cloneNode(true);
+    messageBtn.parentNode.replaceChild(newBtn, messageBtn);
+    newBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (!currentUser) { alert('请先登录'); return; }
+      openMessageList();
+    });
+  }
+
+  const closeMessageListBtn = document.querySelector('#messageListModal .close');
+  if (closeMessageListBtn) {
+    closeMessageListBtn.addEventListener('click', closeMessageList);
+  }
+
+  const closeChatBtn = document.querySelector('#chatModal .close');
+  if (closeChatBtn) {
+    closeChatBtn.addEventListener('click', closeChat);
+  }
+
+  const chatInput = document.getElementById('chatInput');
+  if (chatInput) {
+    chatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  }
+
+  document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.remove('active');
+        if (this.id === 'messageListModal') {
+          closeMessageList();
+        }
+        if (this.id === 'chatModal') {
+          closeChat();
+        }
+      }
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', init);
