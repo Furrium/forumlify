@@ -1,0 +1,397 @@
+// ============================================================
+//  🌍 国际化（自动检测浏览器语言）
+// ============================================================
+
+const TRANSLATIONS = {
+  'zh': {
+    '登录': '登录',
+    '注册': '注册',
+    '消息': '消息',
+    '设置': '设置',
+    '管理后台': '管理后台',
+    '暗色模式': '暗色模式',
+    '亮色模式': '亮色模式',
+    '退出': '退出',
+    '暂无链接': '暂无链接',
+    '最新发布': '最新发布',
+    '最新回复': '最新回复',
+    '发布新帖': '发布新帖',
+    '标题': '标题',
+    '说点什么...': '说点什么...',
+    '发布帖子': '发布帖子',
+    '加载中...': '加载中...',
+    '还没有帖子，快来发布第一条吧！': '还没有帖子，快来发布第一条吧！',
+    '帖子详情': '帖子详情',
+    '发表回复': '发表回复',
+    '提交回复': '提交回复',
+    '还没有回复，快来抢沙发吧 🛋️': '还没有回复，快来抢沙发吧 🛋️',
+    '回复': '回复',
+    '社区统计': '社区统计',
+    '主题': '主题',
+    '帖子': '帖子',
+    '用户': '用户',
+    '友情链接': '友情链接',
+    '邮箱': '邮箱',
+    '密码': '密码',
+    '忘记密码？': '忘记密码？',
+    '用户名': '用户名',
+    '密码（至少6位）': '密码（至少6位）',
+    '请先登录': '请先登录',
+    '举报记录': '举报记录',
+    '用户列表': '用户列表',
+    '操作日志': '操作日志',
+    '自定义CSS': '自定义CSS',
+    '论坛名称设置': '论坛名称设置',
+    '自定义页面': '自定义页面',
+    '暂无举报': '暂无举报',
+    '待处理': '待处理',
+    '已删除': '已删除',
+    '已驳回': '已驳回',
+    '个人资料': '个人资料',
+    '安全设置': '安全设置',
+    '恢复码': '恢复码',
+    '保存设置': '保存设置',
+    '修改密码': '修改密码',
+    '当前密码': '当前密码',
+    '新密码': '新密码',
+    '修改邮箱': '修改邮箱',
+    '新邮箱': '新邮箱',
+    '查看恢复码': '查看恢复码',
+    '重新生成': '重新生成',
+    '复制全部': '复制全部',
+    '我已保存': '我已保存',
+    '添加页面': '添加页面',
+    '页面名称': '页面名称',
+    '导航栏显示名称': '导航栏显示名称',
+    '状态': '状态',
+    '启用': '启用',
+    '禁用': '禁用',
+    '页面内容': '页面内容',
+    '保存': '保存',
+    '编辑页面': '编辑页面',
+    '保存成功！': '保存成功！',
+    '保存失败': '保存失败',
+    '操作失败': '操作失败',
+    '删除成功': '删除成功',
+    '删除失败': '删除失败',
+    '确定删除吗？': '确定删除吗？',
+    '确定要删除该帖子吗？': '确定要删除该帖子吗？',
+    '举报已提交': '举报已提交',
+    '修改成功': '修改成功',
+    '举报了帖子': '举报了帖子',
+    '原因：': '原因：',
+    '帖子：': '帖子：',
+    '状态：': '状态：',
+    '处理人：': '处理人：',
+    '删除帖子': '删除帖子',
+    '驳回举报': '驳回举报',
+    '共': '共',
+    '位用户': '位用户',
+    '搜索用户名...': '搜索用户名...',
+    '搜索': '搜索',
+    '清空': '清空',
+    '管理员': '管理员',
+    '普通用户': '普通用户',
+    '不可操作自己': '不可操作自己',
+    '设为普通用户': '设为普通用户',
+    '设为管理员': '设为管理员',
+    '暂无日志': '暂无日志',
+    '时间': '时间',
+    '操作': '操作',
+    '条日志': '条日志',
+    '重置密码': '重置密码',
+    '输入你的邮箱和一个未使用的恢复码': '输入你的邮箱和一个未使用的恢复码',
+    '恢复码（格式：ABCD-1234-EFGH-5678）': '恢复码（格式：ABCD-1234-EFGH-5678）',
+    '新密码（至少6位）': '新密码（至少6位）',
+    '用户主页': '用户主页',
+    '用户不存在': '用户不存在',
+    '这个人很懒，什么都没写': '这个人很懒，什么都没写',
+    '加入于': '加入于',
+    '发了': '发了',
+    '个帖子': '个帖子',
+    '发私信': '发私信',
+    '还没有发帖': '还没有发帖',
+    '私信': '私信',
+    '暂无私信': '暂无私信',
+    '还没有消息，打个招呼吧': '还没有消息，打个招呼吧',
+    '输入消息...': '输入消息...',
+    '发送': '发送',
+    '请选择图片文件': '请选择图片文件',
+    '图片不能超过 5MB': '图片不能超过 5MB',
+    '上传中...': '上传中...',
+    '头像更新成功！': '头像更新成功！',
+    '文件名必须是 style.css': '文件名必须是 style.css',
+    '请上传 CSS 文件': '请上传 CSS 文件',
+    '已选择: ': '已选择: ',
+    '请先选择 style.css 文件': '请先选择 style.css 文件',
+    'CSS 上传成功！刷新页面查看效果': 'CSS 上传成功！刷新页面查看效果',
+    '上传失败': '上传失败',
+    '已删除自定义 CSS': '已删除自定义 CSS',
+    '删除失败': '删除失败',
+    '密码修改成功！': '密码修改成功！',
+    '邮箱修改成功！': '邮箱修改成功！',
+    '重置成功！请登录': '重置成功！请登录',
+    '返回': '返回',
+    '点击或拖拽上传图片': '点击或拖拽上传图片',
+    '支持 JPG、PNG、GIF、WebP，单张最大 5MB': '支持 JPG、PNG、GIF、WebP，单张最大 5MB',
+    '答案': '答案',
+    '编辑帖子': '编辑帖子',
+    '请填写内容': '请填写内容',
+    '发布成功！': '发布成功！',
+    '发布失败': '发布失败',
+    '匿名': '匿名',
+    '无标题': '无标题',
+    '已编辑': '已编辑',
+    '置顶': '置顶',
+    '取消置顶': '取消置顶',
+    '垃圾广告': '垃圾广告',
+    '人身攻击': '人身攻击',
+    '违法内容': '违法内容',
+    '不适当内容': '不适当内容',
+    '其他': '其他',
+    '请选择举报原因：': '请选择举报原因：',
+    '提交举报': '提交举报',
+    '论坛名称': '论坛名称',
+    '暂无帖子': '暂无帖子',
+  },
+  'en': {
+    '登录': 'Login',
+    '注册': 'Register',
+    '消息': 'Messages',
+    '设置': 'Settings',
+    '管理后台': 'Admin',
+    '暗色模式': 'Dark Mode',
+    '亮色模式': 'Light Mode',
+    '退出': 'Logout',
+    '暂无链接': 'No links',
+    '最新发布': 'Latest',
+    '最新回复': 'Recent',
+    '发布新帖': 'New Post',
+    '标题': 'Title',
+    '说点什么...': 'Say something...',
+    '发布帖子': 'Publish',
+    '加载中...': 'Loading...',
+    '还没有帖子，快来发布第一条吧！': 'No posts yet. Be the first!',
+    '帖子详情': 'Post Details',
+    '发表回复': 'Reply',
+    '提交回复': 'Submit Reply',
+    '还没有回复，快来抢沙发吧 🛋️': 'No replies yet. Be the first!',
+    '回复': 'Reply',
+    '社区统计': 'Community Stats',
+    '主题': 'Topics',
+    '帖子': 'Posts',
+    '用户': 'Users',
+    '友情链接': 'Links',
+    '邮箱': 'Email',
+    '密码': 'Password',
+    '忘记密码？': 'Forgot Password?',
+    '用户名': 'Username',
+    '密码（至少6位）': 'Password (min 6 chars)',
+    '请先登录': 'Please login first',
+    '举报记录': 'Reports',
+    '用户列表': 'Users',
+    '操作日志': 'Logs',
+    '自定义CSS': 'Custom CSS',
+    '论坛名称设置': 'Forum Settings',
+    '自定义页面': 'Custom Pages',
+    '暂无举报': 'No reports',
+    '待处理': 'Pending',
+    '已删除': 'Approved',
+    '已驳回': 'Rejected',
+    '个人资料': 'Profile',
+    '安全设置': 'Security',
+    '恢复码': 'Recovery Codes',
+    '保存设置': 'Save Settings',
+    '修改密码': 'Change Password',
+    '当前密码': 'Current Password',
+    '新密码': 'New Password',
+    '修改邮箱': 'Change Email',
+    '新邮箱': 'New Email',
+    '查看恢复码': 'View Recovery Codes',
+    '重新生成': 'Regenerate',
+    '复制全部': 'Copy All',
+    '我已保存': 'Saved',
+    '添加页面': 'Add Page',
+    '页面名称': 'Page Name',
+    '导航栏显示名称': 'Display Name',
+    '状态': 'Status',
+    '启用': 'Enabled',
+    '禁用': 'Disabled',
+    '页面内容': 'Page Content',
+    '保存': 'Save',
+    '编辑页面': 'Edit Page',
+    '保存成功！': 'Saved!',
+    '保存失败': 'Save failed',
+    '操作失败': 'Operation failed',
+    '删除成功': 'Deleted',
+    '删除失败': 'Delete failed',
+    '确定删除吗？': 'Are you sure?',
+    '确定要删除该帖子吗？': 'Delete this post?',
+    '举报已提交': 'Report submitted',
+    '修改成功': 'Updated',
+    '举报了帖子': 'reported a post',
+    '原因：': 'Reason: ',
+    '帖子：': 'Post: ',
+    '状态：': 'Status: ',
+    '处理人：': 'Handler: ',
+    '删除帖子': 'Delete Post',
+    '驳回举报': 'Reject',
+    '共': 'Total',
+    '位用户': 'users',
+    '搜索用户名...': 'Search username...',
+    '搜索': 'Search',
+    '清空': 'Clear',
+    '管理员': 'Admin',
+    '普通用户': 'User',
+    '不可操作自己': 'Cannot modify yourself',
+    '设为普通用户': 'Set as User',
+    '设为管理员': 'Set as Admin',
+    '暂无日志': 'No logs',
+    '时间': 'Time',
+    '操作': 'Action',
+    '条日志': 'logs',
+    '重置密码': 'Reset Password',
+    '输入你的邮箱和一个未使用的恢复码': 'Enter your email and an unused recovery code',
+    '恢复码（格式：ABCD-1234-EFGH-5678）': 'Recovery code (format: ABCD-1234-EFGH-5678)',
+    '新密码（至少6位）': 'New password (min 6 chars)',
+    '用户主页': 'User Profile',
+    '用户不存在': 'User not found',
+    '这个人很懒，什么都没写': 'This user is lazy, nothing written',
+    '加入于': 'Joined',
+    '发了': 'Posted',
+    '个帖子': 'posts',
+    '发私信': 'Send Message',
+    '还没有发帖': 'No posts yet',
+    '私信': 'Messages',
+    '暂无私信': 'No messages',
+    '还没有消息，打个招呼吧': 'No messages yet. Say hi!',
+    '输入消息...': 'Type a message...',
+    '发送': 'Send',
+    '请选择图片文件': 'Please select an image',
+    '图片不能超过 5MB': 'Image must be under 5MB',
+    '上传中...': 'Uploading...',
+    '头像更新成功！': 'Avatar updated!',
+    '文件名必须是 style.css': 'File name must be style.css',
+    '请上传 CSS 文件': 'Please upload a CSS file',
+    '已选择: ': 'Selected: ',
+    '请先选择 style.css 文件': 'Please select style.css first',
+    'CSS 上传成功！刷新页面查看效果': 'CSS uploaded! Refresh to see changes',
+    '上传失败': 'Upload failed',
+    '已删除自定义 CSS': 'Custom CSS deleted',
+    '删除失败': 'Delete failed',
+    '密码修改成功！': 'Password updated!',
+    '邮箱修改成功！': 'Email updated!',
+    '重置成功！请登录': 'Reset successful! Please login',
+    '返回': 'Back',
+    '点击或拖拽上传图片': 'Click or drag to upload image',
+    '支持 JPG、PNG、GIF、WebP，单张最大 5MB': 'Supports JPG, PNG, GIF, WebP, max 5MB',
+    '答案': 'Answer',
+    '编辑帖子': 'Edit Post',
+    '请填写内容': 'Please enter content',
+    '发布成功！': 'Posted!',
+    '发布失败': 'Post failed',
+    '匿名': 'Anonymous',
+    '无标题': 'Untitled',
+    '已编辑': 'Edited',
+    '置顶': 'Pin',
+    '取消置顶': 'Unpin',
+    '垃圾广告': 'Spam',
+    '人身攻击': 'Abuse',
+    '违法内容': 'Illegal',
+    '不适当内容': 'NSFW',
+    '其他': 'Other',
+    '请选择举报原因：': 'Select a reason:',
+    '提交举报': 'Submit Report',
+    '论坛名称': 'Forum Name',
+    '暂无帖子': 'No posts',
+  }
+};
+
+// ============================================================
+//  核心逻辑
+// ============================================================
+
+function detectLanguage() {
+  // URL 参数优先（方便测试）
+  const urlParams = new URLSearchParams(window.location.search);
+  const langParam = urlParams.get('lang');
+  if (langParam && TRANSLATIONS[langParam]) return langParam;
+
+  const stored = localStorage.getItem('forumlify-lang');
+  if (stored && TRANSLATIONS[stored]) return stored;
+
+  const browserLang = navigator.language.slice(0, 2);
+  if (TRANSLATIONS[browserLang]) return browserLang;
+
+  return 'en';
+}
+
+let currentLang = detectLanguage();
+
+function setLanguage(lang) {
+  if (!TRANSLATIONS[lang]) return;
+  currentLang = lang;
+  localStorage.setItem('forumlify-lang', lang);
+  applyTranslation();
+}
+
+function t(key) {
+  const dict = TRANSLATIONS[currentLang] || TRANSLATIONS['zh'];
+  return dict[key] || key;
+}
+
+function applyTranslation() {
+  function walk(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent;
+      const trimmed = text.trim();
+      if (trimmed && TRANSLATIONS['zh'][trimmed]) {
+        const translated = t(trimmed);
+        if (translated !== trimmed) {
+          node.textContent = text.replace(trimmed, translated);
+        }
+      }
+      return;
+    }
+
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      if (['IFRAME', 'SCRIPT', 'STYLE'].includes(node.tagName)) return;
+
+      if (node.placeholder && TRANSLATIONS['zh'][node.placeholder]) {
+        node.placeholder = t(node.placeholder);
+      }
+
+      if (node.tagName === 'INPUT' && node.value && TRANSLATIONS['zh'][node.value]) {
+        if (node.type !== 'password') {
+          node.value = t(node.value);
+        }
+      }
+
+      for (const child of node.childNodes) {
+        walk(child);
+      }
+    }
+  }
+
+  walk(document.body);
+
+  // 监听动态内容
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          walk(node);
+        }
+      }
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// ============================================================
+//  初始化
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(applyTranslation, 200);
+});
