@@ -5,6 +5,8 @@
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const { rateLimit } = require('express-rate-limit');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
@@ -19,7 +21,12 @@ const CONFIG = require('./config');
 
 // 监听端口：环境变量 PORT 优先，其次 config.js 的 SERVER_PORT，最后默认 3000
 const PORT = process.env.PORT || CONFIG.SERVER_PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'forumlify-secret-key-change-me-in-production';
+const DEFAULT_JWT_SECRET = 'forumlify-secret-key-change-me-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || DEFAULT_JWT_SECRET;
+
+if (process.env.NODE_ENV === 'production' && JWT_SECRET === DEFAULT_JWT_SECRET) {
+  throw new Error('JWT_SECRET must be set to a unique value in production');
+}
 
 // ============================================================
 //  数据库
@@ -31,13 +38,56 @@ const pool = new Pool({
 // ============================================================
 //  中间件
 // ============================================================
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.disable('x-powered-by');
+if (process.env.TRUST_PROXY === 'true') app.set('trust proxy', 1);
+
+// The existing UI relies on inline styles/scripts and a CDN-hosted Markdown
+// parser, so CSP is left for a dedicated frontend migration.
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
+
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+if (allowedOrigins.length > 0) {
+  app.use(cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error('Origin is not allowed by CORS'));
+    },
+  }));
+}
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 300,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  handler: (req, res) => res.status(429).json({ error: '请求过于频繁，请稍后重试' }),
+});
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  handler: (req, res) => res.status(429).json({ error: '尝试次数过多，请稍后重试' }),
+});
+
+app.use('/api', apiLimiter);
+app.use(['/api/auth/login', '/api/auth/register', '/api/auth/reset-password'], authLimiter);
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
 // 确保上传目录存在
 if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  dotfiles: 'deny',
+  fallthrough: false,
+  index: false,
+}));
 
 // ============================================================
 //  认证中间件
@@ -1401,15 +1451,37 @@ app.post('/api/auth/reset-password', async (req, res) => {
 });
 
 // ============================================================
-//  托管前端文件
+//  托管公开前端文件
 // ============================================================
 
-app.use(express.static('.'));
+app.use('/js', express.static(path.join(__dirname, 'js'), {
+  dotfiles: 'deny',
+  fallthrough: false,
+  index: false,
+}));
+app.get('/style.css', (req, res) => res.sendFile(path.join(__dirname, 'style.css')));
+app.get('/config.js', (req, res) => res.sendFile(path.join(__dirname, 'config.js')));
 
 app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, 'index.html'));
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: '接口不存在' });
   }
+  if (path.extname(req.path)) {
+    return res.status(404).send('Not found');
+  }
+  return res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ error: '请求内容过大' });
+  }
+  if (err.message === 'Origin is not allowed by CORS') {
+    return res.status(403).json({ error: '不允许的跨域来源' });
+  }
+  console.error(err);
+  return res.status(500).json({ error: '服务器错误' });
 });
 
 // ============================================================

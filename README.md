@@ -62,9 +62,11 @@ psql -U forumlify -d forumlify -f schema.sql
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `DATABASE_URL` | `postgresql://forumlify:123456@localhost:5432/forumlify` | PostgreSQL 连接串 |
+| `DATABASE_URL` | `postgresql://forumlify:***@localhost:5432/forumlify` | PostgreSQL 连接串 |
 | `PORT` | `3000` | HTTP 监听端口 |
-| `JWT_SECRET` | `forumlify-secret-key-change-me-in-production` | JWT 签名密钥，**生产环境务必修改** |
+| `JWT_SECRET` | 本地开发使用内置值 | JWT 签名密钥；`NODE_ENV=production` 时必须显式设置 |
+| `ALLOWED_ORIGINS` | 空 | 允许跨域访问的来源，多个值用逗号分隔；为空时仅支持同源访问 |
+| `TRUST_PROXY` | `false` | 位于可信反向代理后时设为 `true`，用于正确识别限流 IP |
 
 4. **启动**
 
