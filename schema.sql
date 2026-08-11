@@ -227,3 +227,14 @@ CREATE TABLE IF NOT EXISTS recovery_codes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_recovery_codes_user ON recovery_codes(user_id);
+
+
+-- ============================================================
+--  超级管理员自动设立（数据库兼容，幂等）
+--  若没有任何 admin，将最早注册的用户提升为超级管理员。
+--  不依赖自增 uid（users 主键是 UUID），任何现有数据库都可安全执行。
+-- ============================================================
+UPDATE users SET role = 'admin'
+WHERE role <> 'admin'
+  AND NOT EXISTS (SELECT 1 FROM users WHERE role = 'admin')
+  AND id = (SELECT id FROM users ORDER BY created_at ASC, id ASC LIMIT 1);
