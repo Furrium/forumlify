@@ -29,6 +29,20 @@ export default function RootLayout({ children }) {
                 var n = localStorage.getItem('forumlify-forum-name');
                 if (n) document.title = n;
               } catch (e) {}
+              // 加载页名字：DOMContentLoaded（早于 React hydrate）时把缓存名填入，
+              // 二次访问首帧就显示论坛名，不必等 React 启动
+              document.addEventListener('DOMContentLoaded', function () {
+                try {
+                  var n2 = localStorage.getItem('forumlify-forum-name');
+                  if (n2) {
+                    var el = document.getElementById('loadingTitle');
+                    if (el && !el.textContent) {
+                      el.textContent = n2;
+                      document.title = n2;
+                    }
+                  }
+                } catch (e) {}
+              });
             })();`,
           }}
         />
