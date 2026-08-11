@@ -35,6 +35,23 @@ function clearPostTransitionParts(elements) {
   });
 }
 
+function waitForPostImages(container) {
+  const images = Array.from(container?.querySelectorAll('img') || []);
+  if (images.length === 0) return Promise.resolve();
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      resolve();
+    };
+    const timeout = setTimeout(finish, 1200);
+    Promise.all(images.map((image) => image.decode?.().catch(() => {}) || Promise.resolve())).then(finish);
+  });
+}
+
 function stageSharedGeometry(transition, { name, duration, moveOffset }) {
   transition.ready.then(() => {
     const groupAnimation = document.getAnimations().find(
@@ -295,8 +312,9 @@ export default function AppProvider({ children, cachedName = '' }) {
     sourceElement.style.viewTransitionName = 'post-expand';
     const sourceParts = namePostTransitionParts(sourceElement);
     document.documentElement.classList.add('post-view-transition');
-    const transition = document.startViewTransition(() => {
+    const transition = document.startViewTransition(async () => {
       flushSync(commitNavigation);
+      await waitForPostImages(document.querySelector('#pagePost .post-detail-card'));
     });
     stageSharedGeometry(transition, { name: 'post-expand', duration: 960, moveOffset: 0.62 });
     stageSharedGeometry(transition, { name: 'post-body', duration: 960, moveOffset: 0.62 });

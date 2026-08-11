@@ -1071,17 +1071,20 @@ html.post-view-transition::view-transition-old(post-feed-actions) {
 }
 
 html.post-view-transition::view-transition-old(post-body) {
-  animation: bodySourceOut 0.08s 0.56s ease-out both;
+  animation: none;
+  opacity: 0;
 }
 
 html.post-view-transition::view-transition-new(post-body) {
-  animation: bodyTargetIn 0.1s 0.59s ease-out both;
+  animation: none;
+  opacity: 1;
   object-fit: none;
   object-position: left top;
 }
 
 html.post-view-transition::view-transition-old(post-feed-media) {
-  animation: feedOnlyPartOut 0.24s 0.32s ease-out both;
+  animation: none;
+  opacity: 0;
 }
 
 html.post-view-transition::view-transition-new(post-detail-controls),
@@ -1387,8 +1390,8 @@ html.home-view-transition.returning-home::view-transition-new(post-body) {
   box-shadow: var(--glass-shadow);
 }
 #pagePost .post-detail-card .post-content {
-  font-size: 16px;
-  line-height: 1.8;
+  font-size: 15px;
+  line-height: 1.7;
 }
 #pagePost .post-detail-card .post-title {
   font-size: 22px;

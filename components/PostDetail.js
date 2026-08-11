@@ -1,7 +1,7 @@
 'use client';
 
 // 帖子详情页
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { API, uploadImage } from '@/lib/api';
 import { useApp } from './AppProvider';
 import ReplyList from './ReplyList';
@@ -39,7 +39,13 @@ export default function PostDetail({ postId, initialPost = null }) {
     }
   }, [postId, refreshKey]);
 
-  useEffect(() => { load(); }, [load]);
+  const initialRefreshKey = useRef(refreshKey);
+  useEffect(() => {
+    if (initialPost?.id === postId && refreshKey === initialRefreshKey.current) return;
+    load();
+  }, [initialPost?.id, load, postId, refreshKey]);
+  const renderedContent = useMemo(() => renderMarkdown(post?.content), [post?.content]);
+  const renderedSignature = useMemo(() => renderMarkdown(post?.signature), [post?.signature]);
 
   if (error) {
     return (
@@ -165,7 +171,7 @@ export default function PostDetail({ postId, initialPost = null }) {
                 )}
               </div>
             </div>
-            <div className="post-content" style={{ fontSize: 16, lineHeight: 1.8 }} dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content) }} />
+            <div className="post-content" dangerouslySetInnerHTML={{ __html: renderedContent }} />
             {post.images && post.images.length > 0 && (
               <div className="post-images">
                 {post.images.map((img, i) => (
@@ -174,7 +180,7 @@ export default function PostDetail({ postId, initialPost = null }) {
               </div>
             )}
             {post.signature && (
-              <div className="post-detail-signature" style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid var(--border-light)', fontSize: 12, color: 'var(--text-secondary)' }} dangerouslySetInnerHTML={{ __html: renderMarkdown(post.signature) }} />
+              <div className="post-detail-signature" style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid var(--border-light)', fontSize: 12, color: 'var(--text-secondary)' }} dangerouslySetInnerHTML={{ __html: renderedSignature }} />
             )}
           </div>
           <ReplyList postId={postId} onRefresh={load} />
