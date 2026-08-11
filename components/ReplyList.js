@@ -26,9 +26,9 @@ export default function ReplyList({ postId, onRefresh }) {
   const replyAreaRef = useRef(null);
   const replyInputRef = useRef(null);
 
-  // 点击"回复"：记录目标用户，滚动到回复框并聚焦
-  const startReply = (username) => {
-    setReplyTo(username);
+  // 点击"回复"：记录目标回复 ID，滚动到回复框并聚焦
+  const startReply = (replyId) => {
+    setReplyTo(replyId);
     setTimeout(() => {
       replyAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       replyInputRef.current?.focus();
@@ -76,13 +76,13 @@ export default function ReplyList({ postId, onRefresh }) {
     }
   };
 
-  // 计算每条回复的嵌套深度（按 reply_to_username 追踪回复链）
+  // 计算每条回复的嵌套深度（按 reply_to_id 精确追踪回复链）
   const replyDepths = (() => {
     const map = {};
     const getDepth = (r) => {
       if (map[r.id] !== undefined) return map[r.id];
-      if (!r.reply_to_username) { map[r.id] = 0; return 0; }
-      const parent = replies.find((x) => x.username === r.reply_to_username);
+      if (!r.reply_to_id) { map[r.id] = 0; return 0; }
+      const parent = replies.find((x) => x.id === r.reply_to_id);
       const d = parent ? getDepth(parent) + 1 : 0;
       map[r.id] = d;
       return d;
@@ -90,6 +90,9 @@ export default function ReplyList({ postId, onRefresh }) {
     replies.forEach((r) => getDepth(r));
     return map;
   })();
+
+  // 正在回复的目标回复对象（用于显示 @用户名）
+  const replyToObj = replyTo ? replies.find((x) => x.id === replyTo) : null;
 
   return (
     <>
@@ -104,7 +107,7 @@ export default function ReplyList({ postId, onRefresh }) {
             const rTime = r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '';
             const nestDepth = Math.min(replyDepths[r.id] || 0, 5);
             return (
-              <div key={r.id} className="reply-item" data-username={r.username} style={{ marginLeft: nestDepth ? nestDepth * 18 : 0 }}>
+              <div key={r.id} className="reply-item" data-username={r.username} data-reply-id={r.id} style={{ marginLeft: nestDepth ? nestDepth * 18 : 0 }}>
                 <div className="reply-header">
                   <img src={r.avatar_url || avatar(r.username)} className="reply-avatar" alt="" />
                   <span
@@ -115,7 +118,7 @@ export default function ReplyList({ postId, onRefresh }) {
                     {r.username || '匿名用户'}
                   </span>
                   <span className="reply-time">{rTime}</span>
-                  <button className="reply-btn" onClick={() => startReply(r.username)} title="回复">
+                  <button className="reply-btn" onClick={() => startReply(r.id)} title="回复">
                     <Icon name="reply" size={13} />
                   </button>
                   {currentUser && (currentUser.id === r.user_id || currentUser.role === 'admin') && (
@@ -129,7 +132,7 @@ export default function ReplyList({ postId, onRefresh }) {
                   <div
                     className="reply-to-indicator"
                     onClick={() => {
-                      const target = document.querySelector(`.reply-item[data-username="${r.reply_to_username}"]`);
+                      const target = document.querySelector(`.reply-item[data-reply-id="${r.reply_to_id}"]`);
                       if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }}
                   >
@@ -144,11 +147,11 @@ export default function ReplyList({ postId, onRefresh }) {
 
       <div id="replyArea" ref={replyAreaRef} style={{ marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
         <h3 style={{ fontSize: 16, marginBottom: 12 }}><Icon name="message" size={16} /> 发表回复</h3>
-        {replyTo && (
+        {replyTo && replyToObj && (
           <div className="reply-preview-bar">
             <Icon name="reply" size={13} />
             <span>回复</span>
-            <strong>@{replyTo}</strong>
+            <strong>@{replyToObj.username}</strong>
             <button className="reply-preview-cancel" onClick={() => setReplyTo(null)}>取消</button>
           </div>
         )}
