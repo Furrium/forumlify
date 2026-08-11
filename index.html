@@ -4,6 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title id="pageTitle">Forumlify</title>
+  
+  <script>
+  (function() {
+    const theme = localStorage.getItem('forumlify-theme');
+    if (theme === 'dark') {
+      // 直接改背景色，不让白屏出现
+      document.documentElement.style.background = '#0f1117';
+      document.documentElement.style.color = '#e8edf5';
+      // 预置暗色属性，防止闪烁
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  })();
+</script>
+  
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
