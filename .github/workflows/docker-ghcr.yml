@@ -8,11 +8,10 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: lezi-fun/forumlify-deploy
 
 jobs:
   linux-amd64:
-    if: github.repository == 'lezi-fun/forumlify-deploy'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -23,8 +22,8 @@ jobs:
       - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: lezi-fun
+          password: ${{ secrets.GHCR_TOKEN }}
       - name: Metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -46,7 +45,6 @@ jobs:
           cache-to: type=gha,mode=max,scope=amd64
 
   linux-arm64:
-    if: github.repository == 'lezi-fun/forumlify-deploy'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -57,8 +55,8 @@ jobs:
       - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: lezi-fun
+          password: ${{ secrets.GHCR_TOKEN }}
       - name: Metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -81,7 +79,6 @@ jobs:
 
 
   manifest:
-    if: github.repository == 'lezi-fun/forumlify-deploy'
     needs: [linux-amd64, linux-arm64]
     runs-on: ubuntu-latest
     permissions:
@@ -91,8 +88,8 @@ jobs:
       - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: lezi-fun
+          password: ${{ secrets.GHCR_TOKEN }}
       - name: Metadata (base tags)
         id: meta
         uses: docker/metadata-action@v5
