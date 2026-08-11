@@ -77,3 +77,34 @@ jobs:
           cache-from: type=gha,scope=arm64
           cache-to: type=gha,mode=max,scope=arm64
 
+
+  manifest:
+    needs: [linux-amd64, linux-arm64]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Metadata (base tags)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=sha,prefix=git-
+      - name: Merge multi-arch manifests
+        shell: bash
+        run: |
+          set -e
+          for tag in ${{ steps.meta.outputs.tags }}; do
+            echo "merging: $tag (amd64 + arm64)"
+            docker manifest create "$tag" --amend "$tag-amd64" --amend "$tag-arm64"
+            docker manifest push "$tag"
+          done
