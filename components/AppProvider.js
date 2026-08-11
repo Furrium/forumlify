@@ -12,13 +12,9 @@ export function useApp() {
 
 export default function AppProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
-  // 初始化时先用 localStorage 缓存的论坛名，避免闪烁（默认名 → 正确名）
-  const [forumName, setForumName] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('forumlify-forum-name') || 'Forumlify';
-    }
-    return 'Forumlify';
-  });
+  // 固定初始值（SSR/客户端一致，避免 hydration mismatch 导致加载圈重启）；
+  // 缓存论坛名由 useEffect 读取，首帧显示靠内联脚本（body 首个子元素）
+  const [forumName, setForumName] = useState('Forumlify');
   const [theme, setThemeState] = useState('light');
   const [view, setView] = useState('feed'); // feed | post | new | admin | settings | messages | user | custom
   const [currentPostId, setCurrentPostId] = useState(null);
@@ -27,14 +23,8 @@ export default function AppProvider({ children }) {
   const [sort, setSort] = useState('latest');
   const [refreshKey, setRefreshKey] = useState(0);
   const [ready, setReady] = useState(false); // 初始加载完成标记（控制加载页/淡入）
-  // 有缓存论坛名即视为"已加载"（第二次访问立即显示缓存名，不必等服务器）；
-  // 首次访问无缓存 → 等服务器返回后才显示名字
-  const [forumNameLoaded, setForumNameLoaded] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return !!localStorage.getItem('forumlify-forum-name');
-    }
-    return false;
-  });
+  // 固定 false（避免 hydration mismatch）；有缓存时由 useEffect 立即置 true
+  const [forumNameLoaded, setForumNameLoaded] = useState(false);
   const loadedRef = useRef(false);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
@@ -68,8 +58,17 @@ export default function AppProvider({ children }) {
     });
   }, []);
 
-  // 初始化：恢复登录、加载论坛名
+  // 初始化：读取缓存论坛名（立即显示），恢复登录、加载服务器论坛名
   useEffect(() => {
+    // 缓存论坛名（hydrate 后立即生效，首帧显示由内联脚本完成）
+    try {
+      const cached = localStorage.getItem('forumlify-forum-name');
+      if (cached) {
+        setForumName(cached);
+        setForumNameLoaded(true);
+      }
+    } catch (e) {}
+
     if (loadedRef.current) return;
     loadedRef.current = true;
 
