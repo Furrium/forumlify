@@ -802,34 +802,64 @@ app.post('/api/reports', auth, async (req, res) => {
 app.put('/api/reports/:id', auth, admin, async (req, res) => {
   const { status, note } = req.body;
 
-  if (!['pending', 'approved', 'rejected'].includes(status)) {
+  if (!['approved', 'rejected'].includes(status)) {
     return res.status(400).json({ error: '无效的状态' });
   }
 
+  let client;
   try {
-    const report = await pool.query('SELECT reporter_id, post_id FROM reports WHERE id = $1', [req.params.id]);
+    client = await pool.connect();
+    await client.query('BEGIN');
+    const report = await client.query(
+      'SELECT reporter_id, post_id, status FROM reports WHERE id = $1 FOR UPDATE',
+      [req.params.id]
+    );
+    if (report.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: '举报不存在' });
+    }
+    if (report.rows[0].status !== 'pending') {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: '该举报已处理' });
+    }
 
-    await pool.query(
+    await client.query(
       `UPDATE reports
        SET status = $1, handled_at = NOW(), handler_id = $2, handler_note = $3
        WHERE id = $4`,
       [status, req.user.id, note || '', req.params.id]
     );
 
-    if (report.rows[0]) {
-      const statusText = status === 'approved' ? '已删除' : '已驳回';
-      await createNotification(
+    if (status === 'approved' && report.rows[0].post_id) {
+      await client.query('DELETE FROM posts WHERE id = $1', [report.rows[0].post_id]);
+    }
+
+    const statusText = status === 'approved' ? '已删除' : '已驳回';
+    await client.query(
+      `INSERT INTO notifications (user_id, type, title, content, link)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
         report.rows[0].reporter_id,
         'report_handled',
         '你的举报已被处理',
         `你举报的帖子已被管理员${statusText}`,
-        report.rows[0].post_id ? '/?post=' + report.rows[0].post_id : null
-      );
-    }
+        status === 'rejected' && report.rows[0].post_id ? '/?post=' + report.rows[0].post_id : null,
+      ]
+    );
 
-    res.json({ success: true });
+    await client.query('COMMIT');
+    res.json({ success: true, post_deleted: status === 'approved' });
   } catch (err) {
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch (rollbackError) {
+        console.error('回滚举报处理事务失败:', rollbackError);
+      }
+    }
     res.status(500).json({ error: '操作失败，请稍后重试' });
+  } finally {
+    if (client) client.release();
   }
 });
 
@@ -1192,10 +1222,18 @@ app.post('/api/conversations/:id/messages', auth, async (req, res) => {
 // 标记消息已读
 app.put('/api/messages/:id/read', auth, async (req, res) => {
   try {
-    await pool.query(`
-      UPDATE messages SET is_read = true
-      WHERE id = $1 AND sender_id != $2
+    const result = await pool.query(`
+      UPDATE messages AS m SET is_read = true
+      FROM conversations AS c
+      WHERE m.id = $1
+        AND m.sender_id != $2
+        AND c.id = m.conversation_id
+        AND (c.user1_id = $2 OR c.user2_id = $2)
+      RETURNING m.id
     `, [req.params.id, req.user.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: '消息不存在或无权限' });
+    }
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: '服务器错误' });

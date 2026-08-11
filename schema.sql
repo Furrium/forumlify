@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS friendly_links (
 -- 举报表
 CREATE TABLE IF NOT EXISTS reports (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  post_id UUID REFERENCES posts(id) ON DELETE SET NULL,
   reporter_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   reason VARCHAR(100) NOT NULL,
   status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
@@ -54,6 +54,31 @@ CREATE TABLE IF NOT EXISTS reports (
   handler_id UUID REFERENCES users(id) ON DELETE SET NULL,
   handler_note TEXT
 );
+
+-- Preserve moderation history when a reported post is deleted. This also
+-- upgrades databases created with the previous ON DELETE CASCADE constraint.
+DO $$
+DECLARE
+  constraint_name TEXT;
+BEGIN
+  SELECT con.conname INTO constraint_name
+  FROM pg_constraint con
+  JOIN pg_class rel ON rel.oid = con.conrelid
+  JOIN pg_attribute attr ON attr.attrelid = rel.oid AND attr.attnum = ANY(con.conkey)
+  WHERE rel.relname = 'reports'
+    AND con.contype = 'f'
+    AND attr.attname = 'post_id'
+  LIMIT 1;
+
+  IF constraint_name IS NOT NULL THEN
+    EXECUTE format('ALTER TABLE reports DROP CONSTRAINT %I', constraint_name);
+  END IF;
+
+  ALTER TABLE reports ALTER COLUMN post_id DROP NOT NULL;
+  ALTER TABLE reports
+    ADD CONSTRAINT reports_post_id_fkey
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE SET NULL;
+END $$;
 
 -- 事件日志表
 CREATE TABLE IF NOT EXISTS event_logs (

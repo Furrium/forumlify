@@ -49,12 +49,6 @@ function renderAdminReports() {
         const note = action === 'approve' ? '已删除违规帖子' : '举报不成立';
         if (action === 'approve' && !confirm('确定要删除该帖子并标记举报为已处理吗？')) return;
         API.updateReport(id, status, note).then(() => {
-          if (action === 'approve') {
-            const report = reports.find(r => r.id === id);
-            if (report && report.post_id) {
-              API.deletePost(report.post_id).catch(() => {});
-            }
-          }
           renderAdminReports();
         }).catch(err => alert('操作失败：' + err.message));
       });
