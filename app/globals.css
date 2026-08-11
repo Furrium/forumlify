@@ -3052,3 +3052,21 @@ a.btn-secondary {
 .replies-toggle.open .chev {
   transform: rotate(180deg);
 }
+
+/* ===== 窄屏：帖子操作按钮整行换行（避免图标/文字拆行） ===== */
+@media (max-width: 640px) {
+  .post-header {
+    flex-wrap: wrap;
+  }
+  .post-detail-controls {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .post-detail-controls .btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+}
