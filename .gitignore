@@ -3,3 +3,7 @@ uploads/
 *.log
 .DS_Store
 .env
+
+# Wrangler 本地状态
+.wrangler/
+
