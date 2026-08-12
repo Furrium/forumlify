@@ -45,6 +45,15 @@ docker-compose up -d
 
 应用默认运行在 `http://localhost:3000`（监听 `0.0.0.0`，局域网可访问）。
 
+##Docker更新
+
+```
+# 拉取最新镜像
+docker pull ghcr.io/furrium/forumlify:next
+# 重启
+docker compose down && docker compose up -d
+```
+
 ---
 
 > 以下内容需要一定的Nextjs开发技术！
