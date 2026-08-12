@@ -458,7 +458,7 @@ function showCustomPage(pageName) {
   API.getCustomPage(pageName).then(page => {
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'width:100%;min-height:70vh;border:none;border-radius:8px;background:var(--surface);';
-    iframe.sandbox = 'allow-scripts allow-modals allow-top-navigation allow-same-origin';
+    iframe.sandbox = 'allow-scripts allow-modals allow-top-navigation allow-same-origin allow-popups';
     iframe.srcdoc = `
       <!DOCTYPE html>
       <html>
