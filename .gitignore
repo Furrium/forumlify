@@ -7,3 +7,9 @@ uploads/
 # Wrangler 本地状态
 .wrangler/
 
+
+# 构建产物
+.open-next/
+.vercel/
+.next/
+.wrangler/

@@ -1,3 +1,0 @@
-{
-  "/api/auth/recovery-codes/generate/route": "app/api/auth/recovery-codes/generate/route.js"
-}

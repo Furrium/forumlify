@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 64, "column": 0}, "map": {"version":3,"sources":["file:///Users/home/Projects/forumlify/app/api/custom-css/route.js"],"sourcesContent":["// GET /api/custom-css — 公开获取自定义 CSS\nimport { readFile } from 'fs/promises';\nimport path from 'path';\n\nexport const runtime = 'nodejs';\n\nexport async function GET() {\n  try {\n    const cssPath = path.join(process.cwd(), 'uploads', 'custom', 'style.css');\n    const css = await readFile(cssPath, 'utf-8');\n    return new Response(css, { headers: { 'Content-Type': 'text/css' } });\n  } catch {\n    return new Response('', { status: 404 });\n  }\n}\n"],"names":["runtime","GET","cssPath","join","process","cwd","css","Response","headers","status"],"mappings":";;;;;;AAAA,oCAAoC;AACpC;AACA;;;AAEO,MAAMA,UAAU;AAEhB,eAAeC;IACpB,IAAI;QACF,MAAMC,UAAU,4GAAI,CAACC,IAAI,CAACC,QAAQC,GAAG,IAAI,WAAW,UAAU;QAC9D,MAAMC,MAAM,MAAM,IAAA,iIAAQ,EAACJ,SAAS;QACpC,OAAO,IAAIK,SAASD,KAAK;YAAEE,SAAS;gBAAE,gBAAgB;YAAW;QAAE;IACrE,EAAE,OAAM;QACN,OAAO,IAAID,SAAS,IAAI;YAAEE,QAAQ;QAAI;IACxC;AACF"}}]
-}
