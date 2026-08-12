@@ -51,7 +51,13 @@ export default function ReplyList({ postId, onRefresh }) {
     if (!captcha || !captchaInput.trim()) { toast('请填写验证码', 'warning'); return; }
     try {
       // 答案由服务端 HMAC 校验
-      await API.createReply(postId, content.trim(), { id: captcha.id, answer: captchaInput.trim(), sig: captcha.sig }, replyTo);
+      await API.createReply(
+        postId,
+        content.trim(),
+        { id: captcha.id, answer: captchaInput.trim(), sig: captcha.sig },
+        replyTo,
+        replyToObj?.username
+      );
       setContent('');
       setCaptchaInput('');
       setReplyTo(null);
