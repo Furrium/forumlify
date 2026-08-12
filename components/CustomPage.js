@@ -49,7 +49,7 @@ export default function CustomPage({ pageName }) {
 </html>`;
 
   return (
-    <div style={{ padding: '84px 32px 40px', background: 'var(--bg)', minHeight: '100vh' }}>
+    <div className="custom-page-container" style={{ padding: '84px 32px 40px', background: 'var(--bg)', minHeight: '100vh' }}>
       <iframe
         style={{ width: '100%', minHeight: '70vh', border: 'none', borderRadius: 8, background: 'var(--surface)' }}
         sandbox="allow-scripts allow-modals allow-same-origin"

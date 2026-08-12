@@ -3144,3 +3144,31 @@ a.btn-secondary {
     flex-wrap: wrap;
   }
 }
+
+/* ===== 自定义页面 —— 全屏沉浸式（对齐上游 Lite） ===== */
+.custom-page-container {
+  position: fixed !important;
+  top: 64px !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: calc(100vh - 64px) !important;
+  z-index: 40 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+}
+.custom-page-container iframe {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+@media (max-width: 768px) {
+  .custom-page-container {
+    top: 56px !important;
+    height: calc(100vh - 56px) !important;
+  }
+}

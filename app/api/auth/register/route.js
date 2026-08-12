@@ -2,6 +2,7 @@
 import bcrypt from 'bcryptjs';
 import pool from '@/lib/db';
 import { verifyCaptcha } from '@/lib/captcha';
+import { logAudit } from '@/lib/audit';
 
 export async function POST(req) {
   const { email, password, username, captcha_id, captcha_answer, captcha_sig } = await req.json();
@@ -30,6 +31,8 @@ export async function POST(req) {
       [email, hash, username, avatar, role]
     );
 
+    // 服务端审计：注册成功
+    await logAudit(req, 'register', r.rows[0].id);
     return Response.json({
       user: r.rows[0],
       message: isFirstUser ? '你是第一个用户，已自动设为管理员！' : '注册成功',

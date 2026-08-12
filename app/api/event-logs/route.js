@@ -27,20 +27,5 @@ export async function GET(req) {
   }
 }
 
-export async function POST(req) {
-  const user = getUser(req);
-  if (!user) {
-    return Response.json({ error: '请先登录' }, { status: 401 });
-  }
-  const { action } = await req.json();
-  try {
-    await pool.query(
-      `INSERT INTO event_logs (user_id, action, ip)
-       VALUES ($1, $2, $3)`,
-      [user.id, action, req.headers.get('x-forwarded-for') || '0.0.0.0']
-    );
-    return Response.json({ success: true });
-  } catch {
-    return Response.json({ success: true });
-  }
-}
+// 审计日志由服务端在关键操作后记录（对齐上游 PR #22）——
+// 客户端上报端点已移除，防止伪造审计记录

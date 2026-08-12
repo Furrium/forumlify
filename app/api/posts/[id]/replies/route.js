@@ -3,6 +3,7 @@ import pool from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { jsonWithEtag } from '@/lib/http-cache';
 import { verifyCaptcha } from '@/lib/captcha';
+import { logAudit } from '@/lib/audit';
 
 export async function GET(req, { params }) {
   try {
@@ -43,6 +44,7 @@ export async function POST(req, { params }) {
        RETURNING *`,
       [(await params).id, user.id, content, reply_to_id || null]
     );
+    await logAudit(req, 'create_reply', user.id);
     await pool.query('UPDATE posts SET updated_at = NOW() WHERE id = $1', [(await params).id]);
     return Response.json(r.rows[0]);
   } catch {

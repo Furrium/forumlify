@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from '@/lib/db';
 import { JWT_SECRET } from '@/lib/auth';
+import { logAudit } from '@/lib/audit';
 
 export async function POST(req) {
   const { email, password } = await req.json();
@@ -24,6 +25,8 @@ export async function POST(req) {
       JWT_SECRET,
       { expiresIn: '7d' }
     );
+    // 服务端审计：登录成功
+    await logAudit(req, 'login', user.id);
     return Response.json({
       token,
       user: {

@@ -181,8 +181,7 @@ export default function AppProvider({ children, cachedName = '' }) {
         try {
           const user = await API.getMe();
           setCurrentUser(user);
-          API.logEvent('login').catch(() => {});
-        } catch {
+            } catch {
           setToken(null);
         }
       }
@@ -395,7 +394,6 @@ export default function AppProvider({ children, cachedName = '' }) {
     const result = await API.login(email, password);
     if (result.user) {
       setCurrentUser(result.user);
-      API.logEvent('login').catch(() => {});
     }
     return result;
   }, []);
@@ -405,7 +403,6 @@ export default function AppProvider({ children, cachedName = '' }) {
     const loginResult = await API.login(email, password);
     if (loginResult.user) {
       setCurrentUser(loginResult.user);
-      API.logEvent('register').catch(() => {});
     }
     return result;
   }, []);

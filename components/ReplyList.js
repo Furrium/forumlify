@@ -52,7 +52,6 @@ export default function ReplyList({ postId, onRefresh }) {
     try {
       // 答案由服务端 HMAC 校验
       await API.createReply(postId, content.trim(), { id: captcha.id, answer: captchaInput.trim(), sig: captcha.sig }, replyTo);
-      API.logEvent('create_reply').catch(() => {});
       setContent('');
       setCaptchaInput('');
       setReplyTo(null);

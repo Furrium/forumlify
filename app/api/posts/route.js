@@ -3,6 +3,7 @@ import pool from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { jsonWithEtag } from '@/lib/http-cache';
 import { verifyCaptcha } from '@/lib/captcha';
+import { logAudit } from '@/lib/audit';
 
 // 避免 GET 被静态优化导致写方法 405（动态接口，不能缓存）
 export const dynamic = 'force-dynamic';
@@ -73,6 +74,7 @@ export async function POST(req) {
        RETURNING *`,
       [user.id, title || '无标题', content, images || []]
     );
+    await logAudit(req, 'create_post', user.id);
     return Response.json(r.rows[0]);
   } catch {
     return Response.json({ error: '发布失败，请稍后重试' }, { status: 500 });

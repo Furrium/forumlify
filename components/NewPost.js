@@ -71,7 +71,6 @@ export default function NewPost() {
     try {
       // 答案由服务端 HMAC 校验
       await API.createPost(title.trim() || '无标题', content.trim(), images, { id: captcha.id, answer: captchaInput.trim(), sig: captcha.sig });
-      API.logEvent('create_post').catch(() => {});
       toast('发布成功', 'success');
       navigate('feed');
       refresh();
