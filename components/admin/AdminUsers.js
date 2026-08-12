@@ -80,7 +80,9 @@ export default function AdminUsers() {
                     {u.created_at ? new Date(u.created_at).toLocaleDateString(dateLocale) : '—'}
                   </td>
                   <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                    {isCurrent ? (
+                    {u.is_super ? (
+                      <span style={{ fontSize: 12, color: '#94a3b8' }}>{t('admin.user.cannotSuper')}</span>
+                    ) : isCurrent ? (
                       <span style={{ fontSize: 12, color: '#94a3b8' }}>{t('admin.user.cannotSelf')}</span>
                     ) : isAdmin ? (
                       <button className="btn-sm btn-secondary" style={{ padding: '4px 12px' }} onClick={() => handleRole(u, 'user')}>{t('admin.user.makeUser')}</button>

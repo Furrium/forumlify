@@ -1,6 +1,6 @@
 // GET /api/users (admin) — 支持 ?username= 按用户名查询
 import pool from '@/lib/db';
-import { getUser, requireAdmin } from '@/lib/auth';
+import { getUser, getSuperAdminId, requireAdmin } from '@/lib/auth';
 
 export async function GET(req) {
   const user = getUser(req);
@@ -12,10 +12,7 @@ export async function GET(req) {
 
   try {
     // 超级管理员 = 最早注册的 admin（对齐迁移：无 admin 时自动提升最早注册用户）
-    const superR = await pool.query(
-      `SELECT id FROM users WHERE role = 'admin' ORDER BY created_at ASC, id ASC LIMIT 1`
-    );
-    const superAdminId = superR.rows[0]?.id || null;
+    const superAdminId = await getSuperAdminId();
 
     let query = 'SELECT id, username, avatar_url, bio, role, created_at FROM users';
     const params = [];

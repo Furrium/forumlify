@@ -208,6 +208,7 @@
       "registeredAt": "Registered",
       "you": "You",
       "cannotSelf": "You cannot edit yourself",
+      "cannotSuper": "Super admin cannot be changed",
       "makeUser": "Make user",
       "makeAdmin": "Make admin",
       "roleSuper": "Super admin"

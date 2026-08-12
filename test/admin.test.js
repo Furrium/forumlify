@@ -20,6 +20,7 @@ async function api(path, options = {}) {
 }
 
 let adminToken = null;
+let adminId = null;
 let userToken = null;
 let userId = null;
 const adminUser = { email: `adm${suffix}@test.com`, password: '123456', username: `adm${suffix}` };
@@ -34,6 +35,7 @@ test('设置: 注册管理员 + 登录', async () => {
     body: JSON.stringify({ email: adminUser.email, password: adminUser.password }),
   });
   adminToken = data.token;
+  adminId = data.user.id;
   assert.ok(adminToken);
 });
 
@@ -83,6 +85,23 @@ test('管理员修改普通用户角色', async () => {
     body: JSON.stringify({ role: 'admin' }),
   });
   assert.equal(status, 200);
+});
+
+test('超级管理员不能被其他管理员降级', async () => {
+  const { data: users } = await api('/users', {
+    headers: { Authorization: `Bearer ${adminToken}` },
+  });
+  const superAdmin = users.find((user) => user.is_super);
+  assert.ok(superAdmin);
+
+  const actorToken = superAdmin.id === adminId ? userToken : adminToken;
+  const { status, data } = await api('/users/' + superAdmin.id + '/role', {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${actorToken}` },
+    body: JSON.stringify({ role: 'user' }),
+  });
+  assert.equal(status, 403);
+  assert.equal(data.error, '不能降级超级管理员');
 });
 
 test('更新论坛名称', async () => {
