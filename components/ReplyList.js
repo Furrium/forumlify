@@ -8,6 +8,7 @@ import { Icon } from './Icons';
 import { renderMarkdown } from '@/lib/markdown';
 import CaptchaImage from './CaptchaImage';
 import { useToast } from './Toast';
+import { useTranslation } from 'react-i18next';
 
 function avatar(username) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || '匿名用户') +
@@ -17,7 +18,10 @@ function avatar(username) {
 export default function ReplyList({ postId, onRefresh }) {
   const { currentUser, openUser } = useApp();
   const { toast, confirmAction } = useToast();
-  const [replies, setReplies] = useState([]);
+  const { t } = useTranslation();
+  const [replies, setReplies] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showLoading, setShowLoading] = useState(false);
   const [content, setContent] = useState('');
   const [captcha, setCaptcha] = useState(null);
   const [captchaInput, setCaptchaInput] = useState('');
@@ -25,6 +29,7 @@ export default function ReplyList({ postId, onRefresh }) {
   const [replyTo, setReplyTo] = useState(null);
   const replyAreaRef = useRef(null);
   const replyInputRef = useRef(null);
+  const loadRequestRef = useRef(0);
 
   // 点击"回复"：记录目标回复 ID，滚动到回复框并聚焦
   const startReply = (replyId) => {
@@ -35,14 +40,37 @@ export default function ReplyList({ postId, onRefresh }) {
     }, 120);
   };
 
-  const load = useCallback(async () => {
+  const load = useCallback(async ({ reset = false } = {}) => {
+    const requestId = ++loadRequestRef.current;
+    if (reset) setReplies(null);
+    setLoading(true);
     try {
       const data = await API.getReplies(postId);
+      if (requestId !== loadRequestRef.current) return;
       setReplies(data || []);
-    } catch { setReplies([]); }
+    } catch {
+      if (requestId !== loadRequestRef.current) return;
+      setReplies([]);
+    } finally {
+      if (requestId === loadRequestRef.current) setLoading(false);
+    }
   }, [postId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load({ reset: true });
+    return () => { loadRequestRef.current += 1; };
+  }, [load]);
+
+  // 快请求不闪加载态；慢请求的加载动画由 CSS 等帖子 View Transition 结束后再淡入。
+  useEffect(() => {
+    if (!loading) {
+      setShowLoading(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowLoading(true), 180);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   useEffect(() => { API.getCaptcha().then((c) => setCaptcha(c)).catch(() => {}); }, [postId]);
 
   const handleSubmit = async () => {
@@ -82,33 +110,43 @@ export default function ReplyList({ postId, onRefresh }) {
   };
 
   // 计算每条回复的嵌套深度（按 reply_to_id 精确追踪回复链）
+  const loadedReplies = replies || [];
   const replyDepths = (() => {
     const map = {};
     const getDepth = (r) => {
       if (map[r.id] !== undefined) return map[r.id];
       if (!r.reply_to_id) { map[r.id] = 0; return 0; }
-      const parent = replies.find((x) => x.id === r.reply_to_id);
+      const parent = loadedReplies.find((x) => x.id === r.reply_to_id);
       const d = parent ? getDepth(parent) + 1 : 0;
       map[r.id] = d;
       return d;
     };
-    replies.forEach((r) => getDepth(r));
+    loadedReplies.forEach((r) => getDepth(r));
     return map;
   })();
 
   // 正在回复的目标回复对象（用于显示 @用户名）
-  const replyToObj = replyTo ? replies.find((x) => x.id === replyTo) : null;
+  const replyToObj = replyTo ? loadedReplies.find((x) => x.id === replyTo) : null;
 
   return (
     <>
-      <div className="post-reply-count" style={{ marginTop: 20, fontSize: 14, color: '#64748b' }}>
-        <Icon name="message" size={14} /> {replies.length} 条回复
-      </div>
-      <div style={{ marginTop: 12 }}>
-        {replies.length === 0 ? (
-          <div style={{ color: '#94a3b8', padding: '20px 0', textAlign: 'center' }}><Icon name="message" size={16} /> 还没有回复，快来发表第一条回复吧</div>
-        ) : (
-          replies.map((r) => {
+      {loading && replies === null ? (
+        showLoading && (
+          <div className="reply-loading-state" role="status" aria-live="polite">
+            <span className="reply-loading-spinner" aria-hidden="true" />
+            <span>{t('reply.loading')}</span>
+          </div>
+        )
+      ) : (
+        <>
+          <div className="post-reply-count" style={{ marginTop: 20, fontSize: 14, color: '#64748b' }}>
+            <Icon name="message" size={14} /> {loadedReplies.length} 条回复
+          </div>
+          <div style={{ marginTop: 12 }}>
+            {loadedReplies.length === 0 ? (
+              <div style={{ color: '#94a3b8', padding: '20px 0', textAlign: 'center' }}><Icon name="message" size={16} /> 还没有回复，快来发表第一条回复吧</div>
+            ) : (
+              loadedReplies.map((r) => {
             const rTime = r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '';
             const nestDepth = Math.min(replyDepths[r.id] || 0, 5);
             return (
@@ -135,9 +173,11 @@ export default function ReplyList({ postId, onRefresh }) {
                 <div className="reply-content" dangerouslySetInnerHTML={{ __html: renderMarkdown(r.content) }} />
               </div>
             );
-          })
-        )}
-      </div>
+              })
+            )}
+          </div>
+        </>
+      )}
 
       <div id="replyArea" ref={replyAreaRef} style={{ marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
         <h3 style={{ fontSize: 16, marginBottom: 12 }}><Icon name="message" size={16} /> 发表回复</h3>

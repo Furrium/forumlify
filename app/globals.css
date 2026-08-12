@@ -1513,6 +1513,43 @@ html.home-view-transition.returning-home::view-transition-old(post-edited-detail
   animation: editedDateCollapse 0.24s 0.04s cubic-bezier(0.4, 0, 1, 1) both;
 }
 
+/* 回复仍在加载时返回：从页面中独立抽离，向上淡出后再消失。 */
+html.home-view-transition.returning-home #pagePost .reply-loading-state {
+  view-transition-name: reply-loading-return;
+}
+
+html.home-view-transition.returning-home::view-transition-group(reply-loading-return) {
+  animation: none;
+  z-index: 14;
+}
+
+html.home-view-transition.returning-home::view-transition-image-pair(reply-loading-return) {
+  overflow: visible;
+  mix-blend-mode: normal;
+}
+
+html.home-view-transition.returning-home::view-transition-old(reply-loading-return) {
+  animation: replyLoadingReturnOut 0.24s cubic-bezier(0.4, 0, 1, 1) both;
+  mix-blend-mode: normal;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 40%, transparent 60%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 40%, transparent 60%, transparent 100%);
+  -webkit-mask-size: 100% 250%;
+  mask-size: 100% 250%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+@keyframes replyLoadingReturnOut {
+  from {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+  to {
+    -webkit-mask-position: 0 100%;
+    mask-position: 0 100%;
+  }
+}
+
 @keyframes editedDateExpand {
   from {
     opacity: 0;
@@ -3388,6 +3425,45 @@ a.btn-secondary {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* 回复慢请求：帖子展开完成后才柔和出现，快速请求不会挂载此状态。 */
+.reply-loading-state {
+  min-height: 76px;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--glass-text-light);
+  font-size: 13px;
+  animation: replyLoadingReveal 0.32s ease-out both;
+}
+
+.reply-loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--glass-border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+html.post-view-transition #pagePost .reply-loading-state {
+  opacity: 0;
+  transform: translateY(5px);
+  animation: none;
+}
+
+@keyframes replyLoadingReveal {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 0.78;
+    transform: translateY(0);
+  }
 }
 
 /* ===== 评论抽屉（平滑展开/收起） ===== */

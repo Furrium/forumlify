@@ -58,6 +58,7 @@
     "dropHint": "Click or drag to upload image"
   },
   "reply": {
+    "loading": "Loading replies...",
     "submit": "Submit reply",
     "placeholder": "Write your reply...",
     "empty": "No replies yet — be the first to comment",
