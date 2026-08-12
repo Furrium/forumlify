@@ -39,8 +39,12 @@ Forumlify 提供了两个不同架构的分支版本，以满足不同部署环�
 ```
 git clone https://github.com/furrium/forumlify.git
 cd forumlify
-docker-compose up -d
+printf 'JWT_SECRET=%s\n' "$(openssl rand -hex 32)" > .env
+docker compose up -d
 ```
+
+旧版 Compose 也可以使用 `docker-compose up -d`。请妥善备份 `.env`；更换
+`JWT_SECRET` 会使现有登录令牌失效。
 
 应用默认运行在 `http://localhost:3000`。
 
@@ -138,5 +142,4 @@ forumlify/
 ## 📝 License
 
 MIT
-
 

@@ -24,8 +24,7 @@ services:
       DATABASE_URL: postgresql://forumlify:123456@db:5432/forumlify
       PORT: 3000
       ENABLE_CAPTCHA: "true"
-    
-      JWT_SECRET: "7sALTz9fZZvoIT2iLc1Uox4mo3bgvofzivIFq6HSPiU="
+      JWT_SECRET: "${JWT_SECRET:?Set JWT_SECRET in .env before starting Forumlify}"
       # 信任反向代理（Nginx / Docker 端口转发），修复限流警告
       TRUST_PROXY: "true"
     volumes:
