@@ -308,16 +308,18 @@ export default function AppProvider({ children, cachedName = '' }) {
     });
     stageSharedGeometry(transition, {
       name: 'post-expand',
-      duration: 960,
-      moveOffset: 0.62,
+      duration: 1100,
+      moveOffset: 0.73,
       moveEasing: 'cubic-bezier(0.42, 0, 0.58, 1)',
-      resizeEasing: 'cubic-bezier(0.42, 0, 0.58, 1)',
+      resizeEasing: 'cubic-bezier(0.16, 1, 0.3, 1)',
       reverse: true,
     });
     stageSharedGeometry(transition, {
       name: 'post-body',
-      duration: 960,
-      moveOffset: 0.62,
+      duration: 1100,
+      moveOffset: 0.73,
+      moveEasing: 'cubic-bezier(0.42, 0, 0.58, 1)',
+      resizeEasing: 'cubic-bezier(0.16, 1, 0.3, 1)',
       reverse: true,
     });
     const clearTargetNames = () => {

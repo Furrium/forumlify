@@ -993,7 +993,7 @@ html.home-view-transition::view-transition {
 
 html.post-view-transition::view-transition-group(post-expand),
 html.home-view-transition.returning-home::view-transition-group(post-expand) {
-  animation-duration: 0.96s;
+  animation-duration: 1.1s;
   animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
   border-radius: var(--radius);
   overflow: clip;
@@ -1171,29 +1171,38 @@ html.home-view-transition.returning-home::view-transition-group(post-sidebar) {
 }
 
 html.home-view-transition.returning-home::view-transition-group(post-heading) {
-  animation-duration: 0.64s;
-  animation-delay: 0.32s;
+  animation-duration: 0.8s;
+  animation-delay: 0.3s;
   animation-fill-mode: both;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
 }
 
 html.home-view-transition.returning-home::view-transition-group(post-time) {
-  animation-duration: 0.96s;
+  animation-duration: 0.8s;
+  animation-delay: 0.3s;
   animation-fill-mode: both;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
 }
 
 html.home-view-transition.returning-home::view-transition-group(post-avatar),
 html.home-view-transition.returning-home::view-transition-group(post-author),
 html.home-view-transition.returning-home::view-transition-group(post-pin-state),
 html.home-view-transition.returning-home::view-transition-group(post-edited-state) {
-  animation-duration: 0.68s;
-  animation-delay: 0.28s;
+  animation-duration: 0.8s;
+  animation-delay: 0.3s;
   animation-fill-mode: both;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
 }
 
 html.home-view-transition.returning-home::view-transition-old(post-expand) {
+  animation: none;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  mix-blend-mode: normal;
+}
+
+html.home-view-transition.returning-home::view-transition-new(post-expand) {
   animation: none;
   width: 100%;
   height: 100%;
@@ -1202,28 +1211,20 @@ html.home-view-transition.returning-home::view-transition-old(post-expand) {
   mix-blend-mode: normal;
 }
 
-html.home-view-transition.returning-home::view-transition-new(post-expand) {
-  animation: none;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  mix-blend-mode: normal;
-}
-
 html.home-view-transition.returning-home::view-transition-old(post-heading) {
-  animation: returnSharedPartOut 0.24s 0.32s ease-out both;
+  animation: returnSharedPartOut 0.22s 0.3s ease-out both;
 }
 
 html.home-view-transition.returning-home::view-transition-new(post-heading) {
-  animation: returnSharedPartIn 0.24s 0.32s ease-out both;
+  animation: returnSharedPartIn 0.22s 0.3s ease-out both;
 }
 
 html.home-view-transition.returning-home::view-transition-old(post-time) {
-  animation: returnSharedPartOut 0.2s 0.47s ease-out both;
+  animation: returnSharedPartOut 0.2s 0.3s ease-out both;
 }
 
 html.home-view-transition.returning-home::view-transition-new(post-time) {
-  animation: returnSharedPartIn 0.2s 0.47s ease-out both;
+  animation: returnSharedPartIn 0.2s 0.3s ease-out both;
 }
 
 html.home-view-transition.returning-home::view-transition-old(post-sidebar) {
@@ -1238,14 +1239,14 @@ html.home-view-transition.returning-home::view-transition-old(post-avatar),
 html.home-view-transition.returning-home::view-transition-old(post-author),
 html.home-view-transition.returning-home::view-transition-old(post-pin-state),
 html.home-view-transition.returning-home::view-transition-old(post-edited-state) {
-  animation: returnSharedPartOut 0.22s 0.28s ease-out both;
+  animation: returnSharedPartOut 0.22s 0.3s ease-out both;
 }
 
 html.home-view-transition.returning-home::view-transition-new(post-avatar),
 html.home-view-transition.returning-home::view-transition-new(post-author),
 html.home-view-transition.returning-home::view-transition-new(post-pin-state),
 html.home-view-transition.returning-home::view-transition-new(post-edited-state) {
-  animation: returnSharedPartIn 0.22s 0.28s ease-out both;
+  animation: returnSharedPartIn 0.22s 0.3s ease-out both;
 }
 
 html.home-view-transition.returning-home::view-transition-old(post-detail-controls),
