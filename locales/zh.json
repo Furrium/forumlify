@@ -17,6 +17,7 @@
     "hot": "最新回复",
     "newPost": "发布新帖",
     "loading": "加载中...",
+    "loadFailed": "加载失败：{{msg}}",
     "empty": "还没有帖子，快来发布第一条吧！",
     "pinned": "置顶",
     "deleted": "（已编辑）",

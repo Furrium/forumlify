@@ -17,6 +17,7 @@
     "hot": "Latest replies",
     "newPost": "New post",
     "loading": "Loading...",
+    "loadFailed": "Load failed: {{msg}}",
     "empty": "No posts yet — be the first to publish!",
     "pinned": "Pinned",
     "deleted": "(edited)",

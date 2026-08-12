@@ -58,6 +58,7 @@ function stageSharedGeometry(transition, {
   moveOffset,
   moveEasing = 'cubic-bezier(0.16, 1, 0.3, 1)',
   resizeEasing = 'cubic-bezier(0.4, 0, 0.2, 1)',
+  reverse = false,
 }) {
   transition.ready.then(() => {
     const groupAnimation = document.getAnimations().find(
@@ -68,7 +69,28 @@ function stageSharedGeometry(transition, {
 
     const start = frames[0];
     const end = frames[frames.length - 1];
-    groupAnimation.effect.setKeyframes([
+    groupAnimation.effect.setKeyframes(reverse ? [
+      {
+        offset: 0,
+        width: start.width,
+        height: start.height,
+        transform: start.transform,
+        easing: resizeEasing,
+      },
+      {
+        offset: 1 - moveOffset,
+        width: start.width,
+        height: end.height,
+        transform: start.transform,
+        easing: moveEasing,
+      },
+      {
+        offset: 1,
+        width: end.width,
+        height: end.height,
+        transform: end.transform,
+      },
+    ] : [
       {
         offset: 0,
         width: start.width,
@@ -284,8 +306,20 @@ export default function AppProvider({ children, cachedName = '' }) {
       if (targetCard) targetCard.style.viewTransitionName = 'post-expand';
       targetParts = namePostTransitionParts(targetCard);
     });
-    stageSharedGeometry(transition, { name: 'post-expand', duration: 480, moveOffset: 0.72 });
-    stageSharedGeometry(transition, { name: 'post-body', duration: 480, moveOffset: 0.72 });
+    stageSharedGeometry(transition, {
+      name: 'post-expand',
+      duration: 960,
+      moveOffset: 0.62,
+      moveEasing: 'cubic-bezier(0.42, 0, 0.58, 1)',
+      resizeEasing: 'cubic-bezier(0.42, 0, 0.58, 1)',
+      reverse: true,
+    });
+    stageSharedGeometry(transition, {
+      name: 'post-body',
+      duration: 960,
+      moveOffset: 0.62,
+      reverse: true,
+    });
     const clearTargetNames = () => {
       if (targetCard) targetCard.style.viewTransitionName = '';
       clearPostTransitionParts(targetParts);
