@@ -8,7 +8,9 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: lezi-fun/forumlify-deploy
+  # 推仓库自己的 GHCR 包（github.repository = Furrium/forumlify）——
+  # 仓库 GITHUB_TOKEN 无权推跨仓库包（如 lezi-fun/forumlify-deploy）
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build:
