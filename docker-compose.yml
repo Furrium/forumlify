@@ -11,17 +11,22 @@ services:
       - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    restart: unless-stopped
 
   app:
-    build: .
+    # 从 GHCR 拉取镜像（每次 push Lite 自动重建），不再本地构建
+    image: ghcr.io/lezi-fun/forumlify-deploy:lite
     ports:
       - "3000:3000"
     depends_on:
       - db
     environment:
       DATABASE_URL: postgresql://forumlify:123456@db:5432/forumlify
+      PORT: 3000
+      ENABLE_CAPTCHA: "true"
     volumes:
       - ./uploads:/app/uploads
+    restart: unless-stopped
 
 volumes:
   db_data:

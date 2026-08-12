@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "functions": {
+    "/api/admin/custom-css": {},
+    "/api/custom-css": {},
+    "/api/upload": {},
+    "/api/uploads/[name]": {}
+  }
+}

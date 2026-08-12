@@ -1,0 +1,30 @@
+{
+  "name": "forumlify",
+  "version": "2.0.0",
+  "description": "Forumlify - 简洁优雅的现代社区系统 (Next.js)",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.js",
+    "dev": "next dev -H 0.0.0.0",
+    "start": "node scripts/start.js",
+    "test": "node --test --test-concurrency=1 \"test/*.test.js\"",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+  },
+  "dependencies": {
+    "aws4fetch": "^1.0.20",
+    "bcryptjs": "^3.0.3",
+    "jsonwebtoken": "^9.0.2",
+    "marked": "^18.0.9",
+    "next": "^14.2.15",
+    "pg": "^8.11.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.2",
+    "wrangler": "^4.120.0"
+  }
+}
