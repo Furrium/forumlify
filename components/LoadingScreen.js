@@ -9,7 +9,7 @@ export default function LoadingScreen({ forumName, forumNameLoaded }) {
     <div className="loading-screen">
       <div className="loading-inner">
         <div className="loading-spinner" />
-        <div className="loading-title loading-title-appear" id="loadingTitle" suppressHydrationWarning>
+        <div className={'loading-title' + (forumNameLoaded ? ' loading-title-appear' : '')} id="loadingTitle" suppressHydrationWarning>
           {forumNameLoaded && forumName}
         </div>
         <div className="loading-sub">加载中...</div>

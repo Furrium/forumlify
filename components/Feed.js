@@ -140,7 +140,7 @@ export default function Feed({ onOpenModal, onReport }) {
                   <div key={p.id} className="post-card" data-post-id={p.id} style={{ cursor: 'pointer' }}
                     onClick={(e) => openPost(p.id, e.currentTarget, p)}>
                 {p.is_pinned && (
-                  <div className="post-pin-state" style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600, marginBottom: 4 }}><Icon name="pin" size={12} /> {t('feed.pinned')}</div>
+                  <div className="post-pin-state" style={{ width: 'fit-content', display: 'flex', alignItems: 'center', gap: 3, fontSize: 12, color: 'var(--primary)', fontWeight: 600, marginBottom: 4 }}><Icon name="pin" size={12} /> {t('feed.pinned')}</div>
                 )}
                 <div className="post-header">
                   <img src={p.avatar_url || avatar(p.username)} className="post-avatar" alt="" />
