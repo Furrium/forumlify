@@ -18,7 +18,7 @@ function avatar(username) {
 }
 
 export default function PostDetail({ postId, initialPost = null }) {
-  const { currentUser, navigate, openUser, refreshKey } = useApp();
+  const { currentUser, navigate, openUser, returnFromPost, refreshKey } = useApp();
   const { t, i18n } = useTranslation();
   const { toast, confirmAction } = useToast();
   const [post, setPost] = useState(initialPost);
@@ -134,10 +134,26 @@ export default function PostDetail({ postId, initialPost = null }) {
     setEditImages((prev) => prev.filter((u) => u !== url));
   };
 
+  const handleOpenUser = (event) => {
+    const header = event.currentTarget.closest('.post-header');
+    openUser(
+      post.username,
+      {
+        avatarElement: header?.querySelector('.post-avatar'),
+        nameElement: header?.querySelector('.post-username'),
+      },
+      {
+        username: post.username,
+        avatar_url: post.avatar_url || avatar(post.username),
+        sourcePostId: post.id,
+      }
+    );
+  };
+
   return (
     <div id="pagePost" className="page-slide active">
       <div className="page-header post-page-header">
-        <button className="back-btn" onClick={() => navigate('feed')}>
+        <button className="back-btn" onClick={returnFromPost}>
           <Icon name="back" size={16} /> 返回
         </button>
         <h2>{post.title || '帖子详情'}</h2>
@@ -147,11 +163,25 @@ export default function PostDetail({ postId, initialPost = null }) {
         <div id="postDetailContent" className="post-page-main">
           <div className="post-detail-card">
             <div className="post-header">
-              <img src={post.avatar_url || avatar(post.username)} className="post-avatar" alt="" />
+              <img
+                src={post.avatar_url || avatar(post.username)}
+                className="post-avatar"
+                alt={post.username || '匿名用户'}
+                role="button"
+                tabIndex={0}
+                style={{ cursor: 'pointer' }}
+                onClick={handleOpenUser}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    handleOpenUser(event);
+                  }
+                }}
+              />
               <span
                 className="post-username"
                 style={{ cursor: 'pointer', color: 'var(--primary)' }}
-                onClick={() => openUser(post.username)}
+                onClick={handleOpenUser}
               >
                 {post.username || '匿名用户'}
               </span>

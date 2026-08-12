@@ -26,10 +26,11 @@ export default function Feed({ onOpenModal, onReport }) {
   const [totalPages, setTotalPages] = useState(1);
   const [viewerSrc, setViewerSrc] = useState(null);
   const [selectedSort, setSelectedSort] = useState(sort);
-  const [drawerPhase, setDrawerPhase] = useState('idle');
+  const [drawerPhase, setDrawerPhase] = useState('closed');
   const postListRef = useRef(null);
   const sortTimerRef = useRef(null);
   const pendingSortRef = useRef(null);
+  const initialDrawerOpenedRef = useRef(false);
   const PAGE_SIZE = 20;
 
   const load = useCallback(async (targetPage) => {
@@ -50,6 +51,14 @@ export default function Feed({ onOpenModal, onReport }) {
             pendingSortRef.current = null;
             setDrawerPhase('idle');
           }, 360);
+        });
+      } else if (!initialDrawerOpenedRef.current) {
+        // 首次加载：先在收起状态完成列表渲染，再像排序切换一样抽屉式展开。
+        // Feed 在 SPA 视图间保持挂载，因此从帖子/用户页返回时不会重复播放。
+        initialDrawerOpenedRef.current = true;
+        requestAnimationFrame(() => {
+          setDrawerPhase('opening');
+          sortTimerRef.current = setTimeout(() => setDrawerPhase('idle'), 360);
         });
       }
     }

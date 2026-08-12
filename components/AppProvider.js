@@ -116,6 +116,77 @@ function stageSharedGeometry(transition, {
   }).catch(() => {});
 }
 
+function stagePostBodyGeometry(transition, {
+  duration,
+  moveOffset,
+  moveEasing = 'cubic-bezier(0.42, 0, 0.58, 1)',
+  resizeEasing = 'cubic-bezier(0.42, 0, 0.58, 1)',
+}) {
+  transition.ready.then(() => {
+    const animations = document.getAnimations();
+    const cardAnimation = animations.find(
+      (animation) => animation.effect?.pseudoElement === '::view-transition-group(post-expand)'
+    );
+    const bodyAnimation = animations.find(
+      (animation) => animation.effect?.pseudoElement === '::view-transition-group(post-body)'
+    );
+    const cardFrames = cardAnimation?.effect?.getKeyframes();
+    const bodyFrames = bodyAnimation?.effect?.getKeyframes();
+    if (!bodyAnimation || !cardFrames || cardFrames.length < 2 || !bodyFrames || bodyFrames.length < 2) return;
+
+    const cardStart = cardFrames[0];
+    const cardEnd = cardFrames[cardFrames.length - 1];
+    const bodyStart = bodyFrames[0];
+    const bodyEnd = bodyFrames[bodyFrames.length - 1];
+    const cardStartMatrix = new DOMMatrixReadOnly(cardStart.transform);
+    const cardEndMatrix = new DOMMatrixReadOnly(cardEnd.transform);
+    const bodyStartMatrix = new DOMMatrixReadOnly(bodyStart.transform);
+    const bodyEndMatrix = new DOMMatrixReadOnly(bodyEnd.transform);
+    const startCardWidth = Number.parseFloat(cardStart.width);
+    const endCardWidth = Number.parseFloat(cardEnd.width);
+    const startBodyWidth = Number.parseFloat(bodyStart.width);
+    if (![startCardWidth, endCardWidth, startBodyWidth].every(Number.isFinite)) return;
+
+    // 第一阶段让正文锁定在卡片内的原始位置；卡片停稳后，正文才调整到详情布局。
+    const leftInset = bodyStartMatrix.e - cardStartMatrix.e;
+    const topInset = bodyStartMatrix.f - cardStartMatrix.f;
+    const rightInset = startCardWidth - leftInset - startBodyWidth;
+    const midpointWidth = Math.max(0, endCardWidth - leftInset - rightInset);
+    const midpointTransform = new DOMMatrix([
+      bodyEndMatrix.a,
+      bodyEndMatrix.b,
+      bodyEndMatrix.c,
+      bodyEndMatrix.d,
+      cardEndMatrix.e + leftInset,
+      cardEndMatrix.f + topInset,
+    ]).toString();
+
+    bodyAnimation.effect.setKeyframes([
+      {
+        offset: 0,
+        width: bodyStart.width,
+        height: bodyStart.height,
+        transform: bodyStart.transform,
+        easing: moveEasing,
+      },
+      {
+        offset: moveOffset,
+        width: `${midpointWidth}px`,
+        height: bodyStart.height,
+        transform: midpointTransform,
+        easing: resizeEasing,
+      },
+      {
+        offset: 1,
+        width: bodyEnd.width,
+        height: bodyEnd.height,
+        transform: bodyEnd.transform,
+      },
+    ]);
+    bodyAnimation.effect.updateTiming({ duration, easing: 'linear', fill: 'both' });
+  }).catch(() => {});
+}
+
 export function useApp() {
   return useContext(AppContext);
 }
@@ -128,8 +199,10 @@ export default function AppProvider({ children, cachedName = '' }) {
   const [view, setView] = useState('feed'); // feed | post | new | admin | settings | messages | user | custom
   const [currentPostId, setCurrentPostId] = useState(null);
   const [currentPostPreview, setCurrentPostPreview] = useState(null);
+  const [currentPostOrigin, setCurrentPostOrigin] = useState(null);
   const [currentUsername, setCurrentUsername] = useState(null);
   const [currentUserPreview, setCurrentUserPreview] = useState(null);
+  const [currentUserPostsPreview, setCurrentUserPostsPreview] = useState(null);
   const [currentPageName, setCurrentPageName] = useState(null);
   const [sort, setSort] = useState('latest');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -285,8 +358,10 @@ export default function AppProvider({ children, cachedName = '' }) {
       setView(page);
       setCurrentPostId(null);
       setCurrentPostPreview(null);
+      setCurrentPostOrigin(null);
       setCurrentUsername(null);
       setCurrentUserPreview(null);
+      setCurrentUserPostsPreview(null);
       if (refreshFeed) refresh();
     };
 
@@ -380,17 +455,23 @@ export default function AppProvider({ children, cachedName = '' }) {
     });
   }, [currentPostId, currentUsername, currentUserPreview, refresh, view]);
 
-  const openPost = useCallback((postId, sourceElement = null, preview = null) => {
+  const openPost = useCallback((postId, sourceElement = null, preview = null, origin = null) => {
     const url = new URL(window.location);
     url.searchParams.set('post', postId);
     url.searchParams.delete('page');
     url.searchParams.delete('user');
+    const resolvedOrigin = origin || { view };
+    const historyOrigin = resolvedOrigin?.view === 'user'
+      ? { view: 'user', username: resolvedOrigin.username }
+      : { view: resolvedOrigin?.view || 'feed' };
     const commitNavigation = () => {
-      window.history.pushState({ page: 'post', postId }, '', url);
+      window.history.pushState({ page: 'post', postId, origin: historyOrigin }, '', url);
       setView('post');
       setCurrentPostId(postId);
       setCurrentPostPreview(preview);
+      setCurrentPostOrigin(resolvedOrigin);
       setCurrentUserPreview(null);
+      setCurrentUserPostsPreview(null);
     };
 
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -414,7 +495,12 @@ export default function AppProvider({ children, cachedName = '' }) {
       moveEasing: 'cubic-bezier(0.42, 0, 0.58, 1)',
       resizeEasing: 'cubic-bezier(0.42, 0, 0.58, 1)',
     });
-    stageSharedGeometry(transition, { name: 'post-body', duration: 960, moveOffset: 0.62 });
+    stagePostBodyGeometry(transition, {
+      duration: 960,
+      moveOffset: 0.62,
+      moveEasing: 'cubic-bezier(0.42, 0, 0.58, 1)',
+      resizeEasing: 'cubic-bezier(0.42, 0, 0.58, 1)',
+    });
     const clearSourceNames = () => {
       sourceElement.style.viewTransitionName = '';
       clearPostTransitionParts(sourceParts);
@@ -426,7 +512,75 @@ export default function AppProvider({ children, cachedName = '' }) {
       root.classList.add('post-transition-settled');
       window.setTimeout(() => root.classList.remove('post-transition-settled'), 220);
     });
-  }, []);
+  }, [view]);
+
+  const returnFromPost = useCallback(() => {
+    if (currentPostOrigin?.view !== 'user' || !currentPostOrigin.username) {
+      navigate('feed');
+      return;
+    }
+
+    const url = new URL(window.location);
+    url.searchParams.set('user', currentPostOrigin.username);
+    url.searchParams.delete('page');
+    url.searchParams.delete('post');
+    const commitNavigation = () => {
+      window.history.pushState({ page: 'user', username: currentPostOrigin.username }, '', url);
+      setView('user');
+      setCurrentUsername(currentPostOrigin.username);
+      setCurrentUserPreview(currentPostOrigin.user || { username: currentPostOrigin.username });
+      setCurrentUserPostsPreview(currentPostOrigin.posts || []);
+      setCurrentPostId(null);
+      setCurrentPostPreview(null);
+    };
+
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const sourceCard = document.querySelector('#pagePost .post-detail-card');
+    if (!sourceCard || !document.startViewTransition || reduceMotion) {
+      commitNavigation();
+      return;
+    }
+
+    const root = document.documentElement;
+    let targetCard = null;
+    let targetParts = [];
+    root.classList.add('home-view-transition', 'returning-home', 'returning-user-post');
+    const transition = document.startViewTransition(() => {
+      flushSync(commitNavigation);
+      const userPage = document.getElementById('pageUser');
+      if (userPage) userPage.scrollTop = currentPostOrigin.scrollTop || 0;
+      targetCard = Array.from(document.querySelectorAll('#userProfileContent [data-post-id]')).find(
+        (element) => element.dataset.postId === String(currentPostId)
+      ) || null;
+      if (targetCard) targetCard.style.viewTransitionName = 'post-expand';
+      targetParts = namePostTransitionParts(targetCard);
+    });
+    stageSharedGeometry(transition, {
+      name: 'post-expand',
+      duration: 1100,
+      moveOffset: 0.73,
+      moveEasing: 'cubic-bezier(0.42, 0, 0.58, 1)',
+      resizeEasing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+      reverse: true,
+    });
+    stageSharedGeometry(transition, {
+      name: 'post-body',
+      duration: 1100,
+      moveOffset: 0.73,
+      moveEasing: 'cubic-bezier(0.42, 0, 0.58, 1)',
+      resizeEasing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+      reverse: true,
+    });
+    const clearTargetNames = () => {
+      if (targetCard) targetCard.style.viewTransitionName = '';
+      clearPostTransitionParts(targetParts);
+    };
+    transition.ready.then(clearTargetNames, clearTargetNames);
+    transition.finished.finally(() => {
+      root.classList.remove('home-view-transition', 'returning-home', 'returning-user-post');
+      setCurrentPostOrigin(null);
+    });
+  }, [currentPostId, currentPostOrigin, navigate]);
 
   const openUser = useCallback((username, source = null, preview = null) => {
     const url = new URL(window.location);
@@ -440,6 +594,8 @@ export default function AppProvider({ children, cachedName = '' }) {
       setCurrentUserPreview(preview || { username });
       setCurrentPostId(null);
       setCurrentPostPreview(null);
+      setCurrentPostOrigin(null);
+      setCurrentUserPostsPreview(null);
     };
 
     const avatarElement = source?.avatarElement;
@@ -490,10 +646,12 @@ export default function AppProvider({ children, cachedName = '' }) {
         setView('post');
         setCurrentPostId(state.postId);
         setCurrentPostPreview(null);
+        setCurrentPostOrigin(state.origin || null);
       } else if (state.username) {
         setView('user');
         setCurrentUsername(state.username);
         setCurrentUserPreview(null);
+        setCurrentUserPostsPreview(null);
       } else if (state.pageName) {
         setView('custom');
         setCurrentPageName(state.pageName);
@@ -501,8 +659,10 @@ export default function AppProvider({ children, cachedName = '' }) {
         setView(state.page || 'feed');
         setCurrentPostId(null);
         setCurrentPostPreview(null);
+        setCurrentPostOrigin(null);
         setCurrentUsername(null);
         setCurrentUserPreview(null);
+        setCurrentUserPostsPreview(null);
         setCurrentPageName(null);
       }
     };
@@ -544,8 +704,8 @@ export default function AppProvider({ children, cachedName = '' }) {
     forumName, forumNameLoaded, updateForumName,
     theme, toggleTheme,
     view, navigate,
-    currentPostId, currentPostPreview, openPost,
-    currentUsername, currentUserPreview, openUser,
+    currentPostId, currentPostPreview, currentPostOrigin, openPost, returnFromPost,
+    currentUsername, currentUserPreview, currentUserPostsPreview, openUser,
     currentPageName, openCustomPage,
     sort, setSort,
     refreshKey, refresh,

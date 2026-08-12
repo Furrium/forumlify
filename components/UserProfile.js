@@ -1,23 +1,27 @@
 'use client';
 
 // 用户主页：资料卡 + 该用户的帖子列表
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { API } from '@/lib/api';
 import { useApp } from './AppProvider';
 import { Icon } from './Icons';
 import { useOpenPrivateChat } from './chat/ChatManager';
+import { renderMarkdown } from '@/lib/markdown';
+import { useTranslation } from 'react-i18next';
 
 function avatar(username, size = 128) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || 'U') +
     '&background=6366f1&color=fff&size=' + size;
 }
 
-export default function UserProfile({ username, initialUser = null }) {
+export default function UserProfile({ username, initialUser = null, initialPosts = null }) {
   const { currentUser, openPost } = useApp();
+  const { t, i18n } = useTranslation();
   const openPrivateChat = useOpenPrivateChat();
   const [user, setUser] = useState(initialUser);
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState(initialPosts || []);
   const [error, setError] = useState(null);
+  const postsRef = useRef(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -37,9 +41,16 @@ export default function UserProfile({ username, initialUser = null }) {
 
   useEffect(() => {
     setUser(initialUser);
-    setPosts([]);
+    setPosts(initialPosts || []);
     load();
-  }, [initialUser, load]);
+  }, [initialPosts, initialUser, load]);
+
+  useEffect(() => {
+    const contents = postsRef.current?.querySelectorAll('.user-post-preview') || [];
+    contents.forEach((element) => {
+      element.classList.toggle('has-fade', element.scrollHeight > element.clientHeight + 4);
+    });
+  }, [posts]);
 
   if (error) {
     return (
@@ -82,20 +93,55 @@ export default function UserProfile({ username, initialUser = null }) {
           )}
         </div>
         {user.id && (
-        <div className="user-profile-posts">
+        <div className="user-profile-posts" ref={postsRef}>
           <h3 style={{ margin: '24px 0 16px', fontSize: 18 }}><Icon name="file" size={18} /> 发布的帖子</h3>
           {posts.length === 0 ? (
             <div style={{ color: '#94a3b8', padding: '20px 0', textAlign: 'center' }}>还没有发帖</div>
           ) : (
             posts.map((p) => {
-              const time = p.created_at ? new Date(p.created_at).toLocaleString('zh-CN') : '';
+              const time = p.created_at ? new Date(p.created_at).toLocaleString(i18n.language === 'en' ? 'en-US' : 'zh-CN') : '';
               return (
-                <div key={p.id} className="post-card" style={{ cursor: 'pointer' }} onClick={(e) => openPost(p.id, e.currentTarget, p)}>
-                  <div className="post-title" style={{ fontSize: 16, fontWeight: 600 }}>{p.title || '无标题'}</div>
-                  <div className="post-content" style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                    {(p.content || '').substring(0, 100)}{(p.content || '').length > 100 ? '...' : ''}
+                <div
+                  key={p.id}
+                  className="post-card user-post-card"
+                  data-post-id={p.id}
+                  data-username={user.username || ''}
+                  style={{ cursor: 'pointer' }}
+                  onClick={(event) => openPost(p.id, event.currentTarget, p, {
+                    view: 'user',
+                    username: user.username,
+                    user,
+                    posts,
+                    scrollTop: document.getElementById('pageUser')?.scrollTop || 0,
+                  })}
+                >
+                  {p.is_pinned && (
+                    <div className="post-pin-state" style={{ width: 'fit-content', display: 'flex', alignItems: 'center', gap: 3, fontSize: 12, color: 'var(--primary)', fontWeight: 600, marginBottom: 4 }}>
+                      <Icon name="pin" size={12} /> {t('feed.pinned')}
+                    </div>
+                  )}
+                  <div className="post-header">
+                    <img src={p.avatar_url || user.avatar_url || avatar(user.username, 64)} className="post-avatar" alt="" />
+                    <span className="post-username" style={{ color: 'var(--primary)' }}>{user.username}</span>
+                    <span className="post-time">{time}</span>
+                    {p.edited_at && (
+                      <span className="post-edited-state" style={{ fontSize: 11, color: 'var(--text-light)', marginLeft: 6 }}>
+                        <span className="post-edited-label">{t('feed.deleted')}</span>
+                      </span>
+                    )}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 8 }}>{time}</div>
+                  <div className="post-title">{p.title || t('feed.noTitle')}</div>
+                  <div className="post-content user-post-preview" dangerouslySetInnerHTML={{ __html: renderMarkdown(p.content) }} />
+                  {p.images && p.images.length > 0 && (
+                    <div className="post-images">
+                      {p.images.map((image, index) => (
+                        <img key={image + index} src={image} className="post-image" alt="" />
+                      ))}
+                    </div>
+                  )}
+                  <div className="post-actions">
+                    <span><Icon name="message" size={14} /> {p.reply_count || 0}</span>
+                  </div>
                 </div>
               );
             })

@@ -1237,16 +1237,16 @@ html.post-view-transition::view-transition-group(post-sidebar) {
 }
 
 html.post-view-transition::view-transition-group(post-heading) {
-  animation-duration: 0.64s;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-duration: 0.8s;
+  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
 }
 
 html.post-view-transition::view-transition-group(post-avatar),
 html.post-view-transition::view-transition-group(post-author),
 html.post-view-transition::view-transition-group(post-pin-state),
 html.post-view-transition::view-transition-group(post-edited-label) {
-  animation-duration: 0.68s;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-duration: 0.8s;
+  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
 }
 
 html.post-view-transition::view-transition-group(post-body) {
@@ -1260,8 +1260,8 @@ html.home-view-transition.returning-home::view-transition-image-pair(post-body) 
 }
 
 html.post-view-transition::view-transition-group(post-time) {
-  animation-duration: 1.05s;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-duration: 0.8s;
+  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
 }
 
 html.post-view-transition::view-transition-group(persistent-navbar),
@@ -1300,11 +1300,11 @@ html.post-view-transition::view-transition-new(post-expand) {
 }
 
 html.post-view-transition::view-transition-old(post-heading) {
-  animation: sharedTitleMorphOut 0.64s ease-out both;
+  animation: sharedTitleMorphOut 0.8s cubic-bezier(0.42, 0, 0.58, 1) both;
 }
 
 html.post-view-transition::view-transition-new(post-heading) {
-  animation: sharedTitleMorphIn 0.64s ease-out both;
+  animation: sharedTitleMorphIn 0.8s cubic-bezier(0.42, 0, 0.58, 1) both;
 }
 
 html.post-view-transition::view-transition-old(post-time) {
@@ -1319,14 +1319,14 @@ html.post-view-transition::view-transition-old(post-avatar),
 html.post-view-transition::view-transition-old(post-author),
 html.post-view-transition::view-transition-old(post-pin-state),
 html.post-view-transition::view-transition-old(post-edited-label) {
-  animation: sharedPartMorphOut 0.68s ease-out both;
+  animation: sharedPartMorphOut 0.8s cubic-bezier(0.42, 0, 0.58, 1) both;
 }
 
 html.post-view-transition::view-transition-new(post-avatar),
 html.post-view-transition::view-transition-new(post-author),
 html.post-view-transition::view-transition-new(post-pin-state),
 html.post-view-transition::view-transition-new(post-edited-label) {
-  animation: sharedPartMorphIn 0.68s ease-out both;
+  animation: sharedPartMorphIn 0.8s cubic-bezier(0.42, 0, 0.58, 1) both;
 }
 
 html.post-view-transition::view-transition-group(post-edited-detail),
@@ -2608,6 +2608,26 @@ html.home-view-transition.returning-home::view-transition-new(post-body) {
   background: rgba(255, 255, 255, 0.28) !important;
   transform: translateY(-2px) !important;
   box-shadow: var(--glass-shadow-hover) !important;
+}
+
+#userProfileContent .user-post-preview {
+  position: relative;
+  max-height: 8.5em;
+  overflow: hidden;
+  line-height: 1.7;
+}
+
+#userProfileContent .user-post-preview.has-fade {
+  -webkit-mask-image: linear-gradient(180deg, #000 58%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 58%, transparent 100%);
+}
+
+#userProfileContent .user-post-preview > :first-child {
+  margin-top: 0;
+}
+
+#userProfileContent .user-post-preview > :last-child {
+  margin-bottom: 0;
 }
 
 /* 亮色模式下稍微实一点，避免太透 */
