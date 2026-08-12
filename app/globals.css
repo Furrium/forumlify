@@ -18,6 +18,9 @@
   --glass-text: #1a1a2e;
   --glass-text-secondary: #4a4a6a;
   --glass-text-light: #7a7a9a;
+  /* 信息流卡片使用不透明底色，避免卡片高度改变透出的页面渐变色。 */
+  --feed-card-bg: #eff3f4;
+  --feed-card-hover-bg: #f5f7f8;
 
   /* ===== 背景渐变 - 亮色 ===== */
   --bg-start: #dfe6e9;
@@ -62,6 +65,8 @@
   --glass-text: #e8e8f0;
   --glass-text-secondary: #a0a0b8;
   --glass-text-light: #707090;
+  --feed-card-bg: #1b1b2d;
+  --feed-card-hover-bg: #25253b;
 
   /* ===== 背景渐变 - 暗色 ===== */
   --bg-start: #0f0f1a;
@@ -552,6 +557,15 @@ svg {
   background: rgba(255, 255, 255, 0.28);
   transform: translateY(-3px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.10);
+}
+
+/* 首页卡片高度不同也必须保持同一底色；玻璃效果由边框和阴影保留。 */
+#feed .post-card {
+  background: var(--feed-card-bg);
+}
+
+#feed .post-card:hover {
+  background: var(--feed-card-hover-bg);
 }
 
 .post-header {
