@@ -18,7 +18,7 @@ import Modals from '@/components/Modals';
 import LoadingScreen from '@/components/LoadingScreen';
 
 function HomeInner() {
-  const { view, currentPostId, currentPostPreview, currentUsername, currentPageName, ready, forumName, forumNameLoaded } = useApp();
+  const { view, currentPostId, currentPostPreview, currentUsername, currentUserPreview, currentPageName, ready, forumName, forumNameLoaded } = useApp();
   const [modal, setModal] = useState(null); // null | login | register | report
   const [reportPostId, setReportPostId] = useState(null);
 
@@ -42,7 +42,7 @@ function HomeInner() {
       {/* 独立页面 */}
       <div style={{ display: view !== 'feed' ? 'block' : 'none' }}>
         {view === 'post' && currentPostId && <PostDetail postId={currentPostId} initialPost={currentPostPreview} />}
-        {view === 'user' && currentUsername && <UserProfile username={currentUsername} />}
+        {view === 'user' && currentUsername && <UserProfile username={currentUsername} initialUser={currentUserPreview} />}
         {view === 'custom' && currentPageName && <CustomPage pageName={currentPageName} />}
         {view === 'new' && <NewPost />}
         {view === 'admin' && <AdminPage />}

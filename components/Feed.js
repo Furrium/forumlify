@@ -107,6 +107,23 @@ export default function Feed({ onOpenModal, onReport }) {
     }
   };
 
+  const handleOpenUser = (event, post) => {
+    event.stopPropagation();
+    const header = event.currentTarget.closest('.post-header');
+    openUser(
+      post.username,
+      {
+        avatarElement: header?.querySelector('.post-avatar'),
+        nameElement: header?.querySelector('.post-username'),
+      },
+      {
+        username: post.username,
+        avatar_url: post.avatar_url || avatar(post.username),
+        sourcePostId: post.id,
+      }
+    );
+  };
+
   return (
     <main id="feed">
       <div className="feed-header">
@@ -137,23 +154,39 @@ export default function Feed({ onOpenModal, onReport }) {
               posts.map((p) => {
                 const time = p.created_at ? new Date(p.created_at).toLocaleString('zh-CN') : '';
                 return (
-                  <div key={p.id} className="post-card" data-post-id={p.id} style={{ cursor: 'pointer' }}
+                  <div key={p.id} className="post-card" data-post-id={p.id} data-username={p.username || ''} style={{ cursor: 'pointer' }}
                     onClick={(e) => openPost(p.id, e.currentTarget, p)}>
                 {p.is_pinned && (
                   <div className="post-pin-state" style={{ width: 'fit-content', display: 'flex', alignItems: 'center', gap: 3, fontSize: 12, color: 'var(--primary)', fontWeight: 600, marginBottom: 4 }}><Icon name="pin" size={12} /> {t('feed.pinned')}</div>
                 )}
                 <div className="post-header">
-                  <img src={p.avatar_url || avatar(p.username)} className="post-avatar" alt="" />
+                  <img
+                    src={p.avatar_url || avatar(p.username)}
+                    className="post-avatar"
+                    alt={p.username || t('feed.anonymous')}
+                    role="button"
+                    tabIndex={0}
+                    style={{ cursor: 'pointer' }}
+                    onClick={(e) => handleOpenUser(e, p)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleOpenUser(e, p);
+                      }
+                    }}
+                  />
                   <span
                     className="post-username"
                     style={{ cursor: 'pointer', color: 'var(--primary)' }}
-                    onClick={(e) => { e.stopPropagation(); openUser(p.username); }}
+                    onClick={(e) => handleOpenUser(e, p)}
                   >
                     {p.username || t('feed.anonymous')}
                   </span>
                   <span className="post-time">{time}</span>
                   {p.edited_at && (
-                    <span className="post-edited-state" style={{ fontSize: 11, color: 'var(--text-light)', marginLeft: 6 }}>{t('feed.deleted')}</span>
+                    <span className="post-edited-state" style={{ fontSize: 11, color: 'var(--text-light)', marginLeft: 6 }}>
+                      <span className="post-edited-label">{t('feed.deleted')}</span>
+                    </span>
                   )}
                 </div>
                 <div className="post-title">{p.title || t('feed.noTitle')}</div>

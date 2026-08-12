@@ -15,7 +15,7 @@ const POST_TRANSITION_PARTS = [
   ['.post-content', 'post-body'],
   ['.post-images', 'post-feed-media'],
   ['.post-pin-state', 'post-pin-state'],
-  ['.post-edited-state', 'post-edited-state'],
+  ['.post-edited-label', 'post-edited-label'],
   ['.post-actions', 'post-feed-actions'],
 ];
 
@@ -129,6 +129,7 @@ export default function AppProvider({ children, cachedName = '' }) {
   const [currentPostId, setCurrentPostId] = useState(null);
   const [currentPostPreview, setCurrentPostPreview] = useState(null);
   const [currentUsername, setCurrentUsername] = useState(null);
+  const [currentUserPreview, setCurrentUserPreview] = useState(null);
   const [currentPageName, setCurrentPageName] = useState(null);
   const [sort, setSort] = useState('latest');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -273,15 +274,19 @@ export default function AppProvider({ children, cachedName = '' }) {
     if (page === 'feed') {
       url.searchParams.delete('page');
       url.searchParams.delete('post');
+      url.searchParams.delete('user');
     } else {
       url.searchParams.set('page', page);
       url.searchParams.delete('post');
+      url.searchParams.delete('user');
     }
     const commitNavigation = (refreshFeed = true) => {
       window.history.pushState({ page }, '', url);
       setView(page);
       setCurrentPostId(null);
       setCurrentPostPreview(null);
+      setCurrentUsername(null);
+      setCurrentUserPreview(null);
       if (refreshFeed) refresh();
     };
 
@@ -289,6 +294,48 @@ export default function AppProvider({ children, cachedName = '' }) {
     if (page !== 'feed' || view === 'feed' || !document.startViewTransition || reduceMotion) {
       commitNavigation();
       return;
+    }
+
+    if (view === 'user') {
+      const root = document.documentElement;
+      const sourceAvatar = document.querySelector('#pageUser .user-profile-avatar');
+      const sourceName = document.querySelector('#pageUser .user-profile-name');
+      const findTargetCard = () => {
+        if (currentUserPreview?.sourcePostId) {
+          const exact = Array.from(document.querySelectorAll('[data-post-id]')).find(
+            (element) => element.dataset.postId === String(currentUserPreview.sourcePostId)
+          );
+          if (exact) return exact;
+        }
+        return Array.from(document.querySelectorAll('[data-username]')).find(
+          (element) => element.dataset.username === String(currentUsername || '')
+        ) || null;
+      };
+      let targetCard = findTargetCard();
+
+      if (sourceAvatar && sourceName && targetCard) {
+        let targetAvatar = null;
+        let targetName = null;
+        root.classList.add('user-view-transition', 'returning-user-home');
+        const transition = document.startViewTransition(() => {
+          flushSync(() => commitNavigation(false));
+          targetCard = findTargetCard();
+          targetAvatar = targetCard?.querySelector('.post-avatar') || null;
+          targetName = targetCard?.querySelector('.post-username') || null;
+          if (targetAvatar) targetAvatar.style.viewTransitionName = 'user-avatar';
+          if (targetName) targetName.style.viewTransitionName = 'user-name';
+        });
+        const clearTargetNames = () => {
+          if (targetAvatar) targetAvatar.style.viewTransitionName = '';
+          if (targetName) targetName.style.viewTransitionName = '';
+        };
+        transition.ready.then(clearTargetNames, clearTargetNames);
+        transition.finished.finally(() => {
+          root.classList.remove('user-view-transition', 'returning-user-home');
+          refresh();
+        });
+        return;
+      }
     }
 
     let targetCard = currentPostId
@@ -331,7 +378,7 @@ export default function AppProvider({ children, cachedName = '' }) {
       document.documentElement.classList.remove('home-view-transition', 'returning-home');
       refresh();
     });
-  }, [currentPostId, refresh, view]);
+  }, [currentPostId, currentUsername, currentUserPreview, refresh, view]);
 
   const openPost = useCallback((postId, sourceElement = null, preview = null) => {
     const url = new URL(window.location);
@@ -343,6 +390,7 @@ export default function AppProvider({ children, cachedName = '' }) {
       setView('post');
       setCurrentPostId(postId);
       setCurrentPostPreview(preview);
+      setCurrentUserPreview(null);
     };
 
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -380,14 +428,47 @@ export default function AppProvider({ children, cachedName = '' }) {
     });
   }, []);
 
-  const openUser = useCallback((username) => {
+  const openUser = useCallback((username, source = null, preview = null) => {
     const url = new URL(window.location);
     url.searchParams.set('user', username);
     url.searchParams.delete('page');
     url.searchParams.delete('post');
-    window.history.pushState({ page: 'user', username }, '', url);
-    setView('user');
-    setCurrentUsername(username);
+    const commitNavigation = () => {
+      window.history.pushState({ page: 'user', username }, '', url);
+      setView('user');
+      setCurrentUsername(username);
+      setCurrentUserPreview(preview || { username });
+      setCurrentPostId(null);
+      setCurrentPostPreview(null);
+    };
+
+    const avatarElement = source?.avatarElement;
+    const nameElement = source?.nameElement;
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (!avatarElement || !nameElement || !document.startViewTransition || reduceMotion) {
+      commitNavigation();
+      return;
+    }
+
+    const root = document.documentElement;
+    root.classList.remove('user-transition-settled');
+    root.classList.add('user-view-transition');
+    avatarElement.style.viewTransitionName = 'user-avatar';
+    nameElement.style.viewTransitionName = 'user-name';
+
+    const transition = document.startViewTransition(() => {
+      flushSync(commitNavigation);
+    });
+    const clearSourceNames = () => {
+      avatarElement.style.viewTransitionName = '';
+      nameElement.style.viewTransitionName = '';
+    };
+    transition.ready.then(clearSourceNames, clearSourceNames);
+    transition.finished.finally(() => {
+      root.classList.remove('user-view-transition');
+      root.classList.add('user-transition-settled');
+      window.setTimeout(() => root.classList.remove('user-transition-settled'), 320);
+    });
   }, []);
 
   const openCustomPage = useCallback((pageName) => {
@@ -398,6 +479,7 @@ export default function AppProvider({ children, cachedName = '' }) {
     window.history.pushState({ page: 'custom', pageName }, '', url);
     setView('custom');
     setCurrentPageName(pageName);
+    setCurrentUserPreview(null);
   }, []);
 
   // 浏览器前进后退
@@ -411,6 +493,7 @@ export default function AppProvider({ children, cachedName = '' }) {
       } else if (state.username) {
         setView('user');
         setCurrentUsername(state.username);
+        setCurrentUserPreview(null);
       } else if (state.pageName) {
         setView('custom');
         setCurrentPageName(state.pageName);
@@ -419,6 +502,7 @@ export default function AppProvider({ children, cachedName = '' }) {
         setCurrentPostId(null);
         setCurrentPostPreview(null);
         setCurrentUsername(null);
+        setCurrentUserPreview(null);
         setCurrentPageName(null);
       }
     };
@@ -461,7 +545,7 @@ export default function AppProvider({ children, cachedName = '' }) {
     theme, toggleTheme,
     view, navigate,
     currentPostId, currentPostPreview, openPost,
-    currentUsername, openUser,
+    currentUsername, currentUserPreview, openUser,
     currentPageName, openCustomPage,
     sort, setSort,
     refreshKey, refresh,

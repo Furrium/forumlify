@@ -10,6 +10,7 @@ import { Icon } from './Icons';
 import ImageViewer from './ImageViewer';
 import { renderMarkdown } from '@/lib/markdown';
 import { useToast } from './Toast';
+import { useTranslation } from 'react-i18next';
 
 function avatar(username) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || '匿名用户') +
@@ -18,6 +19,7 @@ function avatar(username) {
 
 export default function PostDetail({ postId, initialPost = null }) {
   const { currentUser, navigate, openUser, refreshKey } = useApp();
+  const { t, i18n } = useTranslation();
   const { toast, confirmAction } = useToast();
   const [post, setPost] = useState(initialPost);
   const [error, setError] = useState(null);
@@ -156,7 +158,10 @@ export default function PostDetail({ postId, initialPost = null }) {
               <span className="post-time">{time}</span>
               {post.edited_at && (
                 <span className="post-edited-state" style={{ fontSize: 12, color: 'var(--text-light)', marginLeft: 8 }}>
-                  （已编辑 {new Date(post.edited_at).toLocaleString('zh-CN')}）
+                  <span className="post-edited-label">{t('feed.deleted')}</span>
+                  <span className="post-edited-detail">
+                    {' '}{new Date(post.edited_at).toLocaleString(i18n.language === 'en' ? 'en-US' : 'zh-CN')}
+                  </span>
                 </span>
               )}
               {post.is_pinned && (
