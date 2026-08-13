@@ -31,6 +31,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://forumlify:123456@localhost:5433/forumlify
       JWT_SECRET: ci-test-secret
+      ENABLE_CAPTCHA: 'false'
       PORT: 3100
       BASE_URL: http://127.0.0.1:3100
       NEXT_TELEMETRY_DISABLED: '1'
