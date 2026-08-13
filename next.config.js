@@ -1,3 +1,5 @@
+const enableCodecovBundleAnalysis = process.env.CODECOV_BUNDLE_ANALYSIS === 'true';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // 本地开发允许的来源：默认本机；局域网/其他设备通过环境变量追加
@@ -14,6 +16,20 @@ const nextConfig = {
       { source: '/uploads/:name', destination: '/api/uploads/:name' },
     ];
   },
+  ...(enableCodecovBundleAnalysis ? {
+    webpack(config) {
+      const { codecovWebpackPlugin } = require('@codecov/webpack-plugin');
+      config.plugins.push(codecovWebpackPlugin({
+        enableBundleAnalysis: true,
+        bundleName: 'forumlify-next',
+        gitService: 'github',
+        dryRun: process.env.GITHUB_ACTIONS !== 'true',
+        oidc: { useGitHubOIDC: true },
+      }));
+
+      return config;
+    },
+  } : {}),
 };
 
 module.exports = nextConfig;

@@ -57,17 +57,15 @@ jobs:
       - name: Build application
         run: npm run build
 
+      - name: Upload bundle analysis to Codecov
+        env:
+          CODECOV_BUNDLE_ANALYSIS: 'true'
+        run: npx next build --webpack
+
       - name: Run integration tests with coverage
         run: |
-          npx c8 \
-            --all \
-            --include 'app/**/*.js' \
-            --include 'lib/**/*.js' \
-            --exclude-after-remap \
-            --reporter lcov \
-            --reports-dir coverage \
-            --temp-directory .coverage-tmp \
-            node scripts/start.js > server.log 2>&1 &
+          mkdir -p .coverage-tmp
+          NODE_V8_COVERAGE="$PWD/.coverage-tmp" node scripts/start.js > server.log 2>&1 &
           server_pid=$!
           cleanup() {
             kill "$server_pid" 2>/dev/null || true
@@ -86,12 +84,40 @@ jobs:
             sleep 1
           done
 
-          npm test
+          node --test \
+            --test-concurrency=1 \
+            --test-reporter=spec \
+            --test-reporter=junit \
+            --test-reporter-destination=stdout \
+            --test-reporter-destination=test-results.xml \
+            test/*.test.js
+          cleanup
+          trap - EXIT
+
+          npx c8 report \
+            --all \
+            --include 'app/**/*.js' \
+            --include 'lib/**/*.js' \
+            --exclude-after-remap \
+            --reporter lcov \
+            --reports-dir coverage \
+            --temp-directory .coverage-tmp
+          test -s coverage/lcov.info
+          test -s test-results.xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           use_oidc: true
           files: coverage/lcov.info
+          disable_search: true
           fail_ci_if_error: true
           verbose: true
+
+      - name: Upload test results to Codecov
+        uses: codecov/test-results-action@v1
+        with:
+          use_oidc: true
+          file: test-results.xml
+          disable_search: true
+          fail_ci_if_error: true
