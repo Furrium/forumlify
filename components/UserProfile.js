@@ -69,7 +69,7 @@ export default function UserProfile({ username, initialUser = null, initialPosts
         <h2><Icon name="users" size={20} /> 用户主页</h2>
       </div>
       <div id="userProfileContent" style={{ maxWidth: 700, margin: '0 auto', width: '100%' }}>
-        <div className="user-profile-card" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 32, textAlign: 'center' }}>
+        <div className="user-profile-card" data-username={user.username || ''} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 32, textAlign: 'center' }}>
           <img className="user-profile-avatar" src={user.avatar_url || avatar(user.username)} style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }} alt={user.username || ''} />
           <h2 className="user-profile-name" style={{ margin: '16px 0 4px', fontSize: 24, color: 'var(--text)' }}>{user.username}</h2>
           {user.id && (
@@ -105,9 +105,10 @@ export default function UserProfile({ username, initialUser = null, initialPosts
                   key={p.id}
                   className="post-card user-post-card"
                   data-post-id={p.id}
+                  data-post-ref={p.post_number || p.id}
                   data-username={user.username || ''}
                   style={{ cursor: 'pointer' }}
-                  onClick={(event) => openPost(p.id, event.currentTarget, p, {
+                  onClick={(event) => openPost(p.post_number || p.id, event.currentTarget, p, {
                     view: 'user',
                     username: user.username,
                     user,

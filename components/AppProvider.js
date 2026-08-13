@@ -13,7 +13,7 @@ const POST_TRANSITION_PARTS = [
   ['.post-title', 'post-heading'],
   ['.post-time', 'post-time'],
   ['.post-content', 'post-body'],
-  ['.post-images', 'post-feed-media'],
+  ['.post-images', 'post-media'],
   ['.post-pin-state', 'post-pin-state'],
   ['.post-edited-label', 'post-edited-label'],
   ['.post-actions', 'post-feed-actions'],
@@ -33,6 +33,143 @@ function clearPostTransitionParts(elements) {
   elements.forEach((element) => {
     element.style.viewTransitionName = '';
   });
+}
+
+const SETTINGS_AVATAR_SELECTOR = [
+  '.post-avatar',
+  '.reply-avatar',
+  '.user-profile-avatar',
+  '.admin-user-avatar',
+].join(', ');
+
+const SETTINGS_NAME_SELECTOR = [
+  '.post-username',
+  '.reply-username',
+  '.user-profile-name',
+  '.admin-user-name',
+].join(', ');
+
+function visibleAreaRatio(element) {
+  if (!element?.isConnected) return 0;
+  const style = window.getComputedStyle(element);
+  if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return 0;
+
+  const bounds = element.getBoundingClientRect();
+  const totalArea = bounds.width * bounds.height;
+  if (totalArea <= 0) return 0;
+
+  let left = Math.max(0, bounds.left);
+  let top = Math.max(0, bounds.top);
+  let right = Math.min(window.innerWidth, bounds.right);
+  let bottom = Math.min(window.innerHeight, bounds.bottom);
+
+  // Account for scroll/clip containers, but deliberately do not treat the
+  // translucent navbar as an occluder: content underneath it is still visible.
+  for (let parent = element.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
+    const parentStyle = window.getComputedStyle(parent);
+    const clipsX = ['auto', 'scroll', 'hidden', 'clip'].includes(parentStyle.overflowX);
+    const clipsY = ['auto', 'scroll', 'hidden', 'clip'].includes(parentStyle.overflowY);
+    if (!clipsX && !clipsY) continue;
+    const parentBounds = parent.getBoundingClientRect();
+    if (clipsX) {
+      left = Math.max(left, parentBounds.left);
+      right = Math.min(right, parentBounds.right);
+    }
+    if (clipsY) {
+      top = Math.max(top, parentBounds.top);
+      bottom = Math.min(bottom, parentBounds.bottom);
+    }
+  }
+
+  return Math.max(0, right - left) * Math.max(0, bottom - top) / totalArea;
+}
+
+function randomElement(elements) {
+  return elements[Math.floor(Math.random() * elements.length)] || null;
+}
+
+function findSettingsTransitionSource(username) {
+  const groups = Array.from(document.querySelectorAll('[data-username]')).filter(
+    (element) => !element.closest('#navbar') && element.dataset.username === String(username || '')
+  );
+  const candidates = groups.map((group) => {
+    const avatarElement = group.querySelector(SETTINGS_AVATAR_SELECTOR);
+    const nameElement = group.querySelector(SETTINGS_NAME_SELECTOR);
+    return {
+      avatarElement: visibleAreaRatio(avatarElement) >= 0.5 ? avatarElement : null,
+      nameElement: visibleAreaRatio(nameElement) >= 0.5 ? nameElement : null,
+    };
+  });
+  const completeCandidates = candidates.filter(({ avatarElement, nameElement }) => avatarElement && nameElement);
+  if (completeCandidates.length > 0) return randomElement(completeCandidates);
+
+  return randomElement(candidates.filter(({ avatarElement, nameElement }) => avatarElement || nameElement)) || {
+    avatarElement: null,
+    nameElement: null,
+  };
+}
+
+const BUILT_IN_PAGES = new Set(['messages', 'settings', 'admin', 'new']);
+
+function cleanPathSegment(value) {
+  return encodeURIComponent(String(value || '').trim());
+}
+
+function pathForPage(page) {
+  return page === 'feed' ? '/' : `/${cleanPathSegment(page)}`;
+}
+
+function pathForUser(username) {
+  return `/user/${cleanPathSegment(username)}`;
+}
+
+function pathForPost(postRef) {
+  return `/post/${cleanPathSegment(postRef)}`;
+}
+
+function pathForCustomPage(pageName) {
+  return `/${cleanPathSegment(pageName)}`;
+}
+
+function routeFromLocation(location) {
+  const parts = location.pathname.split('/').filter(Boolean).map((part) => {
+    try { return decodeURIComponent(part); } catch { return part; }
+  });
+  const legacy = new URLSearchParams(location.search);
+  const legacyPost = legacy.get('post');
+  const legacyUser = legacy.get('user');
+  const legacyPage = legacy.get('page');
+
+  if (parts[0] === 'post' && parts.length === 2) return { page: 'post', postId: parts[1] };
+  if (parts[0] === 'user' && parts.length === 2) return { page: 'user', username: parts[1] };
+  if (parts.length === 1 && BUILT_IN_PAGES.has(parts[0])) return { page: parts[0] };
+  if (parts.length === 1) return { page: 'custom', pageName: parts[0] };
+
+  // Compatibility for links created before path-based navigation.
+  if (legacyPost) return { page: 'post', postId: legacyPost, legacy: true };
+  if (legacyUser) return { page: 'user', username: legacyUser, legacy: true };
+  if (legacyPage && BUILT_IN_PAGES.has(legacyPage)) return { page: legacyPage, legacy: true };
+  if (legacyPage) return { page: 'custom', pageName: legacyPage, legacy: true };
+  return { page: 'feed' };
+}
+
+function pathForRoute(route) {
+  if (route.page === 'post') return pathForPost(route.postId);
+  if (route.page === 'user') return pathForUser(route.username);
+  if (route.page === 'custom') return pathForCustomPage(route.pageName);
+  return pathForPage(route.page);
+}
+
+function clearLegacyPageParams(url) {
+  url.searchParams.delete('page');
+  url.searchParams.delete('post');
+  url.searchParams.delete('user');
+  return url;
+}
+
+function postCardMatches(element, postRef) {
+  const ref = String(postRef || '');
+  return element?.dataset.postRef === ref || element?.dataset.postId === ref;
 }
 
 function waitForPostImages(container) {
@@ -320,39 +457,32 @@ export default function AppProvider({ children, cachedName = '' }) {
     if (titleEl) titleEl.textContent = forumName;
   }, [ready, forumNameLoaded, forumName]);
 
-  // 按 URL 参数初始化视图
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const postParam = params.get('post');
-    const pageParam = params.get('page');
-    const userParam = params.get('user');
-    if (postParam) {
-      setView('post');
-      setCurrentPostId(postParam);
-    } else if (userParam) {
-      setView('user');
-      setCurrentUsername(userParam);
-    } else if (pageParam && ['messages', 'settings', 'admin', 'new'].includes(pageParam)) {
-      setView(pageParam);
-    } else if (pageParam) {
-      // 未知 page 参数视为自定义页面
-      setView('custom');
-      setCurrentPageName(pageParam);
-    }
+  const applyRoute = useCallback((route, state = {}) => {
+    setView(route.page);
+    setCurrentPostId(route.page === 'post' ? route.postId : null);
+    setCurrentPostPreview(null);
+    setCurrentPostOrigin(route.page === 'post' ? state.origin || null : null);
+    setCurrentUsername(route.page === 'user' ? route.username : null);
+    setCurrentUserPreview(null);
+    setCurrentUserPostsPreview(null);
+    setCurrentPageName(route.page === 'custom' ? route.pageName : null);
   }, []);
+
+  // Initialize from path routes and normalize legacy query-based links.
+  useEffect(() => {
+    const route = routeFromLocation(window.location);
+    applyRoute(route, window.history.state || {});
+    if (route.legacy) {
+      const normalized = clearLegacyPageParams(new URL(window.location));
+      normalized.pathname = pathForRoute(route);
+      window.history.replaceState({ ...window.history.state, ...route }, '', normalized);
+    }
+  }, [applyRoute]);
 
   // 视图切换：同步 URL (pushState，模拟原 SPA 行为)
   const navigate = useCallback((page) => {
-    const url = new URL(window.location);
-    if (page === 'feed') {
-      url.searchParams.delete('page');
-      url.searchParams.delete('post');
-      url.searchParams.delete('user');
-    } else {
-      url.searchParams.set('page', page);
-      url.searchParams.delete('post');
-      url.searchParams.delete('user');
-    }
+    const url = clearLegacyPageParams(new URL(window.location));
+    url.pathname = pathForPage(page);
     const commitNavigation = (refreshFeed = true) => {
       window.history.pushState({ page }, '', url);
       setView(page);
@@ -366,6 +496,100 @@ export default function AppProvider({ children, cachedName = '' }) {
     };
 
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (page === 'settings' && view !== 'settings' && document.startViewTransition && !reduceMotion) {
+      const root = document.documentElement;
+      const visibleSource = findSettingsTransitionSource(currentUser?.username);
+      const navbarAvatar = document.querySelector('#navbar #userDropdown .avatar');
+      const sourceAvatar = visibleSource.avatarElement || navbarAvatar;
+      const sourceName = visibleSource.nameElement;
+      const avatarFromNavbar = sourceAvatar === navbarAvatar;
+
+      if (!sourceAvatar) {
+        commitNavigation();
+        return;
+      }
+
+      root.classList.add('settings-view-transition');
+      if (avatarFromNavbar) root.classList.add('settings-avatar-from-navbar');
+      if (!sourceName) root.classList.add('settings-name-fade-only');
+      sourceAvatar.style.viewTransitionName = 'settings-avatar';
+      if (sourceName) sourceName.style.viewTransitionName = 'settings-user-name';
+
+      const transition = document.startViewTransition(() => {
+        sourceAvatar.style.viewTransitionName = '';
+        if (sourceName) sourceName.style.viewTransitionName = '';
+        if (avatarFromNavbar) root.classList.add('settings-navbar-avatar-hidden');
+        flushSync(() => commitNavigation(false));
+      });
+      transition.finished.finally(() => {
+        root.classList.remove(
+          'settings-view-transition',
+          'settings-avatar-from-navbar',
+          'settings-name-fade-only',
+          'settings-navbar-avatar-hidden'
+        );
+        if (avatarFromNavbar) {
+          root.classList.add('settings-navbar-avatar-reveal');
+          window.setTimeout(() => root.classList.remove('settings-navbar-avatar-reveal'), 360);
+        }
+        refresh();
+      });
+      return;
+    }
+
+    if (page === 'feed' && view === 'settings' && document.startViewTransition && !reduceMotion) {
+      const root = document.documentElement;
+      const sourceAvatar = document.querySelector('#pageSettings .settings-profile-avatar');
+      const sourceName = document.querySelector('#pageSettings .settings-profile-name');
+
+      if (!sourceAvatar) {
+        commitNavigation();
+        return;
+      }
+
+      let targetAvatar = null;
+      let targetName = null;
+      root.classList.add(
+        'settings-view-transition',
+        'returning-settings-home',
+        'settings-navbar-avatar-hidden'
+      );
+
+      const transition = document.startViewTransition(() => {
+        flushSync(() => commitNavigation(false));
+        const visibleTarget = findSettingsTransitionSource(currentUser?.username);
+        const navbarAvatar = document.querySelector('#navbar #userDropdown .avatar');
+        targetAvatar = visibleTarget.avatarElement || navbarAvatar;
+        targetName = visibleTarget.nameElement;
+
+        // Hide the navbar avatar only in the old snapshot. The new snapshot
+        // must expose it as the shared target when no visible feed avatar exists.
+        root.classList.remove('settings-navbar-avatar-hidden');
+
+        if (targetAvatar) targetAvatar.style.viewTransitionName = 'settings-avatar';
+        if (targetName) {
+          targetName.style.viewTransitionName = 'settings-user-name';
+        } else {
+          root.classList.add('settings-name-return-fade-only');
+        }
+      });
+      const clearTargetNames = () => {
+        if (targetAvatar) targetAvatar.style.viewTransitionName = '';
+        if (targetName) targetName.style.viewTransitionName = '';
+      };
+      transition.ready.then(clearTargetNames, clearTargetNames);
+      transition.finished.finally(() => {
+        root.classList.remove(
+          'settings-view-transition',
+          'returning-settings-home',
+          'settings-name-return-fade-only',
+          'settings-navbar-avatar-hidden'
+        );
+        refresh();
+      });
+      return;
+    }
+
     if (page !== 'feed' || view === 'feed' || !document.startViewTransition || reduceMotion) {
       commitNavigation();
       return;
@@ -377,8 +601,8 @@ export default function AppProvider({ children, cachedName = '' }) {
       const sourceName = document.querySelector('#pageUser .user-profile-name');
       const findTargetCard = () => {
         if (currentUserPreview?.sourcePostId) {
-          const exact = Array.from(document.querySelectorAll('[data-post-id]')).find(
-            (element) => element.dataset.postId === String(currentUserPreview.sourcePostId)
+          const exact = Array.from(document.querySelectorAll('[data-post-ref], [data-post-id]')).find(
+            (element) => postCardMatches(element, currentUserPreview.sourcePostId)
           );
           if (exact) return exact;
         }
@@ -414,7 +638,7 @@ export default function AppProvider({ children, cachedName = '' }) {
     }
 
     let targetCard = currentPostId
-      ? Array.from(document.querySelectorAll('[data-post-id]')).find((element) => element.dataset.postId === String(currentPostId))
+      ? Array.from(document.querySelectorAll('[data-post-ref], [data-post-id]')).find((element) => postCardMatches(element, currentPostId))
       : null;
     let targetParts = [];
     document.documentElement.classList.add('home-view-transition');
@@ -423,7 +647,7 @@ export default function AppProvider({ children, cachedName = '' }) {
     const transition = document.startViewTransition(() => {
       flushSync(() => commitNavigation(false));
       targetCard = currentPostId
-        ? Array.from(document.querySelectorAll('[data-post-id]')).find((element) => element.dataset.postId === String(currentPostId))
+        ? Array.from(document.querySelectorAll('[data-post-ref], [data-post-id]')).find((element) => postCardMatches(element, currentPostId))
         : null;
       if (targetCard) targetCard.style.viewTransitionName = 'post-expand';
       targetParts = namePostTransitionParts(targetCard);
@@ -453,21 +677,20 @@ export default function AppProvider({ children, cachedName = '' }) {
       document.documentElement.classList.remove('home-view-transition', 'returning-home');
       refresh();
     });
-  }, [currentPostId, currentUsername, currentUserPreview, refresh, view]);
+  }, [currentPostId, currentUser, currentUsername, currentUserPreview, refresh, view]);
 
   const openPost = useCallback((postId, sourceElement = null, preview = null, origin = null) => {
-    const url = new URL(window.location);
-    url.searchParams.set('post', postId);
-    url.searchParams.delete('page');
-    url.searchParams.delete('user');
+    const postRef = preview?.post_number || postId;
+    const url = clearLegacyPageParams(new URL(window.location));
+    url.pathname = pathForPost(postRef);
     const resolvedOrigin = origin || { view };
     const historyOrigin = resolvedOrigin?.view === 'user'
       ? { view: 'user', username: resolvedOrigin.username }
       : { view: resolvedOrigin?.view || 'feed' };
     const commitNavigation = () => {
-      window.history.pushState({ page: 'post', postId, origin: historyOrigin }, '', url);
+      window.history.pushState({ page: 'post', postId: postRef, origin: historyOrigin }, '', url);
       setView('post');
-      setCurrentPostId(postId);
+      setCurrentPostId(postRef);
       setCurrentPostPreview(preview);
       setCurrentPostOrigin(resolvedOrigin);
       setCurrentUserPreview(null);
@@ -520,10 +743,8 @@ export default function AppProvider({ children, cachedName = '' }) {
       return;
     }
 
-    const url = new URL(window.location);
-    url.searchParams.set('user', currentPostOrigin.username);
-    url.searchParams.delete('page');
-    url.searchParams.delete('post');
+    const url = clearLegacyPageParams(new URL(window.location));
+    url.pathname = pathForUser(currentPostOrigin.username);
     const commitNavigation = () => {
       window.history.pushState({ page: 'user', username: currentPostOrigin.username }, '', url);
       setView('user');
@@ -549,8 +770,8 @@ export default function AppProvider({ children, cachedName = '' }) {
       flushSync(commitNavigation);
       const userPage = document.getElementById('pageUser');
       if (userPage) userPage.scrollTop = currentPostOrigin.scrollTop || 0;
-      targetCard = Array.from(document.querySelectorAll('#userProfileContent [data-post-id]')).find(
-        (element) => element.dataset.postId === String(currentPostId)
+      targetCard = Array.from(document.querySelectorAll('#userProfileContent [data-post-ref], #userProfileContent [data-post-id]')).find(
+        (element) => postCardMatches(element, currentPostId)
       ) || null;
       if (targetCard) targetCard.style.viewTransitionName = 'post-expand';
       targetParts = namePostTransitionParts(targetCard);
@@ -583,10 +804,8 @@ export default function AppProvider({ children, cachedName = '' }) {
   }, [currentPostId, currentPostOrigin, navigate]);
 
   const openUser = useCallback((username, source = null, preview = null) => {
-    const url = new URL(window.location);
-    url.searchParams.set('user', username);
-    url.searchParams.delete('page');
-    url.searchParams.delete('post');
+    const url = clearLegacyPageParams(new URL(window.location));
+    url.pathname = pathForUser(username);
     const commitNavigation = () => {
       window.history.pushState({ page: 'user', username }, '', url);
       setView('user');
@@ -628,10 +847,8 @@ export default function AppProvider({ children, cachedName = '' }) {
   }, []);
 
   const openCustomPage = useCallback((pageName) => {
-    const url = new URL(window.location);
-    url.searchParams.set('page', pageName);
-    url.searchParams.delete('post');
-    url.searchParams.delete('user');
+    const url = clearLegacyPageParams(new URL(window.location));
+    url.pathname = pathForCustomPage(pageName);
     window.history.pushState({ page: 'custom', pageName }, '', url);
     setView('custom');
     setCurrentPageName(pageName);
@@ -642,33 +859,11 @@ export default function AppProvider({ children, cachedName = '' }) {
   useEffect(() => {
     const onPop = (e) => {
       const state = e.state || {};
-      if (state.postId) {
-        setView('post');
-        setCurrentPostId(state.postId);
-        setCurrentPostPreview(null);
-        setCurrentPostOrigin(state.origin || null);
-      } else if (state.username) {
-        setView('user');
-        setCurrentUsername(state.username);
-        setCurrentUserPreview(null);
-        setCurrentUserPostsPreview(null);
-      } else if (state.pageName) {
-        setView('custom');
-        setCurrentPageName(state.pageName);
-      } else {
-        setView(state.page || 'feed');
-        setCurrentPostId(null);
-        setCurrentPostPreview(null);
-        setCurrentPostOrigin(null);
-        setCurrentUsername(null);
-        setCurrentUserPreview(null);
-        setCurrentUserPostsPreview(null);
-        setCurrentPageName(null);
-      }
+      applyRoute(routeFromLocation(window.location), state);
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
-  }, []);
+  }, [applyRoute]);
 
   const login = useCallback(async (email, password) => {
     const result = await API.login(email, password);

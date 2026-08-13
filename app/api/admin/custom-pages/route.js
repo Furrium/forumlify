@@ -5,6 +5,9 @@ import { getUser, requireAdmin } from '@/lib/auth';
 // 避免 GET 被静态优化导致写方法 405（动态接口，不能缓存）
 export const dynamic = 'force-dynamic';
 
+const RESERVED_PAGE_NAMES = new Set([
+  'api', 'post', 'user', 'settings', 'messages', 'admin', 'new', 'uploads',
+]);
 
 export async function GET(req) {
   const user = getUser(req);
@@ -32,6 +35,9 @@ export async function POST(req) {
   }
   if (!/^[a-zA-Z0-9\-_]+$/.test(name)) {
     return Response.json({ error: '页面名称只允许字母、数字、短横线和下划线' }, { status: 400 });
+  }
+  if (RESERVED_PAGE_NAMES.has(name.toLowerCase())) {
+    return Response.json({ error: '该页面名称为系统保留路径' }, { status: 400 });
   }
   try {
     const r = await pool.query(

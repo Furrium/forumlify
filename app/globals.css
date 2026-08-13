@@ -898,14 +898,13 @@ svg {
   overflow-y: auto;
   transition: background 0.3s ease;
 }
-.page-slide.active {
+.page-slide.active:not(#pagePost):not(#pageUser):not(#pageSettings) {
   display: block;
   animation: slideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-#pagePost.page-slide.active,
-#pageUser.page-slide.active {
-  animation: none;
+.page-slide.active:is(#pagePost, #pageUser, #pageSettings) {
+  display: block;
 }
 
 #pageUser {
@@ -1043,6 +1042,136 @@ html.user-transition-settled #pageUser .user-profile-posts {
   animation: userPageContentReveal 0.28s ease-out both;
 }
 
+/* ===== 设置页共享元素过渡 ===== */
+html.settings-view-transition #navbar {
+  view-transition-name: persistent-navbar;
+}
+
+html.settings-view-transition #pageSettings {
+  animation: none;
+}
+
+html.settings-view-transition #pageSettings .settings-profile-avatar {
+  view-transition-name: settings-avatar;
+}
+
+html.settings-view-transition #pageSettings .settings-profile-name {
+  view-transition-name: settings-user-name;
+}
+
+.settings-profile-name {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  overflow-wrap: anywhere;
+}
+
+html.settings-view-transition::view-transition {
+  background: linear-gradient(145deg, var(--bg-start) 0%, var(--bg-end) 100%);
+  pointer-events: none;
+}
+
+html.settings-view-transition::view-transition-group(settings-avatar),
+html.settings-view-transition::view-transition-group(settings-user-name) {
+  z-index: 20;
+  animation-duration: 0.82s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.settings-view-transition::view-transition-image-pair(settings-avatar),
+html.settings-view-transition::view-transition-old(settings-avatar),
+html.settings-view-transition::view-transition-new(settings-avatar) {
+  border-radius: 50%;
+  overflow: clip;
+  mix-blend-mode: normal;
+}
+
+html.settings-view-transition::view-transition-old(settings-avatar),
+html.settings-view-transition::view-transition-new(settings-avatar),
+html.settings-view-transition::view-transition-old(settings-user-name),
+html.settings-view-transition::view-transition-new(settings-user-name) {
+  animation: none;
+  font-size: 14px;
+  font-weight: 600;
+  mix-blend-mode: normal;
+}
+
+html.settings-view-transition.settings-name-fade-only::view-transition-new(settings-user-name) {
+  animation: settingsNameReveal 0.26s 0.56s ease-out both;
+}
+
+html.settings-view-transition::view-transition-old(root) {
+  animation: settingsSourceFadeOut 0.34s 0.16s ease-out both;
+}
+
+html.settings-view-transition::view-transition-new(root) {
+  animation: settingsShellReveal 0.3s 0.52s ease-out both;
+}
+
+html.settings-view-transition.returning-settings-home::view-transition-old(root) {
+  animation: settingsShellHide 0.3s 0.06s ease-in both;
+}
+
+html.settings-view-transition.returning-settings-home::view-transition-new(root) {
+  animation: settingsFeedReveal 0.34s 0.3s ease-out both;
+}
+
+html.settings-view-transition.returning-settings-home.settings-name-return-fade-only::view-transition-old(settings-user-name) {
+  animation: settingsNameReturnHide 0.26s 0.34s ease-in both;
+}
+
+html.settings-view-transition::view-transition-group(persistent-navbar),
+html.settings-view-transition::view-transition-old(persistent-navbar),
+html.settings-view-transition::view-transition-new(persistent-navbar) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html.settings-navbar-avatar-hidden #navbar #userDropdown .avatar {
+  opacity: 0;
+}
+
+html.settings-navbar-avatar-reveal #navbar #userDropdown .avatar {
+  animation: settingsNavbarAvatarReveal 0.32s ease-out both;
+}
+
+@keyframes settingsSourceFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes settingsShellReveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes settingsShellHide {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes settingsFeedReveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes settingsNameReveal {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes settingsNameReturnHide {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(4px); }
+}
+
+@keyframes settingsNavbarAvatarReveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @keyframes userAvatarSourceOut {
   from { opacity: 1; }
   to { opacity: 0; }
@@ -1158,7 +1287,7 @@ html.home-view-transition.returning-home #pagePost .post-detail-card > .post-con
 
 html.post-view-transition #pagePost .post-detail-card > .post-images,
 html.home-view-transition.returning-home #pagePost .post-detail-card > .post-images {
-  view-transition-name: post-detail-media;
+  view-transition-name: post-media;
 }
 
 html.post-view-transition #pagePost .post-detail-card .post-pin-state,
@@ -1273,6 +1402,31 @@ html.home-view-transition.returning-home::view-transition-image-pair(post-body) 
   overflow: clip;
 }
 
+html.post-view-transition::view-transition-group(post-media),
+html.home-view-transition.returning-home::view-transition-group(post-media) {
+  z-index: 12;
+  animation-duration: 0.96s;
+  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+}
+
+html.home-view-transition.returning-home::view-transition-group(post-media) {
+  animation-duration: 1.1s;
+}
+
+html.post-view-transition::view-transition-image-pair(post-media),
+html.home-view-transition.returning-home::view-transition-image-pair(post-media) {
+  overflow: clip;
+}
+
+html.post-view-transition::view-transition-old(post-media),
+html.post-view-transition::view-transition-new(post-media),
+html.home-view-transition.returning-home::view-transition-old(post-media),
+html.home-view-transition.returning-home::view-transition-new(post-media) {
+  animation: none;
+  opacity: 1;
+  mix-blend-mode: normal;
+}
+
 html.post-view-transition::view-transition-group(post-time) {
   animation-duration: 0.8s;
   animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
@@ -1377,14 +1531,8 @@ html.post-view-transition::view-transition-new(post-body) {
   object-position: left top;
 }
 
-html.post-view-transition::view-transition-old(post-feed-media) {
-  animation: none;
-  opacity: 0;
-}
-
 html.post-view-transition::view-transition-new(post-detail-controls),
-html.post-view-transition::view-transition-new(post-detail-signature),
-html.post-view-transition::view-transition-new(post-detail-media) {
+html.post-view-transition::view-transition-new(post-detail-signature) {
   animation: detailOnlyPartIn 0.22s 0.62s ease-out both;
 }
 
@@ -1504,8 +1652,7 @@ html.home-view-transition.returning-home::view-transition-new(post-edited-label)
 }
 
 html.home-view-transition.returning-home::view-transition-old(post-detail-controls),
-html.home-view-transition.returning-home::view-transition-old(post-detail-signature),
-html.home-view-transition.returning-home::view-transition-old(post-detail-media) {
+html.home-view-transition.returning-home::view-transition-old(post-detail-signature) {
   animation: returnDetailOnlyPartOut 0.22s 0.12s ease-out both;
 }
 
@@ -1576,8 +1723,7 @@ html.home-view-transition.returning-home::view-transition-old(reply-loading-retu
   }
 }
 
-html.home-view-transition.returning-home::view-transition-new(post-feed-actions),
-html.home-view-transition.returning-home::view-transition-new(post-feed-media) {
+html.home-view-transition.returning-home::view-transition-new(post-feed-actions) {
   animation: returnFeedOnlyPartIn 0.28s 0.44s ease-out both;
 }
 
@@ -1601,6 +1747,13 @@ html.home-view-transition.returning-home::view-transition-new(post-body) {
 @keyframes returnFeedReveal {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-slide.active,
+  html.settings-navbar-avatar-reveal #navbar #userDropdown .avatar {
+    animation: none !important;
+  }
 }
 
 @keyframes returnSharedPartOut {

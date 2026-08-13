@@ -4,6 +4,7 @@ import { getUser } from '@/lib/auth';
 import { jsonWithEtag } from '@/lib/http-cache';
 import { verifyCaptcha } from '@/lib/captcha';
 import { logAudit } from '@/lib/audit';
+import { ensurePostNumberSchema } from '@/lib/post-reference';
 
 // 避免 GET 被静态优化导致写方法 405（动态接口，不能缓存）
 export const dynamic = 'force-dynamic';
@@ -21,6 +22,7 @@ export async function GET(req) {
   const offset = (safePage - 1) * limit;
 
   try {
+    await ensurePostNumberSchema();
     const params = [];
     let where = '';
     if (userId) {
@@ -68,6 +70,7 @@ export async function POST(req) {
     return Response.json({ error: '验证码错误，请重新计算' }, { status: 400 });
   }
   try {
+    await ensurePostNumberSchema();
     const r = await pool.query(
       `INSERT INTO posts (user_id, title, content, images)
        VALUES ($1, $2, $3, $4)

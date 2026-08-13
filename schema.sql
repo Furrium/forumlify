@@ -15,9 +15,11 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
+CREATE SEQUENCE IF NOT EXISTS posts_post_number_seq START WITH 1;
 -- 帖子表
 CREATE TABLE IF NOT EXISTS posts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_number BIGINT NOT NULL UNIQUE DEFAULT nextval('posts_post_number_seq'),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   title VARCHAR(200) NOT NULL,
   content TEXT NOT NULL,
@@ -239,3 +241,39 @@ UPDATE users SET role = 'admin'
 WHERE role <> 'admin'
   AND NOT EXISTS (SELECT 1 FROM users WHERE role = 'admin')
   AND id = (SELECT id FROM users ORDER BY created_at ASC, id ASC LIMIT 1);
+
+-- ============================================================
+--  帖子公开编号迁移（数据库兼容，幂等）
+--  UUID 继续作为内部主键；公开编号按发布时间从 1 开始。
+-- ============================================================
+CREATE SEQUENCE IF NOT EXISTS posts_post_number_seq START WITH 1;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS post_number BIGINT;
+
+WITH current_max AS (
+  SELECT COALESCE(MAX(post_number), 0) AS value FROM posts
+), numbered AS (
+  SELECT id, (SELECT value FROM current_max) + ROW_NUMBER() OVER (
+    ORDER BY created_at ASC, id ASC
+  ) AS value
+  FROM posts
+  WHERE post_number IS NULL
+)
+UPDATE posts
+SET post_number = numbered.value
+FROM numbered
+WHERE posts.id = numbered.id;
+
+SELECT setval(
+  'posts_post_number_seq',
+  GREATEST(
+    COALESCE((SELECT MAX(post_number) FROM posts), 0) + 1,
+    CASE WHEN is_called THEN last_value + 1 ELSE last_value END
+  ),
+  false
+)
+FROM posts_post_number_seq;
+
+ALTER TABLE posts ALTER COLUMN post_number SET DEFAULT nextval('posts_post_number_seq');
+ALTER SEQUENCE posts_post_number_seq OWNED BY posts.post_number;
+ALTER TABLE posts ALTER COLUMN post_number SET NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS posts_post_number_key ON posts(post_number);

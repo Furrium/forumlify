@@ -52,9 +52,23 @@ export default function PostDetail({ postId, initialPost = null }) {
 
   const initialRefreshKey = useRef(refreshKey);
   useEffect(() => {
-    if (initialPost?.id === postId && refreshKey === initialRefreshKey.current) return;
+    const initialReference = initialPost?.post_number || initialPost?.id;
+    if (String(initialReference || '') === String(postId) && refreshKey === initialRefreshKey.current) return;
     load();
-  }, [initialPost?.id, load, postId, refreshKey]);
+  }, [initialPost?.id, initialPost?.post_number, load, postId, refreshKey]);
+
+  useEffect(() => {
+    if (!post?.post_number || !window.location.pathname.startsWith('/post/')) return;
+    const canonicalPath = `/post/${post.post_number}`;
+    if (window.location.pathname === canonicalPath) return;
+    const url = new URL(window.location);
+    url.pathname = canonicalPath;
+    window.history.replaceState(
+      { ...window.history.state, page: 'post', postId: String(post.post_number) },
+      '',
+      url
+    );
+  }, [post?.post_number]);
   const renderedContent = useMemo(() => renderMarkdown(post?.content), [post?.content]);
   const renderedSignature = useMemo(() => renderMarkdown(post?.signature), [post?.signature]);
 
@@ -161,7 +175,7 @@ export default function PostDetail({ postId, initialPost = null }) {
       <div className="post-page-layout">
         <Sidebar id="postSidebar" />
         <div id="postDetailContent" className="post-page-main">
-          <div className="post-detail-card">
+          <div className="post-detail-card" data-username={post.username || ''}>
             <div className="post-header">
               <img
                 src={post.avatar_url || avatar(post.username)}

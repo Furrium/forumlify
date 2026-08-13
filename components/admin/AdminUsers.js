@@ -56,15 +56,16 @@ export default function AdminUsers() {
               const isAdmin = u.role === 'admin';
               const isCurrent = currentUser && currentUser.id === u.id;
               return (
-                <tr key={u.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                <tr key={u.id} data-username={u.username || ''} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '10px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <img
                         src={u.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.username) + '&background=6366f1&color=fff&size=64'}
+                        className="admin-user-avatar"
                         style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }}
                         alt=""
                       />
-                      <span style={{ fontWeight: 500 }}>{u.username}</span>
+                      <span className="admin-user-name" style={{ fontWeight: 500 }}>{u.username}</span>
                       {isCurrent && <span style={{ fontSize: 11, color: '#94a3b8', background: '#eef2ff', padding: '1px 8px', borderRadius: 4 }}>{t('admin.user.you')}</span>}
                     </div>
                   </td>

@@ -5,6 +5,7 @@ import { jsonWithEtag } from '@/lib/http-cache';
 import { verifyCaptcha } from '@/lib/captcha';
 import { logAudit } from '@/lib/audit';
 import { getReplySchemaCapabilities } from '@/lib/reply-schema';
+import { resolvePostReference } from '@/lib/post-reference';
 
 function repliesSelectSql(capabilities) {
   if (capabilities.replyToId) {
@@ -42,8 +43,10 @@ function repliesSelectSql(capabilities) {
 
 export async function GET(req, { params }) {
   try {
+    const reference = await resolvePostReference((await params).id);
+    if (!reference) return Response.json({ error: '帖子不存在' }, { status: 404 });
     const capabilities = await getReplySchemaCapabilities();
-    const r = await pool.query(repliesSelectSql(capabilities), [(await params).id]);
+    const r = await pool.query(repliesSelectSql(capabilities), [reference.id]);
     return jsonWithEtag(req, r.rows);
   } catch (error) {
     console.error('[replies] list failed:', error?.code || error?.message);
@@ -65,7 +68,9 @@ export async function POST(req, { params }) {
     return Response.json({ error: '验证码错误，请重新计算' }, { status: 400 });
   }
   try {
-    const postId = (await params).id;
+    const reference = await resolvePostReference((await params).id);
+    if (!reference) return Response.json({ error: '帖子不存在' }, { status: 404 });
+    const postId = reference.id;
     const capabilities = await getReplySchemaCapabilities();
     let replyTargetUsername = null;
 

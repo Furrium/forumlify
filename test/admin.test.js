@@ -142,13 +142,13 @@ test('统计接口', async () => {
   assert.ok(typeof data.users === 'number');
 });
 
-test('记录事件日志', async () => {
+test('客户端不能伪造事件日志', async () => {
   const { status } = await api('/event-logs', {
     method: 'POST',
     headers: { Authorization: `Bearer ${adminToken}` },
     body: JSON.stringify({ action: 'test_action' }),
   });
-  assert.equal(status, 200);
+  assert.equal(status, 405);
 });
 
 test('管理员查看事件日志', async () => {

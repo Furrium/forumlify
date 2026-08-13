@@ -163,8 +163,8 @@ export default function Feed({ onOpenModal, onReport }) {
               posts.map((p) => {
                 const time = p.created_at ? new Date(p.created_at).toLocaleString('zh-CN') : '';
                 return (
-                  <div key={p.id} className="post-card" data-post-id={p.id} data-username={p.username || ''} style={{ cursor: 'pointer' }}
-                    onClick={(e) => openPost(p.id, e.currentTarget, p)}>
+                  <div key={p.id} className="post-card" data-post-id={p.id} data-post-ref={p.post_number || p.id} data-username={p.username || ''} style={{ cursor: 'pointer' }}
+                    onClick={(e) => openPost(p.post_number || p.id, e.currentTarget, p)}>
                 {p.is_pinned && (
                   <div className="post-pin-state" style={{ width: 'fit-content', display: 'flex', alignItems: 'center', gap: 3, fontSize: 12, color: 'var(--primary)', fontWeight: 600, marginBottom: 4 }}><Icon name="pin" size={12} /> {t('feed.pinned')}</div>
                 )}
