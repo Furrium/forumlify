@@ -22,13 +22,13 @@ async function api(path, options = {}) {
 let adminToken = null;
 let adminId = null;
 let userId = null;
-let userToken = null;
 let postId = null;
 let postNumber = null;
 let replyId = null;
 
 const adminUser = { email: `admin${suffix}@test.com`, password: '123456', username: `admin${suffix}` };
 const normalUser = { email: `user${suffix}@test.com`, password: '123456', username: `user${suffix}` };
+const resetUser = { email: `reset${suffix}@test.com`, password: '123456', username: `reset${suffix}` };
 
 test('注册第一个用户自动成为管理员', async () => {
   const { status, data } = await api('/auth/register', {
@@ -68,20 +68,23 @@ test('注册普通用户', async () => {
   userId = data.user.id;
 });
 
-test('普通用户登录', async () => {
-  const { status, data } = await api('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email: normalUser.email, password: normalUser.password }),
-  });
-  assert.equal(status, 200);
-  assert.ok(data.token);
-  userToken = data.token;
-});
-
 test('恢复码可重置密码且只能使用一次', async () => {
+  const registered = await api('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(resetUser),
+  });
+  assert.equal(registered.status, 200);
+
+  const loggedIn = await api('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email: resetUser.email, password: resetUser.password }),
+  });
+  assert.equal(loggedIn.status, 200);
+  assert.ok(loggedIn.data.token);
+
   const generated = await api('/auth/recovery-codes/generate', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${userToken}` },
+    headers: { Authorization: `Bearer ${loggedIn.data.token}` },
   });
   assert.equal(generated.status, 200);
   assert.equal(generated.data.codes.length, 10);
@@ -90,25 +93,25 @@ test('恢复码可重置密码且只能使用一次', async () => {
   const newPassword = '654321';
   const reset = await api('/auth/reset-password', {
     method: 'POST',
-    body: JSON.stringify({ email: normalUser.email, recoveryCode, newPassword }),
+    body: JSON.stringify({ email: resetUser.email, recoveryCode, newPassword }),
   });
   assert.equal(reset.status, 200);
 
   const oldLogin = await api('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email: normalUser.email, password: normalUser.password }),
+    body: JSON.stringify({ email: resetUser.email, password: resetUser.password }),
   });
   assert.equal(oldLogin.status, 401);
 
   const newLogin = await api('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email: normalUser.email, password: newPassword }),
+    body: JSON.stringify({ email: resetUser.email, password: newPassword }),
   });
   assert.equal(newLogin.status, 200);
 
   const reused = await api('/auth/reset-password', {
     method: 'POST',
-    body: JSON.stringify({ email: normalUser.email, recoveryCode, newPassword: normalUser.password }),
+    body: JSON.stringify({ email: resetUser.email, recoveryCode, newPassword: resetUser.password }),
   });
   assert.equal(reused.status, 400);
 });

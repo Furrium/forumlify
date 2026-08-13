@@ -38,7 +38,13 @@ export default function Modals({ modal, onClose, reportPostId }) {
     if (modal === 'register') {
       API.getCaptcha().then((c) => setRegCaptcha(c)).catch(() => {});
     }
-    if (modal !== 'login') setAuthMode('login');
+    if (modal !== 'login') {
+      setAuthMode('login');
+      setResetEmail('');
+      setResetRecoveryCode('');
+      setResetPassword('');
+      setResetPasswordConfirm('');
+    }
   }, [modal]);
 
   if (!modal) return null;
@@ -89,6 +95,14 @@ export default function Modals({ modal, onClose, reportPostId }) {
     } catch (err) {
       toast(t('auth.resetFailed', { msg: err.message }), 'error');
     }
+  };
+
+  const returnToLogin = () => {
+    setAuthMode('login');
+    setResetEmail('');
+    setResetRecoveryCode('');
+    setResetPassword('');
+    setResetPasswordConfirm('');
   };
 
   const handleRegister = async () => {
@@ -169,7 +183,7 @@ export default function Modals({ modal, onClose, reportPostId }) {
               onKeyDown={(e) => { if (e.key === 'Enter') handleResetPassword(); }}
             />
             <button className="btn-primary" style={{ width: '100%' }} onClick={handleResetPassword}>{t('auth.resetPassword')}</button>
-            <button type="button" className="auth-forgot-link" onClick={() => setAuthMode('login')}>
+            <button type="button" className="auth-forgot-link" onClick={returnToLogin}>
               {t('auth.backToLogin')}
             </button>
           </div>
