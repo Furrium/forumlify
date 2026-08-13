@@ -3,6 +3,8 @@ node_modules/
 out/
 /uploads/
 *.log
+coverage/
+.coverage-tmp/
 .DS_Store
 
 # 环境变量：.env 是用户本地环境变量（不提交），模板 .env.example 进仓库

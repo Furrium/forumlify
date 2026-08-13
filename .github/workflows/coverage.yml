@@ -1,0 +1,96 @@
+name: Coverage
+
+on:
+  push:
+    branches: [next]
+  pull_request:
+    branches: [next]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  test-and-upload:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: forumlify
+          POSTGRES_PASSWORD: 123456
+          POSTGRES_DB: forumlify
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U forumlify -d forumlify"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://forumlify:123456@localhost:5433/forumlify
+      JWT_SECRET: ci-test-secret
+      PORT: 3100
+      BASE_URL: http://127.0.0.1:3100
+      NEXT_TELEMETRY_DISABLED: '1'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Initialize test database
+        env:
+          PGPASSWORD: '123456'
+        run: psql -h localhost -p 5433 -U forumlify -d forumlify -f schema.sql
+
+      - name: Build application
+        run: npm run build
+
+      - name: Run integration tests with coverage
+        run: |
+          npx c8 \
+            --all \
+            --include 'app/**/*.js' \
+            --include 'lib/**/*.js' \
+            --exclude-after-remap \
+            --reporter lcov \
+            --reports-dir coverage \
+            --temp-directory .coverage-tmp \
+            node scripts/start.js > server.log 2>&1 &
+          server_pid=$!
+          cleanup() {
+            kill "$server_pid" 2>/dev/null || true
+            wait "$server_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error "$BASE_URL/api/stats" >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              cat server.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          npm test
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          use_oidc: true
+          files: coverage/lcov.info
+          fail_ci_if_error: true
+          verbose: true
