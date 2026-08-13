@@ -28,6 +28,7 @@ let replyId = null;
 
 const adminUser = { email: `admin${suffix}@test.com`, password: '123456', username: `admin${suffix}` };
 const normalUser = { email: `user${suffix}@test.com`, password: '123456', username: `user${suffix}` };
+const resetUser = { email: `reset${suffix}@test.com`, password: '123456', username: `reset${suffix}` };
 
 test('注册第一个用户自动成为管理员', async () => {
   const { status, data } = await api('/auth/register', {
@@ -65,6 +66,54 @@ test('注册普通用户', async () => {
   assert.equal(status, 200);
   assert.equal(data.user.role, 'user');
   userId = data.user.id;
+});
+
+test('恢复码可重置密码且只能使用一次', async () => {
+  const registered = await api('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(resetUser),
+  });
+  assert.equal(registered.status, 200);
+
+  const loggedIn = await api('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email: resetUser.email, password: resetUser.password }),
+  });
+  assert.equal(loggedIn.status, 200);
+  assert.ok(loggedIn.data.token);
+
+  const generated = await api('/auth/recovery-codes/generate', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${loggedIn.data.token}` },
+  });
+  assert.equal(generated.status, 200);
+  assert.equal(generated.data.codes.length, 10);
+
+  const recoveryCode = generated.data.codes[0];
+  const newPassword = '654321';
+  const reset = await api('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ email: resetUser.email, recoveryCode, newPassword }),
+  });
+  assert.equal(reset.status, 200);
+
+  const oldLogin = await api('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email: resetUser.email, password: resetUser.password }),
+  });
+  assert.equal(oldLogin.status, 401);
+
+  const newLogin = await api('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email: resetUser.email, password: newPassword }),
+  });
+  assert.equal(newLogin.status, 200);
+
+  const reused = await api('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ email: resetUser.email, recoveryCode, newPassword: resetUser.password }),
+  });
+  assert.equal(reused.status, 400);
 });
 
 test('密码少于6位被拒绝', async () => {
