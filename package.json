@@ -7,7 +7,7 @@
     "build": "node scripts/build.js",
     "dev": "next dev -H 0.0.0.0",
     "start": "node scripts/start.js",
-    "test": "node --test --test-concurrency=1 \"test/*.test.js\"",
+    "test": "node --test --test-concurrency=1 test/*.test.js",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
