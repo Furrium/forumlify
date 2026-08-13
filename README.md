@@ -37,7 +37,7 @@ Forumlify 提供了两个不同架构的分支版本，以满足不同部署环�
 ### Docker 部署（推荐）
 
 ```
-git clone https://github.com/furrium/forumlify.git
+git clone https://github.com/forumlify/public.git
 cd forumlify
 printf 'JWT_SECRET=%s\n' "$(openssl rand -hex 32)" > .env
 docker compose up -d
@@ -50,7 +50,7 @@ docker compose up -d
 
 ---
 
-> 如需部署 Next.js 版本，请前往 [forumlify/tree/next](https://github.com/furrium/forumlify/tree/next)。
+> 如需部署 Next.js 版本，请前往 [forumlify/tree/next](https://github.com/forumlify/public/tree/next)。
 
 ---
 
@@ -68,7 +68,7 @@ docker compose up -d
 1. **克隆并安装依赖**
 
 ```bash
-git clone https://github.com/furrium/forumlify.git
+git clone https://github.com/public/tree/next.git
 cd forumlify
 npm install
 ```
