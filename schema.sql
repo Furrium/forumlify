@@ -14,6 +14,9 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Keep case-insensitive lookups index-backed for legacy mixed-case emails.
+CREATE INDEX IF NOT EXISTS idx_users_email_lower ON users (LOWER(email));
+
 -- 帖子表
 CREATE TABLE IF NOT EXISTS posts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

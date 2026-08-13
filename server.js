@@ -114,10 +114,25 @@ function normalizeHttpUrl(value) {
   }
 }
 
-app.param('id', (req, res, next, value) => {
-  if (!UUID_PATTERN.test(value)) return res.status(400).json({ error: '无效的ID' });
+function normalizeUploadPath(value) {
+  if (typeof value !== 'string' || value.length > 2048 || !value.startsWith('/uploads/')) return null;
+  const encodedName = value.slice('/uploads/'.length);
+  try {
+    const name = decodeURIComponent(encodedName);
+    if (!name || name.length > 255 || name === '.' || name === '..' ||
+        /[\\/\0-\x1f\x7f]/.test(name) || /[?#]/.test(encodedName)) {
+      return null;
+    }
+    return value;
+  } catch {
+    return null;
+  }
+}
+
+function validateUuidId(req, res, next) {
+  if (!UUID_PATTERN.test(req.params.id)) return res.status(400).json({ error: '无效的ID' });
   return next();
-});
+}
 
 // 确保上传目录存在
 if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
@@ -255,7 +270,7 @@ app.post('/api/auth/login', async (req, res) => {
 
   const normalizedEmail = normalizeEmail(email);
 
-  if (!normalizedEmail || !isText(password, { min: 1, max: 128 })) {
+  if (!normalizedEmail || !isText(password, { min: 1, max: 100000 })) {
     return res.status(400).json({ error: '请填写邮箱和密码' });
   }
 
@@ -387,7 +402,7 @@ app.get('/api/users/profile/:username', async (req, res) => {
 });
 
 // 修改用户角色（管理员）
-app.put('/api/users/:id/role', auth, admin, async (req, res) => {
+app.put('/api/users/:id/role', validateUuidId, auth, admin, async (req, res) => {
   const { role } = req.body;
   const userId = req.params.id;
 
@@ -408,7 +423,7 @@ app.put('/api/users/:id/role', auth, admin, async (req, res) => {
 });
 
 // 更新用户资料（含签名）
-app.put('/api/users/:id', auth, async (req, res) => {
+app.put('/api/users/:id', validateUuidId, auth, async (req, res) => {
   const { username, bio, signature } = req.body;
   const userId = req.params.id;
 
@@ -437,7 +452,7 @@ app.put('/api/users/:id', auth, async (req, res) => {
 });
 
 // 更新用户头像
-app.put('/api/users/:id/avatar', auth, async (req, res) => {
+app.put('/api/users/:id/avatar', validateUuidId, auth, async (req, res) => {
   const { avatar_url } = req.body;
   const userId = req.params.id;
 
@@ -445,9 +460,7 @@ app.put('/api/users/:id/avatar', auth, async (req, res) => {
     return res.status(403).json({ error: '无权限修改他人头像' });
   }
 
-  const normalizedAvatar = typeof avatar_url === 'string' && /^\/uploads\/[A-Za-z0-9._-]{1,255}$/.test(avatar_url)
-    ? avatar_url
-    : normalizeHttpUrl(avatar_url);
+  const normalizedAvatar = normalizeUploadPath(avatar_url) || normalizeHttpUrl(avatar_url);
   if (!normalizedAvatar) {
     return res.status(400).json({ error: '请提供有效头像地址' });
   }
@@ -465,7 +478,7 @@ app.put('/api/users/:id/avatar', auth, async (req, res) => {
 // ============================================================
 
 // 修改密码
-app.put('/api/users/:id/password', auth, async (req, res) => {
+app.put('/api/users/:id/password', validateUuidId, auth, async (req, res) => {
   const { oldPassword, newPassword } = req.body;
   const userId = req.params.id;
 
@@ -475,7 +488,7 @@ app.put('/api/users/:id/password', auth, async (req, res) => {
   if (!oldPassword || !newPassword) {
     return res.status(400).json({ error: '请填写完整信息' });
   }
-  if (!isText(oldPassword, { min: 1, max: 128 }) || !isText(newPassword, { min: 6, max: 128 })) {
+  if (!isText(oldPassword, { min: 1, max: 100000 }) || !isText(newPassword, { min: 6, max: 128 })) {
     return res.status(400).json({ error: '密码长度无效' });
   }
 
@@ -500,7 +513,7 @@ app.put('/api/users/:id/password', auth, async (req, res) => {
 });
 
 // 修改邮箱
-app.put('/api/users/:id/email', auth, async (req, res) => {
+app.put('/api/users/:id/email', validateUuidId, auth, async (req, res) => {
   const { password, newEmail } = req.body;
   const userId = req.params.id;
 
@@ -508,7 +521,7 @@ app.put('/api/users/:id/email', auth, async (req, res) => {
     return res.status(403).json({ error: '无权限' });
   }
   const normalizedEmail = normalizeEmail(newEmail);
-  if (!isText(password, { min: 1, max: 128 }) || !normalizedEmail) {
+  if (!isText(password, { min: 1, max: 100000 }) || !normalizedEmail) {
     return res.status(400).json({ error: '请填写完整信息' });
   }
 
@@ -596,7 +609,7 @@ app.get('/api/posts', async (req, res) => {
 });
 
 // 获取单个帖子
-app.get('/api/posts/:id', async (req, res) => {
+app.get('/api/posts/:id', validateUuidId, async (req, res) => {
   try {
     const r = await pool.query(
       `SELECT p.*, u.username, u.avatar_url, u.signature
@@ -639,7 +652,7 @@ app.post('/api/posts', auth, async (req, res) => {
 });
 
 // 编辑帖子
-app.put('/api/posts/:id', auth, async (req, res) => {
+app.put('/api/posts/:id', validateUuidId, auth, async (req, res) => {
   const { title, content } = req.body;
   const postId = req.params.id;
 
@@ -668,7 +681,7 @@ app.put('/api/posts/:id', auth, async (req, res) => {
 });
 
 // 删除帖子
-app.delete('/api/posts/:id', auth, async (req, res) => {
+app.delete('/api/posts/:id', validateUuidId, auth, async (req, res) => {
   try {
     const post = await pool.query('SELECT user_id FROM posts WHERE id = $1', [req.params.id]);
     if (post.rows.length === 0) {
@@ -700,7 +713,7 @@ app.delete('/api/posts/:id', auth, async (req, res) => {
 });
 
 // 置顶/取消置顶帖子（管理员）
-app.put('/api/posts/:id/pin', auth, admin, async (req, res) => {
+app.put('/api/posts/:id/pin', validateUuidId, auth, admin, async (req, res) => {
   const postId = req.params.id;
 
   try {
@@ -736,7 +749,7 @@ app.put('/api/posts/:id/pin', auth, admin, async (req, res) => {
 // ============================================================
 
 // 获取帖子回复列表
-app.get('/api/posts/:id/replies', async (req, res) => {
+app.get('/api/posts/:id/replies', validateUuidId, async (req, res) => {
   try {
     const r = await pool.query(
       `SELECT r.*, u.username, u.avatar_url
@@ -753,7 +766,7 @@ app.get('/api/posts/:id/replies', async (req, res) => {
 });
 
 // 创建回复
-app.post('/api/posts/:id/replies', auth, async (req, res) => {
+app.post('/api/posts/:id/replies', validateUuidId, auth, async (req, res) => {
   const { content } = req.body;
 
   if (!isText(content, { min: 1, max: 10000 })) {
@@ -787,7 +800,7 @@ app.post('/api/posts/:id/replies', auth, async (req, res) => {
 });
 
 // 删除回复
-app.delete('/api/replies/:id', auth, async (req, res) => {
+app.delete('/api/replies/:id', validateUuidId, auth, async (req, res) => {
   try {
     const reply = await pool.query('SELECT user_id FROM replies WHERE id = $1', [req.params.id]);
     if (reply.rows.length === 0) {
@@ -861,7 +874,7 @@ app.post('/api/reports', auth, async (req, res) => {
 });
 
 // 处理举报（管理员）
-app.put('/api/reports/:id', auth, admin, async (req, res) => {
+app.put('/api/reports/:id', validateUuidId, auth, admin, async (req, res) => {
   const { status, note } = req.body;
 
   if (!['approved', 'rejected'].includes(status)) {
@@ -962,7 +975,7 @@ app.post('/api/links', auth, admin, async (req, res) => {
 });
 
 // 删除友情链接（管理员）
-app.delete('/api/links/:id', auth, admin, async (req, res) => {
+app.delete('/api/links/:id', validateUuidId, auth, admin, async (req, res) => {
   try {
     await pool.query('DELETE FROM friendly_links WHERE id = $1', [req.params.id]);
     res.json({ success: true });
@@ -1209,7 +1222,7 @@ app.post('/api/conversations', auth, async (req, res) => {
 });
 
 // 获取会话消息
-app.get('/api/conversations/:id/messages', auth, async (req, res) => {
+app.get('/api/conversations/:id/messages', validateUuidId, auth, async (req, res) => {
   const conversationId = req.params.id;
 
   try {
@@ -1245,7 +1258,7 @@ app.get('/api/conversations/:id/messages', auth, async (req, res) => {
 });
 
 // 发送消息
-app.post('/api/conversations/:id/messages', auth, async (req, res) => {
+app.post('/api/conversations/:id/messages', validateUuidId, auth, async (req, res) => {
   const conversationId = req.params.id;
   const { content } = req.body;
 
@@ -1289,7 +1302,7 @@ app.post('/api/conversations/:id/messages', auth, async (req, res) => {
 });
 
 // 标记消息已读
-app.put('/api/messages/:id/read', auth, async (req, res) => {
+app.put('/api/messages/:id/read', validateUuidId, auth, async (req, res) => {
   try {
     const result = await pool.query(`
       UPDATE messages AS m SET is_read = true
@@ -1382,7 +1395,7 @@ app.post('/api/admin/custom-pages', auth, admin, async (req, res) => {
 });
 
 // 更新自定义页面（管理员）
-app.put('/api/admin/custom-pages/:id', auth, admin, async (req, res) => {
+app.put('/api/admin/custom-pages/:id', validateUuidId, auth, admin, async (req, res) => {
   const { title, content, enabled } = req.body;
   const id = req.params.id;
   if (!isText(title, { min: 1, max: 100 }) ||
@@ -1408,7 +1421,7 @@ app.put('/api/admin/custom-pages/:id', auth, admin, async (req, res) => {
 });
 
 // 删除自定义页面（管理员）
-app.delete('/api/admin/custom-pages/:id', auth, admin, async (req, res) => {
+app.delete('/api/admin/custom-pages/:id', validateUuidId, auth, admin, async (req, res) => {
   try {
     await pool.query('DELETE FROM custom_pages WHERE id = $1', [req.params.id]);
     res.json({ success: true });
@@ -1435,7 +1448,7 @@ app.get('/api/notifications', auth, async (req, res) => {
 });
 
 // 标记通知已读
-app.put('/api/notifications/:id/read', auth, async (req, res) => {
+app.put('/api/notifications/:id/read', validateUuidId, auth, async (req, res) => {
   try {
     await pool.query(
       'UPDATE notifications SET is_read = true WHERE id = $1 AND user_id = $2',
