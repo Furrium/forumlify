@@ -65,7 +65,9 @@ jobs:
       - name: Run integration tests with coverage
         run: |
           mkdir -p .coverage-tmp
-          NODE_V8_COVERAGE="$PWD/.coverage-tmp" node scripts/start.js > server.log 2>&1 &
+          NODE_OPTIONS=--enable-source-maps \
+          NODE_V8_COVERAGE="$PWD/.coverage-tmp" \
+          node node_modules/next/dist/bin/next start -H 127.0.0.1 -p "$PORT" > server.log 2>&1 &
           server_pid=$!
           cleanup() {
             kill "$server_pid" 2>/dev/null || true
@@ -99,11 +101,22 @@ jobs:
             --include 'app/**/*.js' \
             --include 'lib/**/*.js' \
             --exclude-after-remap \
+            --reporter text \
+            --reporter html \
             --reporter lcov \
             --reports-dir coverage \
             --temp-directory .coverage-tmp
           test -s coverage/lcov.info
+          covered_lines=$(awk -F: '/^DA:/{split($2, data, ","); hits += data[2]} END {print hits + 0}' coverage/lcov.info)
+          test "$covered_lines" -gt 0
           test -s test-results.xml
+
+      - name: Publish coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          if-no-files-found: error
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
