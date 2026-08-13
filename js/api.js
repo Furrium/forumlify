@@ -214,14 +214,6 @@ const API = {
     return data;
   },
 
-  async logEvent(action) {
-    try {
-      await apiFetch('/event-logs', {
-        method: 'POST',
-        body: JSON.stringify({ action })
-      });
-    } catch (e) { /* 静默失败 */ }
-  },
 
   // ============================================================
   //  论坛设置

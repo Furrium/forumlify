@@ -1091,7 +1091,7 @@ async function init() {
     try {
       const user = await API.getMe();
       currentUser = user;
-      API.logEvent('login').catch(() => {});
+
     } catch (e) {
       token = null;
       localStorage.removeItem('forumlify-token');
@@ -1242,7 +1242,7 @@ async function init() {
     });
     try {
       await API.createPost(title, content, images);
-      API.logEvent('create_post').catch(() => {});
+
       alert('发布成功！');
       switchPage('feed');
       renderFeed();

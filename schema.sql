@@ -86,8 +86,19 @@ CREATE TABLE IF NOT EXISTS event_logs (
   user_id UUID REFERENCES users(id) ON DELETE SET NULL,
   action VARCHAR(50) NOT NULL,
   ip VARCHAR(45),
+  method VARCHAR(10),
+  path TEXT,
+  user_agent TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ DEFAULT now()
 );
+
+ALTER TABLE event_logs ADD COLUMN IF NOT EXISTS method VARCHAR(10);
+ALTER TABLE event_logs ADD COLUMN IF NOT EXISTS path TEXT;
+ALTER TABLE event_logs ADD COLUMN IF NOT EXISTS user_agent TEXT;
+ALTER TABLE event_logs ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+CREATE INDEX IF NOT EXISTS idx_event_logs_created_at ON event_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_event_logs_user_id ON event_logs(user_id);
 
 -- ============================================================
 --  论坛设置表
