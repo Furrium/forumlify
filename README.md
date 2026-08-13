@@ -1,5 +1,7 @@
 # Forumlify NEXT Edition🌊
 
+[![Codecov](https://codecov.io/gh/forumlify/public/branch/next/graph/badge.svg)](https://app.codecov.io/gh/forumlify/public/tree/next)
+
 > 一个简洁、优雅的现代社区系统。5 分钟 Docker 一键部署。
 
 官方演示地址：[Forumlify NEXT](https://next.forumlify.org)
