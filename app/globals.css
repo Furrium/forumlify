@@ -755,6 +755,29 @@ svg {
   color: var(--glass-text-light);
 }
 
+.auth-forgot-link {
+  display: block;
+  width: fit-content;
+  margin: 12px auto 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.auth-forgot-link:hover {
+  text-decoration: underline;
+}
+
+.auth-reset-hint {
+  margin: -8px 0 16px;
+  color: var(--glass-text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .captcha-row {
   display: flex;
   align-items: center;

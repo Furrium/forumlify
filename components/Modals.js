@@ -17,6 +17,11 @@ export default function Modals({ modal, onClose, reportPostId }) {
   // 登录表单
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [authMode, setAuthMode] = useState('login');
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetRecoveryCode, setResetRecoveryCode] = useState('');
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetPasswordConfirm, setResetPasswordConfirm] = useState('');
 
   // 注册表单
   const [regUsername, setRegUsername] = useState('');
@@ -33,6 +38,7 @@ export default function Modals({ modal, onClose, reportPostId }) {
     if (modal === 'register') {
       API.getCaptcha().then((c) => setRegCaptcha(c)).catch(() => {});
     }
+    if (modal !== 'login') setAuthMode('login');
   }, [modal]);
 
   if (!modal) return null;
@@ -54,6 +60,34 @@ export default function Modals({ modal, onClose, reportPostId }) {
       }
     } catch (err) {
       toast('登录失败：' + err.message, 'error');
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetEmail.trim() || !resetRecoveryCode.trim() || !resetPassword || !resetPasswordConfirm) {
+      toast(t('auth.resetFillAll'), 'warning');
+      return;
+    }
+    if (resetPassword.length < 6) {
+      toast(t('auth.passwordTooShort'), 'warning');
+      return;
+    }
+    if (resetPassword !== resetPasswordConfirm) {
+      toast(t('auth.passwordMismatch'), 'warning');
+      return;
+    }
+    try {
+      await API.resetPassword(resetEmail.trim(), resetRecoveryCode.trim(), resetPassword);
+      setAuthMode('login');
+      setLoginEmail(resetEmail.trim());
+      setLoginPassword('');
+      setResetEmail('');
+      setResetRecoveryCode('');
+      setResetPassword('');
+      setResetPasswordConfirm('');
+      toast(t('auth.resetSuccess'), 'success');
+    } catch (err) {
+      toast(t('auth.resetFailed', { msg: err.message }), 'error');
     }
   };
 
@@ -95,7 +129,7 @@ export default function Modals({ modal, onClose, reportPostId }) {
 
   return (
     <>
-      {modal === 'login' && (
+      {modal === 'login' && authMode === 'login' && (
         <div className="modal active" onClick={close}>
           <div className="modal-content">
             <span className="close" onClick={onClose}><Icon name="close" size={20} /></span>
@@ -104,6 +138,40 @@ export default function Modals({ modal, onClose, reportPostId }) {
             <input type="password" placeholder={t('auth.password')} value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }} />
             <button className="btn-primary" style={{ width: '100%' }} onClick={handleLogin}>{t('auth.login')}</button>
+            <button
+              type="button"
+              className="auth-forgot-link"
+              onClick={() => {
+                setResetEmail(loginEmail);
+                setAuthMode('forgot');
+              }}
+            >
+              {t('auth.forgotPassword')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {modal === 'login' && authMode === 'forgot' && (
+        <div className="modal active" onClick={close}>
+          <div className="modal-content">
+            <span className="close" onClick={onClose}><Icon name="close" size={20} /></span>
+            <h2 style={{ marginBottom: 16 }}>{t('auth.resetTitle')}</h2>
+            <p className="auth-reset-hint">{t('auth.resetHint')}</p>
+            <input type="email" placeholder={t('auth.email')} value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
+            <input type="text" placeholder={t('auth.recoveryCode')} value={resetRecoveryCode} onChange={(e) => setResetRecoveryCode(e.target.value)} />
+            <input type="password" placeholder={t('auth.newPassword')} value={resetPassword} onChange={(e) => setResetPassword(e.target.value)} />
+            <input
+              type="password"
+              placeholder={t('auth.confirmPassword')}
+              value={resetPasswordConfirm}
+              onChange={(e) => setResetPasswordConfirm(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleResetPassword(); }}
+            />
+            <button className="btn-primary" style={{ width: '100%' }} onClick={handleResetPassword}>{t('auth.resetPassword')}</button>
+            <button type="button" className="auth-forgot-link" onClick={() => setAuthMode('login')}>
+              {t('auth.backToLogin')}
+            </button>
           </div>
         </div>
       )}

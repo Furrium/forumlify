@@ -22,6 +22,7 @@ async function api(path, options = {}) {
 let adminToken = null;
 let adminId = null;
 let userId = null;
+let userToken = null;
 let postId = null;
 let postNumber = null;
 let replyId = null;
@@ -65,6 +66,51 @@ test('注册普通用户', async () => {
   assert.equal(status, 200);
   assert.equal(data.user.role, 'user');
   userId = data.user.id;
+});
+
+test('普通用户登录', async () => {
+  const { status, data } = await api('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email: normalUser.email, password: normalUser.password }),
+  });
+  assert.equal(status, 200);
+  assert.ok(data.token);
+  userToken = data.token;
+});
+
+test('恢复码可重置密码且只能使用一次', async () => {
+  const generated = await api('/auth/recovery-codes/generate', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${userToken}` },
+  });
+  assert.equal(generated.status, 200);
+  assert.equal(generated.data.codes.length, 10);
+
+  const recoveryCode = generated.data.codes[0];
+  const newPassword = '654321';
+  const reset = await api('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ email: normalUser.email, recoveryCode, newPassword }),
+  });
+  assert.equal(reset.status, 200);
+
+  const oldLogin = await api('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email: normalUser.email, password: normalUser.password }),
+  });
+  assert.equal(oldLogin.status, 401);
+
+  const newLogin = await api('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email: normalUser.email, password: newPassword }),
+  });
+  assert.equal(newLogin.status, 200);
+
+  const reused = await api('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ email: normalUser.email, recoveryCode, newPassword: normalUser.password }),
+  });
+  assert.equal(reused.status, 400);
 });
 
 test('密码少于6位被拒绝', async () => {
