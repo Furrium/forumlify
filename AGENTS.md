@@ -30,7 +30,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Architecture
 
-- `app/page.js` and `app/HomeClient.js` render the application shell. Most navigation is SPA-style state managed by `components/AppProvider.js` and synchronized to `?post=`, `?user=`, and `?page=` query parameters.
+- `app/page.js` and `app/HomeClient.js` render the application shell. Most navigation is SPA-style state managed by `components/AppProvider.js` and synchronized to `/post/:number`, `/user/:username`, built-in page paths, and direct custom-page paths. Legacy `?post=`, `?user=`, and `?page=` links are normalized on load.
 - `app/api/**/route.js` contains the Next.js Route Handlers. Keep authentication and authorization checks on the server even when the UI already hides an action.
 - `components/` contains client UI. Reuse `AppProvider`, `Toast`, `Icons`, and existing component patterns instead of introducing parallel state or notification systems.
 - `app/globals.css` owns the theme, responsive layout, glass/card styling, page transitions, and View Transition pseudo-elements. Check nearby selectors before adding another override.

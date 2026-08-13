@@ -56,7 +56,7 @@ export default function SettingsProfile() {
       {/* 头像 */}
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <div style={{ position: 'relative', display: 'inline-block' }}>
-          <img src={avatarSrc} style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }} alt="" />
+          <img className="settings-profile-avatar" src={avatarSrc} style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }} alt="" />
           <button
             style={{ position: 'absolute', bottom: 0, right: 0, background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(99,102,241,0.4)' }}
             onClick={() => avatarInputRef.current?.click()}
@@ -67,7 +67,7 @@ export default function SettingsProfile() {
           </button>
         </div>
         <input type="file" ref={avatarInputRef} accept="image/*" style={{ display: 'none' }} onChange={(e) => { if (e.target.files?.[0]) handleAvatar(e.target.files[0]); }} />
-        <h2 style={{ margin: '12px 0 4px' }}>{currentUser?.username}</h2>
+        <h2 className="settings-profile-name" style={{ margin: '12px 0 4px', fontSize: 14, fontWeight: 600, color: 'var(--primary)' }}>{currentUser?.username}</h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{bio || t('user.bioEmpty')}</p>
         {avatarStatus && (
           <div style={{ fontSize: 13, marginTop: 8, color: avatarStatus.ok ? '#22c55e' : '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}><Icon name={avatarStatus.ok ? 'success' : 'error'} size={14} /> {avatarStatus.msg}</div>

@@ -63,7 +63,7 @@ export default function Navbar({ onOpenModal }) {
           {customPages.map((p) => (
             <a
               key={p.id}
-              href="#"
+              href={'/' + encodeURIComponent(p.name)}
               className="custom-page-nav-link"
               data-custom={p.name}
               onClick={(e) => { e.preventDefault(); openCustomPage(p.name); }}

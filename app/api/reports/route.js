@@ -1,6 +1,7 @@
 // GET /api/reports, POST /api/reports
 import pool from '@/lib/db';
 import { getUser, requireAdmin } from '@/lib/auth';
+import { resolvePostReference } from '@/lib/post-reference';
 
 // 避免 GET 被静态优化导致写方法 405（动态接口，不能缓存）
 export const dynamic = 'force-dynamic';
@@ -40,9 +41,11 @@ export async function POST(req) {
     return Response.json({ error: '请填写完整信息' }, { status: 400 });
   }
   try {
+    const post = await resolvePostReference(post_id);
+    if (!post) return Response.json({ error: '帖子不存在' }, { status: 404 });
     const existing = await pool.query(
       'SELECT id FROM reports WHERE post_id = $1 AND reporter_id = $2 AND status = $3',
-      [post_id, user.id, 'pending']
+      [post.id, user.id, 'pending']
     );
     if (existing.rows.length > 0) {
       return Response.json({ error: '你已经举报过此帖子，请等待处理' }, { status: 400 });
@@ -50,7 +53,7 @@ export async function POST(req) {
     await pool.query(
       `INSERT INTO reports (post_id, reporter_id, reason)
        VALUES ($1, $2, $3)`,
-      [post_id, user.id, reason]
+      [post.id, user.id, reason]
     );
     return Response.json({ success: true });
   } catch {

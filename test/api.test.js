@@ -23,6 +23,7 @@ let adminToken = null;
 let adminId = null;
 let userId = null;
 let postId = null;
+let postNumber = null;
 let replyId = null;
 
 const adminUser = { email: `admin${suffix}@test.com`, password: '123456', username: `admin${suffix}` };
@@ -87,7 +88,9 @@ test('发布帖子', async () => {
   });
   assert.equal(status, 200);
   assert.ok(data.id);
+  assert.ok(Number(data.post_number) >= 1);
   postId = data.id;
+  postNumber = data.post_number;
 });
 
 test('帖子列表返回分页结构', async () => {
@@ -108,6 +111,13 @@ test('帖子详情', async () => {
   const { status, data } = await api('/posts/' + postId);
   assert.equal(status, 200);
   assert.equal(data.title, '测试帖子');
+});
+
+test('公开编号可访问同一帖子', async () => {
+  const { status, data } = await api('/posts/' + postNumber);
+  assert.equal(status, 200);
+  assert.equal(data.id, postId);
+  assert.equal(data.post_number, postNumber);
 });
 
 test('不存在的帖子返回 404', async () => {
