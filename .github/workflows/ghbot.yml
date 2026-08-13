@@ -21,7 +21,6 @@ on:
       - submitted
 
 permissions:
-  actions: write
   contents: write
   pull-requests: write
   checks: write
@@ -41,6 +40,8 @@ jobs:
       GH_APP_ID: ${{ secrets.GH_APP_ID }}
       GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
       GH_APP_INSTALLATION_ID: ${{ secrets.GH_APP_INSTALLATION_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
     with:
       event_name: ${{ github.event_name }}
       event_action: ${{ github.event.action }}
@@ -64,6 +65,9 @@ jobs:
       review_branches: ${{ vars.REVIEW_BRANCHES || '' }}
       repository_knowledge_enabled: ${{ vars.REPOSITORY_KNOWLEDGE_ENABLED || 'true' }}
       repository_knowledge_write: ${{ vars.REPOSITORY_KNOWLEDGE_WRITE || 'false' }}
+      r2_endpoint: ${{ vars.R2_ENDPOINT || '' }}
+      r2_bucket_name: ${{ vars.R2_BUCKET_NAME || '' }}
+      r2_prefix: ${{ vars.R2_PREFIX || '' }}
       triage_enabled: ${{ vars.TRIAGE_ENABLED || 'true' }}
       triage_labels: ${{ vars.TRIAGE_LABELS || 'bug,enhancement,documentation,question' }}
       triage_duplicate_label: ${{ vars.TRIAGE_DUPLICATE_LABEL || 'duplicate' }}
