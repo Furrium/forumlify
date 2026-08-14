@@ -68,7 +68,7 @@ docker compose up -d
 1. **克隆并安装依赖**
 
 ```bash
-git clone https://github.com/public/tree/next.git
+git clone https://github.com/public/tree/lite.git
 cd forumlify
 npm install
 ```
