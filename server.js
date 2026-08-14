@@ -13,6 +13,7 @@ const { Pool } = require('pg');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const app = express();
 
@@ -232,9 +233,17 @@ app.put('/api/settings', auth, admin, async (req, res) => {
 //  认证接口
 // ============================================================
 
-// 注册 - 第一个用户自动成为管理员
+function secureTokenMatch(provided, expected) {
+  if (!provided || !expected) return false;
+  const providedBuffer = Buffer.from(String(provided));
+  const expectedBuffer = Buffer.from(String(expected));
+  return providedBuffer.length === expectedBuffer.length &&
+    crypto.timingSafeEqual(providedBuffer, expectedBuffer);
+}
+
+// 注册；管理员只能使用部署时配置的一次性引导令牌创建
 app.post('/api/auth/register', async (req, res) => {
-  const { email, password, username } = req.body;
+  const { email, password, username, bootstrap_token } = req.body;
 
   if (!email || !password || !username) {
     return res.status(400).json({ error: '请填写完整信息' });
@@ -243,34 +252,52 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: '密码至少6位' });
   }
 
+  const hash = await bcrypt.hash(password, 10);
+  const avatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username) + '&background=6366f1&color=fff&size=64';
+  let client;
   try {
-    const countResult = await pool.query('SELECT COUNT(*) FROM users');
-    const isFirstUser = parseInt(countResult.rows[0].count) === 0;
+    client = await pool.connect();
+    await client.query('BEGIN');
+    await client.query("SELECT pg_advisory_xact_lock(hashtext('forumlify-admin-bootstrap'))");
+    const adminResult = await client.query("SELECT EXISTS(SELECT 1 FROM users WHERE role = 'admin') AS exists");
+    const hasAdmin = adminResult.rows[0].exists;
+    const requestedBootstrap = Boolean(bootstrap_token);
+    const validBootstrap = secureTokenMatch(bootstrap_token, process.env.ADMIN_BOOTSTRAP_TOKEN);
 
-    const hash = await bcrypt.hash(password, 10);
-    const avatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username) + '&background=6366f1&color=fff&size=64';
-    const role = isFirstUser ? 'admin' : 'user';
+    if (requestedBootstrap && !validBootstrap) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: '管理员初始化令牌无效' });
+    }
+    if (validBootstrap && hasAdmin) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: '管理员已初始化' });
+    }
 
-    const r = await pool.query(
+    const role = validBootstrap && !hasAdmin ? 'admin' : 'user';
+    const r = await client.query(
       `INSERT INTO users (email, password_hash, username, avatar_url, role, signature)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, username, avatar_url, role, signature, created_at`,
       [email, hash, username, avatar, role, '']
     );
+    await client.query('COMMIT');
 
     req.auditUserId = r.rows[0].id;
     req.auditMetadata = { role: r.rows[0].role };
 
     res.json({
       user: r.rows[0],
-      message: isFirstUser ? '🎉 你是第一个用户，已自动设为管理员！' : '注册成功'
+      message: role === 'admin' ? '管理员初始化成功' : '注册成功'
     });
   } catch (err) {
+    if (client) await client.query('ROLLBACK').catch(() => {});
     if (err.code === '23505') {
       res.status(400).json({ error: '邮箱或用户名已被注册' });
     } else {
       res.status(500).json({ error: '注册失败，请稍后重试' });
     }
+  } finally {
+    if (client) client.release();
   }
 });
 
@@ -846,14 +873,6 @@ app.post('/api/reports', auth, async (req, res) => {
   }
 
   try {
-    const existing = await pool.query(
-      'SELECT id FROM reports WHERE post_id = $1 AND reporter_id = $2 AND status = $3',
-      [post_id, req.user.id, 'pending']
-    );
-    if (existing.rows.length > 0) {
-      return res.status(400).json({ error: '你已经举报过此帖子，请等待处理' });
-    }
-
     await pool.query(
       `INSERT INTO reports (post_id, reporter_id, reason)
        VALUES ($1, $2, $3)`,
@@ -861,6 +880,9 @@ app.post('/api/reports', auth, async (req, res) => {
     );
     res.json({ success: true });
   } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: '你已经举报过此帖子，请等待处理' });
+    }
     res.status(500).json({ error: '举报失败，请稍后重试' });
   }
 });
@@ -1160,7 +1182,7 @@ app.post('/api/conversations', auth, async (req, res) => {
   if (!other_user_id) {
     return res.status(400).json({ error: '缺少对方用户ID' });
   }
-  if (other_user_id === req.user.id) {
+  if (String(other_user_id).toLowerCase() === String(req.user.id).toLowerCase()) {
     return res.status(400).json({ error: '不能与自己私信' });
   }
 
@@ -1170,18 +1192,11 @@ app.post('/api/conversations', auth, async (req, res) => {
       return res.status(404).json({ error: '用户不存在' });
     }
 
-    const existing = await pool.query(`
-      SELECT id FROM conversations
-      WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)
-    `, [req.user.id, other_user_id]);
-
-    if (existing.rows.length > 0) {
-      return res.json({ id: existing.rows[0].id });
-    }
-
     const r = await pool.query(`
       INSERT INTO conversations (user1_id, user2_id)
-      VALUES ($1, $2)
+      SELECT LEAST($1::uuid, $2::uuid), GREATEST($1::uuid, $2::uuid)
+      ON CONFLICT (user1_id, user2_id)
+      DO UPDATE SET user1_id = EXCLUDED.user1_id
       RETURNING id
     `, [req.user.id, other_user_id]);
 

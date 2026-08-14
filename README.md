@@ -90,6 +90,7 @@ psql -U forumlify -d forumlify -f schema.sql
 | `JWT_SECRET` | 本地开发使用内置值 | JWT 签名密钥；`NODE_ENV=production` 时必须显式设置 |
 | `ALLOWED_ORIGINS` | 空 | 允许跨域访问的来源，多个值用逗号分隔；为空时仅支持同源访问 |
 | `TRUST_PROXY` | `false` | 位于可信反向代理后时设为 `true`，用于正确识别限流 IP |
+| `ADMIN_BOOTSTRAP_TOKEN` | 空 | 首次部署时设置强随机值；注册页填写相同值可创建唯一初始管理员，初始化后应删除该变量 |
 
 4. **启动**
 
