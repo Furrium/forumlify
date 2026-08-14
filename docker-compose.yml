@@ -1,27 +1,54 @@
-version: '3'
 services:
   db:
-    image: postgres:15
+    image: postgres:15.14-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: forumlify
-      POSTGRES_PASSWORD: 123456
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: forumlify
     volumes:
-      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
       - db_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forumlify -d forumlify"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:3000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://forumlify:123456@db:5432/forumlify
+
+      NODE_ENV: production
+      PORT: 3000
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: forumlify
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      PGDATABASE: forumlify
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      ADMIN_BOOTSTRAP_TOKEN: ${ADMIN_BOOTSTRAP_TOKEN:-}
+      ENABLE_CAPTCHA: "true"
+      TRUST_PROXY: "true"
     volumes:
       - ./uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "node", "scripts/healthcheck.js"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
 
 volumes:
   db_data:

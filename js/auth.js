@@ -18,7 +18,6 @@ document.getElementById('loginSubmit').addEventListener('click', async () => {
     document.getElementById('loginPassword').value = '';
     if (result.user) {
       currentUser = result.user;
-      API.logEvent('login').catch(() => {});
       renderNav();
       if (currentPage === 'admin' && currentUser.role !== 'admin') {
         switchPage('feed');
@@ -42,13 +41,14 @@ document.getElementById('registerSubmit').addEventListener('click', async () => 
   const username = document.getElementById('regUsername').value.trim();
   const email = document.getElementById('regEmail').value.trim();
   const password = document.getElementById('regPassword').value;
+  const bootstrapToken = document.getElementById('regBootstrapToken').value.trim();
   const captchaInput = document.getElementById('regCaptchaInput').value.trim();
   const captchaAnswer = parseInt(document.getElementById('regCaptchaInput').dataset.answer);
   if (!username || !email || !password) { alert('请填写完整信息'); return; }
   if (password.length < 6) { alert('密码至少6位'); return; }
   if (parseInt(captchaInput) !== captchaAnswer) { alert('验证码错误，请重新计算'); refreshCaptcha('reg'); return; }
   try {
-    await API.register(email, password, username);
+    await API.register(email, password, username, bootstrapToken);
   } catch (err) {
     alert('注册失败：' + err.message);
     return;
@@ -58,12 +58,12 @@ document.getElementById('registerSubmit').addEventListener('click', async () => 
   document.getElementById('regUsername').value = '';
   document.getElementById('regEmail').value = '';
   document.getElementById('regPassword').value = '';
+  document.getElementById('regBootstrapToken').value = '';
   document.getElementById('regCaptchaInput').value = '';
 
   try {
     await API.login(email, password);
     currentUser = await API.getMe();
-    API.logEvent('register').catch(() => {});
     renderNav();
 
     if (currentPage === 'admin' && currentUser.role !== 'admin') {

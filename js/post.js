@@ -228,7 +228,7 @@ async function handleReplySubmit(postId) {
   if (parseInt(captchaInput) !== captchaAnswer) { alert('验证码错误，请重新计算'); refreshCaptcha('reply'); return; }
   try {
     await API.createReply(postId, content);
-    API.logEvent('create_reply').catch(() => {});
+
     renderPostDetail(postId);
     if (currentPage === 'feed') {
       renderFeed();
