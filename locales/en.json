@@ -55,7 +55,10 @@
     "answer": "Answer",
     "captchaLoading": "Loading captcha...",
     "drop": "Release to upload",
-    "dropHint": "Click or drag to upload image"
+    "dropHint": "Click or drag to upload image",
+    "compressing": "Compressing image...",
+    "imageTooLarge": "The source image must be smaller than 20MB",
+    "imageCompressFailed": "This image could not be compressed. Try another image or reduce its dimensions first."
   },
   "reply": {
     "loading": "Loading replies...",
@@ -290,7 +293,20 @@
       "saveFailed": "Save failed",
       "title": "Forum settings",
       "nameLabel": "Forum name",
-      "save": "Save"
+      "save": "Save",
+      "faviconLabel": "Site icon",
+      "faviconHint": "PNG, JPEG, GIF, WebP, or ICO up to 20MB. Files over 5MB are compressed automatically. A square image works best.",
+      "faviconPreview": "Current site icon",
+      "faviconUpload": "Click or drag to upload an icon",
+      "faviconDrop": "Release to upload the icon",
+      "faviconUploading": "Uploading...",
+      "faviconCompressing": "Compressing image...",
+      "faviconInvalid": "Choose a PNG, JPEG, GIF, WebP, or ICO icon",
+      "faviconTooLarge": "The source image must be smaller than 20MB",
+      "faviconCompressFailed": "This image could not be compressed. Try another image or reduce its dimensions first.",
+      "faviconSaved": "Site icon updated",
+      "faviconSaveFailed": "Icon upload failed: {{msg}}",
+      "versionLabel": "Current commit"
     }
   }
 }

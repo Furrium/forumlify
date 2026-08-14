@@ -8,6 +8,7 @@ import { useApp } from './AppProvider';
 import { Icon } from './Icons';
 import { useToast } from './Toast';
 import CaptchaImage from './CaptchaImage';
+import { compressImage, DIRECT_IMAGE_LIMIT, MAX_IMAGE_SOURCE_SIZE } from '@/lib/compress-image';
 
 export default function NewPost() {
   const { currentUser, navigate, refresh } = useApp();
@@ -20,8 +21,70 @@ export default function NewPost() {
   const [captcha, setCaptcha] = useState(null);
   const [captchaInput, setCaptchaInput] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadStage, setUploadStage] = useState('uploading');
+  const launchTitle = t('feed.newPost');
+  const [headingText, setHeadingText] = useState(launchTitle);
+  const [headingPhase, setHeadingPhase] = useState('idle');
+  const terminalStartedRef = useRef(false);
 
   useEffect(() => { API.getCaptcha().then((c) => setCaptcha(c)).catch(() => {}); }, []);
+
+  useEffect(() => {
+    if (!terminalStartedRef.current) setHeadingText(launchTitle);
+  }, [launchTitle]);
+
+  useEffect(() => {
+    if (headingPhase === 'idle') return undefined;
+
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+      if (headingText !== title) setHeadingText(title);
+      return undefined;
+    }
+
+    if (headingPhase === 'erasing') {
+      if (!headingText) {
+        setHeadingPhase('typing');
+        return undefined;
+      }
+      const timer = window.setTimeout(() => setHeadingText((text) => text.slice(0, -1)), 48);
+      return () => window.clearTimeout(timer);
+    }
+
+    if (headingText === title) return undefined;
+
+    let commonLength = 0;
+    while (
+      commonLength < headingText.length
+      && commonLength < title.length
+      && headingText[commonLength] === title[commonLength]
+    ) {
+      commonLength += 1;
+    }
+
+    const needsErasing = headingText.length > commonLength;
+    const timer = window.setTimeout(() => {
+      setHeadingText((text) => (
+        needsErasing ? text.slice(0, -1) : title.slice(0, text.length + 1)
+      ));
+    }, needsErasing ? 38 : 64);
+    return () => window.clearTimeout(timer);
+  }, [headingPhase, headingText, title]);
+
+  const handleTitleChange = (event) => {
+    const nextTitle = event.target.value;
+    setTitle(nextTitle);
+
+    if (!terminalStartedRef.current && nextTitle.length > 0) {
+      terminalStartedRef.current = true;
+      if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+        setHeadingText(nextTitle);
+        setHeadingPhase('typing');
+      } else {
+        setHeadingPhase('erasing');
+      }
+    }
+  };
 
   const handleFiles = async (files) => {
     setUploading(true);
@@ -29,17 +92,30 @@ export default function NewPost() {
       const newPreviews = [];
       for (const file of files) {
         if (!file.type.startsWith('image/')) continue;
-        if (file.size > 5 * 1024 * 1024) {
-          toast('图片 ' + file.name + ' 超过 5MB，请压缩后上传', 'warning');
+        if (file.size > MAX_IMAGE_SOURCE_SIZE) {
+          toast(t('newPost.imageTooLarge'), 'warning');
           continue;
         }
+
+        let uploadFile = file;
+        if (file.size > DIRECT_IMAGE_LIMIT) {
+          setUploadStage('compressing');
+          try {
+            uploadFile = await compressImage(file, { maxDimension: 4096 });
+          } catch {
+            toast(t('newPost.imageCompressFailed'), 'error');
+            continue;
+          }
+        }
+
+        setUploadStage('uploading');
         const dataUrl = await new Promise((resolve) => {
           const reader = new FileReader();
           reader.onload = (e) => resolve(e.target.result);
-          reader.readAsDataURL(file);
+          reader.readAsDataURL(uploadFile);
         });
         newPreviews.push(dataUrl);
-        const url = await uploadImage(file);
+        const url = await uploadImage(uploadFile);
         setImages((prev) => [...prev, url]);
       }
       setPreviews((prev) => [...prev, ...newPreviews]);
@@ -47,6 +123,7 @@ export default function NewPost() {
       toast('上传失败：' + err.message, 'error');
     } finally {
       setUploading(false);
+      setUploadStage('uploading');
     }
   };
 
@@ -80,17 +157,21 @@ export default function NewPost() {
   };
 
   return (
-    <div className="page-slide active">
-      <div className="page-header" style={{ maxWidth: 600, margin: '0 auto', width: '100%' }}>
-        <h2><Icon name="plus" size={20} /> {t('newPost.title')}</h2>
+    <div id="pageNew" className="page-slide active">
+      <div className="page-header new-post-page-header" style={{ maxWidth: 600, margin: '0 auto', width: '100%' }}>
+        <h2 className="new-post-heading">
+          <Icon name="plus" size={20} className="new-post-title-icon" />
+          <span className="new-post-title-label">{headingText}</span>
+          {headingPhase !== 'idle' && <span className="new-post-terminal-cursor" aria-hidden="true" />}
+        </h2>
       </div>
-      <div style={{ maxWidth: 600, margin: '0 auto', width: '100%' }}>
+      <div className="new-post-form-body" style={{ maxWidth: 600, margin: '0 auto', width: '100%' }}>
         <input
           type="text"
           placeholder={t('newPost.title')}
           style={{ width: '100%', padding: '10px 14px', border: '1.5px solid var(--border)', borderRadius: 6, fontSize: 15, fontWeight: 600, marginBottom: 12, fontFamily: 'inherit', background: 'var(--bg)', color: 'var(--text)' }}
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={handleTitleChange}
         />
         <textarea
           rows={6}
@@ -114,7 +195,7 @@ export default function NewPost() {
         >
           {!uploading && !dragOver && <Icon name="image" size={32} style={{ display: 'block', margin: '0 auto 8px', color: 'var(--text-secondary)' }} />}
           <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-            {uploading ? t('newPost.uploading') : (dragOver ? t('newPost.drop') : t('newPost.dropHint'))}
+            {uploading ? t(`newPost.${uploadStage}`) : (dragOver ? t('newPost.drop') : t('newPost.dropHint'))}
           </div>
         </div>
         <input

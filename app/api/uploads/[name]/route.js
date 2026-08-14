@@ -12,6 +12,7 @@ const MIME = {
   '.jpeg': 'image/jpeg',
   '.gif': 'image/gif',
   '.webp': 'image/webp',
+  '.ico': 'image/x-icon',
 };
 
 export async function GET(req, { params }) {

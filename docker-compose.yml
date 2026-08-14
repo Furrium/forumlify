@@ -1,4 +1,3 @@
-version: '3'
 services:
   db:
     image: postgres:15
@@ -9,14 +8,11 @@ services:
     volumes:
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
       - db_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-
   app:
     # 从 GHCR 拉取镜像（每次 push next 自动重建），不再本地构建
     image: ghcr.io/furrium/forumlify:next
     ports:
-      - "3000:3000"
+      - "${FORUMLIFY_PORT:-3000}:3000"
     depends_on:
       - db
     environment:

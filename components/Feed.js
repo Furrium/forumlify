@@ -147,7 +147,8 @@ export default function Feed({ onOpenModal, onReport }) {
             navigate('new');
           }}
         >
-          <Icon name="plus" /> {t('feed.newPost')}
+          <Icon name="plus" className="new-post-launch-icon" />
+          <span className="new-post-launch-label">{t('feed.newPost')}</span>
         </button>
       </div>
       <div className={'feed-posts-drawer ' + drawerPhase}>

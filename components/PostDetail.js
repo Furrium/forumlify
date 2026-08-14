@@ -11,6 +11,7 @@ import ImageViewer from './ImageViewer';
 import { renderMarkdown } from '@/lib/markdown';
 import { useToast } from './Toast';
 import { useTranslation } from 'react-i18next';
+import { compressImage, DIRECT_IMAGE_LIMIT, MAX_IMAGE_SOURCE_SIZE } from '@/lib/compress-image';
 
 function avatar(username) {
   return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username || '匿名用户') +
@@ -29,6 +30,7 @@ export default function PostDetail({ postId, initialPost = null }) {
   const [editContent, setEditContent] = useState('');
   const [editImages, setEditImages] = useState([]);
   const [editUploading, setEditUploading] = useState(false);
+  const [editUploadStage, setEditUploadStage] = useState('uploading');
   const editImageInputRef = useRef(null);
   // 评论抽屉：帖子加载完成后自动展开（动画完整播放）
   const [repliesOpen, setRepliesOpen] = useState(false);
@@ -131,15 +133,27 @@ export default function PostDetail({ postId, initialPost = null }) {
   const handleEditUpload = async (file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) { toast('请选择图片文件', 'warning'); return; }
-    if (file.size > 5 * 1024 * 1024) { toast('图片不能超过 5MB', 'warning'); return; }
+    if (file.size > MAX_IMAGE_SOURCE_SIZE) { toast(t('post.imageTooLarge'), 'warning'); return; }
     setEditUploading(true);
     try {
-      const url = await uploadImage(file);
+      let uploadFile = file;
+      if (file.size > DIRECT_IMAGE_LIMIT) {
+        setEditUploadStage('compressing');
+        uploadFile = await compressImage(file, { maxDimension: 4096 });
+      }
+      setEditUploadStage('uploading');
+      const url = await uploadImage(uploadFile);
       setEditImages((prev) => [...prev, url]);
     } catch (err) {
-      toast('上传失败：' + err.message, 'error');
+      toast(
+        err.message === 'compression_failed'
+          ? t('post.imageCompressFailed')
+          : t('post.imageUploadFailed', { msg: err.message }),
+        'error'
+      );
     } finally {
       setEditUploading(false);
+      setEditUploadStage('uploading');
     }
   };
 
@@ -290,7 +304,7 @@ export default function PostDetail({ postId, initialPost = null }) {
             )}
             <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
               <button type="button" className="btn-secondary" style={{ padding: '8px 16px', border: '1px solid var(--border)', borderRadius: 4, background: 'var(--surface)', cursor: 'pointer', color: 'var(--text)' }} onClick={() => editImageInputRef.current?.click()}>
-                {editUploading ? '上传中...' : <><Icon name="camera" size={14} /> 上传图片</>}
+                {editUploading ? t(`post.image${editUploadStage === 'compressing' ? 'Compressing' : 'Uploading'}`) : <><Icon name="camera" size={14} /> {t('post.imageUpload')}</>}
               </button>
               <input type="file" ref={editImageInputRef} accept="image/*" multiple style={{ display: 'none' }} onChange={(e) => { const files = e.target.files; if (files && files.length > 0) { [...files].forEach((f) => handleEditUpload(f)); e.target.value = ''; } }} />
             </div>

@@ -1,7 +1,20 @@
 const enableCodecovBundleAnalysis = process.env.CODECOV_BUNDLE_ANALYSIS === 'true';
+const { execFileSync } = require('child_process');
+
+function resolveCommit() {
+  if (process.env.FORUMLIFY_COMMIT) return process.env.FORUMLIFY_COMMIT.slice(0, 7);
+  try {
+    return execFileSync('git', ['rev-parse', '--short=7', 'HEAD'], { encoding: 'utf8' }).trim();
+  } catch {
+    return 'unknown';
+  }
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: {
+    FORUMLIFY_COMMIT: resolveCommit(),
+  },
   // 本地开发允许的来源：默认本机；局域网/其他设备通过环境变量追加
   // ALLOWED_DEV_ORIGINS=192.168.x.x,10.0.0.x （仅开发用，不写死具体 IP）
   allowedDevOrigins: [
