@@ -7,12 +7,13 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const { rateLimit } = require('express-rate-limit');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const app = express();
 
@@ -91,6 +92,68 @@ app.use('/api', apiLimiter);
 app.use(['/api/auth/login', '/api/auth/register', '/api/auth/reset-password'], authLimiter);
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
+
+const AUDIT_ACTIONS = new Map([
+  ['POST /api/auth/register', 'register'],
+  ['POST /api/auth/login', 'login'],
+  ['PUT /api/settings', 'update_settings'],
+  ['PUT /api/users/:id/role', 'update_user_role'],
+  ['PUT /api/users/:id', 'update_profile'],
+  ['PUT /api/users/:id/avatar', 'update_avatar'],
+  ['PUT /api/users/:id/password', 'change_password'],
+  ['PUT /api/users/:id/email', 'change_email'],
+  ['POST /api/posts', 'create_post'],
+  ['PUT /api/posts/:id', 'update_post'],
+  ['DELETE /api/posts/:id', 'delete_post'],
+  ['PUT /api/posts/:id/pin', 'toggle_post_pin'],
+  ['POST /api/posts/:id/replies', 'create_reply'],
+  ['DELETE /api/replies/:id', 'delete_reply'],
+  ['POST /api/reports', 'create_report'],
+  ['PUT /api/reports/:id', 'handle_report'],
+  ['POST /api/links', 'create_link'],
+  ['DELETE /api/links/:id', 'delete_link'],
+  ['POST /api/upload', 'upload_image'],
+  ['POST /api/admin/custom-css', 'upload_custom_css'],
+  ['DELETE /api/admin/custom-css', 'delete_custom_css'],
+  ['POST /api/conversations', 'create_conversation'],
+  ['POST /api/conversations/:id/messages', 'send_message'],
+  ['POST /api/admin/custom-pages', 'create_custom_page'],
+  ['PUT /api/admin/custom-pages/:id', 'update_custom_page'],
+  ['DELETE /api/admin/custom-pages/:id', 'delete_custom_page'],
+  ['POST /api/auth/recovery-codes/generate', 'rotate_recovery_codes'],
+  ['POST /api/auth/reset-password', 'reset_password'],
+]);
+
+function auditMetadata(req) {
+  const metadata = {};
+  for (const [key, value] of Object.entries(req.params || {})) {
+    if (typeof value === 'string' && value.length <= 100) metadata[key] = value;
+  }
+  for (const key of ['post_id', 'other_user_id', 'role', 'status']) {
+    const value = req.body?.[key];
+    if (typeof value === 'string' && value.length <= 100) metadata[key] = value;
+  }
+  return { ...metadata, ...(req.auditMetadata || {}) };
+}
+
+app.use((req, res, next) => {
+  res.on('finish', () => {
+    if (res.statusCode < 200 || res.statusCode >= 300 || !req.route?.path) return;
+    const routePath = Array.isArray(req.route.path) ? req.route.path[0] : req.route.path;
+    const action = AUDIT_ACTIONS.get(`${req.method} ${routePath}`);
+    if (!action) return;
+
+    const userId = req.auditUserId || req.user?.id || null;
+    const ip = String(req.ip || req.socket?.remoteAddress || '').slice(0, 45);
+    const userAgent = String(req.get('user-agent') || '').slice(0, 1000);
+    pool.query(
+      `INSERT INTO event_logs (user_id, action, ip, method, path, user_agent, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)`,
+      [userId, action, ip, req.method, req.originalUrl.slice(0, 2000), userAgent, JSON.stringify(auditMetadata(req))]
+    ).catch(error => console.error('Failed to write audit log:', error));
+  });
+  next();
+});
 
 // 确保上传目录存在
 if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
@@ -181,9 +244,17 @@ app.put('/api/settings', auth, admin, async (req, res) => {
 //  认证接口
 // ============================================================
 
-// 注册 - 第一个用户自动成为管理员
+function secureTokenMatch(provided, expected) {
+  if (!provided || !expected) return false;
+  const providedBuffer = Buffer.from(String(provided));
+  const expectedBuffer = Buffer.from(String(expected));
+  return providedBuffer.length === expectedBuffer.length &&
+    crypto.timingSafeEqual(providedBuffer, expectedBuffer);
+}
+
+// 注册；管理员只能使用部署时配置的一次性引导令牌创建
 app.post('/api/auth/register', async (req, res) => {
-  const { email, password, username } = req.body;
+  const { email, password, username, bootstrap_token } = req.body;
 
   if (!email || !password || !username) {
     return res.status(400).json({ error: '请填写完整信息' });
@@ -192,31 +263,52 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: '密码至少6位' });
   }
 
+  const hash = await bcrypt.hash(password, 10);
+  const avatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username) + '&background=6366f1&color=fff&size=64';
+  let client;
   try {
-    const countResult = await pool.query('SELECT COUNT(*) FROM users');
-    const isFirstUser = parseInt(countResult.rows[0].count) === 0;
+    client = await pool.connect();
+    await client.query('BEGIN');
+    await client.query("SELECT pg_advisory_xact_lock(hashtext('forumlify-admin-bootstrap'))");
+    const adminResult = await client.query("SELECT EXISTS(SELECT 1 FROM users WHERE role = 'admin') AS exists");
+    const hasAdmin = adminResult.rows[0].exists;
+    const requestedBootstrap = Boolean(bootstrap_token);
+    const validBootstrap = secureTokenMatch(bootstrap_token, process.env.ADMIN_BOOTSTRAP_TOKEN);
 
-    const hash = await bcrypt.hash(password, 10);
-    const avatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username) + '&background=6366f1&color=fff&size=64';
-    const role = isFirstUser ? 'admin' : 'user';
+    if (requestedBootstrap && !validBootstrap) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: '管理员初始化令牌无效' });
+    }
+    if (validBootstrap && hasAdmin) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: '管理员已初始化' });
+    }
 
-    const r = await pool.query(
+    const role = validBootstrap && !hasAdmin ? 'admin' : 'user';
+    const r = await client.query(
       `INSERT INTO users (email, password_hash, username, avatar_url, role, signature)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, username, avatar_url, role, signature, created_at`,
       [email, hash, username, avatar, role, '']
     );
+    await client.query('COMMIT');
+
+    req.auditUserId = r.rows[0].id;
+    req.auditMetadata = { role: r.rows[0].role };
 
     res.json({
       user: r.rows[0],
-      message: isFirstUser ? '🎉 你是第一个用户，已自动设为管理员！' : '注册成功'
+      message: role === 'admin' ? '管理员初始化成功' : '注册成功'
     });
   } catch (err) {
+    if (client) await client.query('ROLLBACK').catch(() => {});
     if (err.code === '23505') {
       res.status(400).json({ error: '邮箱或用户名已被注册' });
     } else {
       res.status(500).json({ error: '注册失败，请稍后重试' });
     }
+  } finally {
+    if (client) client.release();
   }
 });
 
@@ -240,6 +332,8 @@ app.post('/api/auth/login', async (req, res) => {
     if (!valid) {
       return res.status(401).json({ error: '邮箱或密码错误' });
     }
+
+    req.auditUserId = user.id;
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
@@ -790,14 +884,6 @@ app.post('/api/reports', auth, async (req, res) => {
   }
 
   try {
-    const existing = await pool.query(
-      'SELECT id FROM reports WHERE post_id = $1 AND reporter_id = $2 AND status = $3',
-      [post_id, req.user.id, 'pending']
-    );
-    if (existing.rows.length > 0) {
-      return res.status(400).json({ error: '你已经举报过此帖子，请等待处理' });
-    }
-
     await pool.query(
       `INSERT INTO reports (post_id, reporter_id, reason)
        VALUES ($1, $2, $3)`,
@@ -805,6 +891,9 @@ app.post('/api/reports', auth, async (req, res) => {
     );
     res.json({ success: true });
   } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: '你已经举报过此帖子，请等待处理' });
+    }
     res.status(500).json({ error: '举报失败，请稍后重试' });
   }
 });
@@ -977,21 +1066,6 @@ app.get('/api/event-logs', auth, admin, async (req, res) => {
   }
 });
 
-// 记录事件
-app.post('/api/event-logs', auth, async (req, res) => {
-  const { action } = req.body;
-  try {
-    await pool.query(
-      `INSERT INTO event_logs (user_id, action, ip)
-       VALUES ($1, $2, $3)`,
-      [req.user.id, action, req.ip || '0.0.0.0']
-    );
-    res.json({ success: true });
-  } catch (err) {
-    res.json({ success: true });
-  }
-});
-
 // ============================================================
 //  图片上传
 // ============================================================
@@ -1119,7 +1193,7 @@ app.post('/api/conversations', auth, async (req, res) => {
   if (!other_user_id) {
     return res.status(400).json({ error: '缺少对方用户ID' });
   }
-  if (other_user_id === req.user.id) {
+  if (String(other_user_id).toLowerCase() === String(req.user.id).toLowerCase()) {
     return res.status(400).json({ error: '不能与自己私信' });
   }
 
@@ -1129,18 +1203,11 @@ app.post('/api/conversations', auth, async (req, res) => {
       return res.status(404).json({ error: '用户不存在' });
     }
 
-    const existing = await pool.query(`
-      SELECT id FROM conversations
-      WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)
-    `, [req.user.id, other_user_id]);
-
-    if (existing.rows.length > 0) {
-      return res.json({ id: existing.rows[0].id });
-    }
-
     const r = await pool.query(`
       INSERT INTO conversations (user1_id, user2_id)
-      VALUES ($1, $2)
+      SELECT LEAST($1::uuid, $2::uuid), GREATEST($1::uuid, $2::uuid)
+      ON CONFLICT (user1_id, user2_id)
+      DO UPDATE SET user1_id = EXCLUDED.user1_id
       RETURNING id
     `, [req.user.id, other_user_id]);
 
@@ -1550,6 +1617,7 @@ app.use((err, req, res, next) => {
 //  启动服务器
 // ============================================================
 
+
 let server = null;
 let shuttingDown = false;
 
@@ -1557,12 +1625,14 @@ function startServer() {
   if (server) return server;
 
   server = app.listen(PORT, '0.0.0.0', () => {
+
     console.log('========================================');
     console.log('  🌊 Forumlify 已启动');
     console.log('  📡 http://localhost:' + PORT);
     console.log('  📡 API: http://localhost:' + PORT + '/api');
     console.log('========================================');
   });
+
   return server;
 }
 

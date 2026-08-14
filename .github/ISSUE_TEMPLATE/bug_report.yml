@@ -1,0 +1,90 @@
+name: 🐛 Bug 报告 / Bug Report
+description: 报告一个 Bug / Report a bug
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 感谢你报告问题！/ Thanks for reporting an issue!
+        请填写以下信息，帮助我们快速定位问题。/ Please fill in the following information to help us locate the issue quickly.
+
+  - type: dropdown
+    id: branch
+    attributes:
+      label: 你使用的是哪个分支？/ Which branch are you using?
+      description: 请选择你所使用的分支。/ Please select the branch you are using.
+      options:
+        - Lite（原生单文件版 / Original single-file version）
+        - next（Next.js 16 版 / Next.js 16 version）
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: 后台版本号 / Backend version (管理员填写 / admins only)
+      description: |
+        如果你使用的是 next 分支且是管理员，请粘贴后台显示的版本号。其他情况请留空。
+        / If you are using the next branch and are an administrator, please paste the version shown in the admin panel. Leave blank otherwise.
+      placeholder: "例如 / e.g. 2.0.0"
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述 / Description
+      description: 请清晰描述你遇到的问题。/ Please clearly describe the issue you encountered.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤 / Steps to reproduce
+      description: 如何复现这个问题？/ How can this issue be reproduced?
+      placeholder: |
+        1. 打开... / Open ...
+        2. 点击... / Click ...
+        3. 看到错误... / See the error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为 / Expected behavior
+      description: 你期望发生什么？/ What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为 / Actual behavior
+      description: 实际发生了什么？/ What actually happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境信息 / Environment
+      description: 你的运行环境。/ Your running environment.
+      placeholder: |
+        - 操作系统 / OS: 
+        - 浏览器 / Browser:
+        - Node.js 版本 / Node.js version:
+        - 部署方式 / Deployment method (Docker / 源码 / Source):
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志 / Logs
+      description: 如有报错日志，请粘贴于此。/ Paste any error logs here if available.
+      render: shell
+    validations:
+      required: false

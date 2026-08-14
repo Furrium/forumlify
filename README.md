@@ -17,15 +17,15 @@
 
 Forumlify 提供了两个不同架构的分支版本，以满足不同部署环境与开发需求的场景：
 
-* **Lite 版 (`main` 分支)**：轻量单体架构，零构建步骤，资源占用极低。
-* **Next.js 版 (`next` 分支)**：现代全栈架构，组件化开发，支持云原生与 Serverless / 边缘部署。
+* **Lite 版 (`lite` 分支)**：轻量单体架构，零构建步骤，资源占用极低，主要由Furrium维护。
+* **Next.js 版 (`next` 分支)**：现代全栈架构，组件化开发，支持云原生与 Serverless / 边缘部署，主要由lezi-fun维护。
 
 你可以根据以下维度选择最适合你当前需求的版本：
 
-| 对比维度 | Forumlify (Lite 版 / `main`) | Forumlify-Next (Next.js 版 / `next`) | 选择建议 |
+| 对比维度 | Forumlify (Lite 版 / `lite`) | Forumlify-Next (Next.js 版 / `next`) | 选择建议 |
 | :--- | :--- | :--- | :--- |
-| **上手速度与部署** | **极快**（零编译步骤，直接 `node server.js` 或 Docker 启动） | **中等**（需要经过 `next build` 编译打包，或配置 OpenNext） | 希望 1 分钟快速跑起来选 `main` |
-| **VPS 最低配置要求** | **1 核 512MB RAM**（资源占用极低，适合低配小鸡） | **1 核 1GB RAM+**（主要在打包构建时需要较多内存） | 内存有限或低配 VPS 推荐 `main` |
+| **上手速度与部署** | **极快**（零编译步骤，直接 `node server.js` 或 Docker 启动） | **中等**（需要经过 `next build` 编译打包，或配置 OpenNext） | 希望 1 分钟快速跑起来选 `lite` |
+| **VPS 最低配置要求** | **1 核 512MB RAM**（资源占用极低，适合低配小鸡） | **1 核 1GB RAM+**（主要在打包构建时需要较多内存） | 内存有限或低配 VPS 推荐 `lite` |
 | **存储扩展性** | 本地磁盘存储（`uploads/` 目录） | 支持 **Cloudflare R2 / S3 兼容对象存储** + 本地回退 | 需要接云存储或海量图片存储选 `next` |
 | **部署环境支持** | 传统 VPS / Docker 容器 | VPS / Docker / **Cloudflare Workers / Vercel** | 需要 Serverless / 边缘部署选 `next` |
 | **技术栈与二次开发** | 原生 Vanilla JS + Express，无框架门槛 | React 19 + Next.js 16 + Tailwind，组件化程度高 | 熟悉 React 框架或需要团队协同选 `next` |
@@ -37,12 +37,17 @@ Forumlify 提供了两个不同架构的分支版本，以满足不同部署环�
 ### Docker 部署（推荐）
 
 ```
-git clone https://github.com/furrium/forumlify.git
+git clone https://github.com/forumlify/public.git
 cd forumlify
+
 cp .env.example .env
 # 编辑 .env，为 POSTGRES_PASSWORD 和 JWT_SECRET 设置强随机值
 docker compose up --build -d
+
 ```
+
+旧版 Compose 也可以使用 `docker-compose up -d`。请妥善备份 `.env`；更换
+`JWT_SECRET` 会使现有登录令牌失效。
 
 应用默认运行在 `http://localhost:3000`。
 
@@ -76,7 +81,7 @@ docker run --rm -v forumlify_uploads_data:/data -v "$PWD":/backup alpine \
 
 ---
 
-> 如需部署 Next.js 版本，请前往 [forumlify/tree/next](https://github.com/furrium/forumlify/tree/next)。
+> 如需部署 Next.js 版本，请前往 [forumlify/tree/next](https://github.com/forumlify/public/tree/next)。
 
 ---
 
@@ -86,7 +91,7 @@ docker run --rm -v forumlify_uploads_data:/data -v "$PWD":/backup alpine \
 
 #### 环境要求
 
-- Node.js 18+
+- Node.js 20+
 - PostgreSQL 13+
 
 #### 步骤
@@ -94,7 +99,7 @@ docker run --rm -v forumlify_uploads_data:/data -v "$PWD":/backup alpine \
 1. **克隆并安装依赖**
 
 ```bash
-git clone https://github.com/furrium/forumlify.git
+git clone https://github.com/public/tree/lite.git
 cd forumlify
 npm install
 ```
@@ -116,7 +121,11 @@ psql -U forumlify -d forumlify -f schema.sql
 | `JWT_SECRET` | 本地开发使用内置值 | JWT 签名密钥；生产环境必须显式设置至少 32 个字符 |
 | `ALLOWED_ORIGINS` | 空 | 允许跨域访问的来源，多个值用逗号分隔；为空时仅支持同源访问 |
 | `TRUST_PROXY` | `false` | 位于可信反向代理后时设为 `true`，用于正确识别限流 IP |
+
 | `PGHOST` / `PGPORT` / `PGUSER` / `PGPASSWORD` / `PGDATABASE` | PostgreSQL 客户端默认值 | 可替代 `DATABASE_URL`，Compose 使用这些变量避免密码 URL 编码问题 |
+
+| `ADMIN_BOOTSTRAP_TOKEN` | 空 | 首次部署时设置强随机值；注册页填写相同值可创建唯一初始管理员，初始化后应删除该变量 |
+
 
 4. **执行迁移并启动**
 
@@ -170,5 +179,4 @@ forumlify/
 ## 📝 License
 
 MIT
-
 

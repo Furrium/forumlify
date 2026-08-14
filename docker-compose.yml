@@ -8,6 +8,7 @@ services:
       POSTGRES_DB: forumlify
     volumes:
       - db_data:/var/lib/postgresql/data
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U forumlify -d forumlify"]
       interval: 5s
@@ -20,12 +21,14 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+
     ports:
       - "${PORT:-3000}:3000"
     depends_on:
       db:
         condition: service_healthy
     environment:
+
       NODE_ENV: production
       PORT: 3000
       PGHOST: db
@@ -34,6 +37,9 @@ services:
       PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       PGDATABASE: forumlify
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      ADMIN_BOOTSTRAP_TOKEN: ${ADMIN_BOOTSTRAP_TOKEN:-}
+      ENABLE_CAPTCHA: "true"
+      TRUST_PROXY: "true"
     volumes:
       - uploads_data:/app/uploads
     healthcheck:
@@ -42,6 +48,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+
 
 volumes:
   db_data:
