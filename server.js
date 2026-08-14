@@ -104,6 +104,26 @@ function normalizeEmail(value) {
   return email.length <= 255 && EMAIL_PATTERN.test(email) ? email : null;
 }
 
+function normalizeLegacyEmail(value) {
+  if (typeof value !== 'string') return null;
+  const email = value.trim();
+  return email && email.length <= 255 ? email : null;
+}
+
+async function findUserByEmail(client, value, columns = '*') {
+  const email = normalizeLegacyEmail(value);
+  if (!email) return null;
+
+  const exact = await client.query(`SELECT ${columns} FROM users WHERE email = $1`, [email]);
+  if (exact.rows.length === 1) return exact.rows[0];
+
+  const insensitive = await client.query(
+    `SELECT ${columns} FROM users WHERE LOWER(email) = LOWER($1) LIMIT 2`,
+    [email]
+  );
+  return insensitive.rows.length === 1 ? insensitive.rows[0] : null;
+}
+
 function normalizeHttpUrl(value) {
   if (typeof value !== 'string' || value.length > 2048) return null;
   try {
@@ -119,8 +139,9 @@ function normalizeUploadPath(value) {
   const encodedName = value.slice('/uploads/'.length);
   try {
     const name = decodeURIComponent(encodedName);
-    if (!name || name.length > 255 || name === '.' || name === '..' ||
-        /[\\/\0-\x1f\x7f]/.test(name) || /[?#]/.test(encodedName)) {
+    const segments = name.split('/');
+    if (!name || name.length > 1024 || segments.some(segment => !segment || segment === '.' || segment === '..') ||
+        /[\\\0-\x1f\x7f]/.test(name) || /[?#]/.test(encodedName)) {
       return null;
     }
     return value;
@@ -268,15 +289,12 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
 
-  const normalizedEmail = normalizeEmail(email);
-
-  if (!normalizedEmail || !isText(password, { min: 1, max: 100000 })) {
+  if (!normalizeLegacyEmail(email) || !isText(password, { min: 1, max: 100000 })) {
     return res.status(400).json({ error: '请填写邮箱和密码' });
   }
 
   try {
-    const r = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [normalizedEmail]);
-    const user = r.rows[0];
+    const user = await findUserByEmail(pool, email);
 
     if (!user) {
       return res.status(401).json({ error: '邮箱或密码错误' });
@@ -431,8 +449,8 @@ app.put('/api/users/:id', validateUuidId, auth, async (req, res) => {
     return res.status(403).json({ error: '无权限修改他人资料' });
   }
   if (!isText(username, { min: 1, max: 20 }) ||
-      (bio !== undefined && !isText(bio, { max: 1000 })) ||
-      (signature !== undefined && !isText(signature, { max: 500 }))) {
+      (bio !== undefined && bio !== null && !isText(bio, { max: 1000 })) ||
+      (signature !== undefined && signature !== null && !isText(signature, { max: 500 }))) {
     return res.status(400).json({ error: '资料字段长度无效' });
   }
 
@@ -1531,22 +1549,21 @@ app.get('/api/auth/recovery-codes/count', auth, async (req, res) => {
 // 重置密码（使用恢复码）
 app.post('/api/auth/reset-password', async (req, res) => {
   const { email, recoveryCode, newPassword } = req.body;
-  const normalizedEmail = normalizeEmail(email);
 
-  if (!normalizedEmail || !isText(recoveryCode, { min: 1, max: 64 }) ||
+  if (!normalizeLegacyEmail(email) || !isText(recoveryCode, { min: 1, max: 64 }) ||
       !isText(newPassword, { min: 6, max: 128 })) {
     return res.status(400).json({ error: '请填写完整信息' });
   }
 
   try {
-    const user = await pool.query('SELECT id FROM users WHERE LOWER(email) = LOWER($1)', [normalizedEmail]);
-    if (user.rows.length === 0) {
+    const user = await findUserByEmail(pool, email, 'id');
+    if (!user) {
       return res.status(404).json({ error: '用户不存在' });
     }
 
     const codes = await pool.query(
       'SELECT id, code_hash FROM recovery_codes WHERE user_id = $1 AND is_used = false',
-      [user.rows[0].id]
+      [user.id]
     );
 
     let matched = false;
@@ -1568,7 +1585,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
     await pool.query('UPDATE recovery_codes SET is_used = true WHERE id = $1', [matchedId]);
 
     const hash = await bcrypt.hash(newPassword, 10);
-    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, user.rows[0].id]);
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, user.id]);
 
     res.json({ success: true });
   } catch (err) {
