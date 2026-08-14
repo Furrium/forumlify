@@ -41,7 +41,13 @@
     "reportReason": "Report reason",
     "confirmDelete": "Are you sure you want to delete this post?",
     "reportTitle": "Report post",
-    "submitReport": "Submit report"
+    "submitReport": "Submit report",
+    "imageUpload": "Upload image",
+    "imageUploading": "Uploading...",
+    "imageCompressing": "Compressing image...",
+    "imageTooLarge": "The source image must be smaller than 20MB",
+    "imageCompressFailed": "This image could not be compressed. Try another image or reduce its dimensions first.",
+    "imageUploadFailed": "Upload failed: {{msg}}"
   },
   "newPost": {
     "title": "Title",

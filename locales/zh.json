@@ -41,7 +41,13 @@
     "reportReason": "举报原因",
     "confirmDelete": "确定要删除这条帖子吗？",
     "reportTitle": "举报帖子",
-    "submitReport": "提交举报"
+    "submitReport": "提交举报",
+    "imageUpload": "上传图片",
+    "imageUploading": "正在上传...",
+    "imageCompressing": "正在压缩图片...",
+    "imageTooLarge": "原图大小不能超过 20MB",
+    "imageCompressFailed": "无法压缩这张图片，请换一张图片或先缩小尺寸",
+    "imageUploadFailed": "上传失败：{{msg}}"
   },
   "newPost": {
     "title": "标题",

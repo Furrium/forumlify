@@ -31,20 +31,36 @@ export async function POST(req) {
   const objectName = `forumlify-favicon-${randomUUID()}${image.ext}`;
   let oldObject = '';
   try {
-    const current = await pool.query("SELECT value FROM settings WHERE key = 'favicon_object'");
-    oldObject = current.rows[0]?.value || '';
     const { url } = await saveObject(objectName, buffer, image.mime);
-    const version = Date.now().toString();
+    let client = null;
+    let committed = false;
+    let version = '';
 
     try {
-      await pool.query(
+      client = await pool.connect();
+      await client.query('BEGIN');
+      await client.query(
+        `INSERT INTO settings (key, value) VALUES ('favicon_object', '')
+         ON CONFLICT (key) DO NOTHING`
+      );
+      const current = await client.query(
+        "SELECT value FROM settings WHERE key = 'favicon_object' FOR UPDATE"
+      );
+      oldObject = current.rows[0]?.value || '';
+      version = Date.now().toString();
+      await client.query(
         `INSERT INTO settings (key, value) VALUES ($1, $2), ($3, $4), ($5, $6)
          ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
         ['favicon_url', url, 'favicon_version', version, 'favicon_object', objectName]
       );
+      await client.query('COMMIT');
+      committed = true;
     } catch (error) {
-      await deleteObject(objectName).catch(() => {});
+      if (client) await client.query('ROLLBACK').catch(() => {});
+      if (!committed) await deleteObject(objectName).catch(() => {});
       throw error;
+    } finally {
+      client?.release();
     }
 
     if (oldObject && /^forumlify-favicon-[\w-]+\.(?:png|jpg|gif|webp|ico)$/.test(oldObject)) {

@@ -93,6 +93,10 @@ export default function AdminPage() {
         setPanelPhase('idle');
         const settledHeight = measurePanelHeight();
         if (settledHeight != null) setPanelHeight(settledHeight);
+        if (pendingTab.current !== tab) {
+          const queuedTab = pendingTab.current;
+          transitionFrame.current = requestAnimationFrame(() => changeTab(queuedTab));
+        }
       }, 360);
     });
   }, [panelPhase, tab]);

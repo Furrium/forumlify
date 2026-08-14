@@ -151,6 +151,36 @@ test('管理员上传网站图标', async () => {
   assert.equal(settings.data.favicon_object, undefined);
 });
 
+test('并发上传网站图标不会遗留未引用对象', async () => {
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+    'base64'
+  );
+  const upload = async (name) => {
+    const form = new FormData();
+    form.append('file', new Blob([png], { type: 'image/png' }), name);
+    const res = await fetch(BASE + '/api/admin/favicon', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: form,
+    });
+    return { status: res.status, data: await res.json() };
+  };
+
+  const uploads = await Promise.all([upload('favicon-a.png'), upload('favicon-b.png')]);
+  assert.deepEqual(uploads.map(({ status }) => status), [200, 200]);
+
+  const settings = await api('/settings');
+  const currentUrl = settings.data.favicon_url;
+  const urls = uploads.map(({ data }) => data.favicon_url);
+  assert.ok(urls.includes(currentUrl));
+
+  const staleUrl = urls.find((url) => url !== currentUrl);
+  assert.ok(staleUrl);
+  assert.equal((await fetch(BASE + currentUrl)).status, 200);
+  assert.equal((await fetch(BASE + staleUrl)).status, 404);
+});
+
 test('添加友情链接', async () => {
   const { status, data } = await api('/links', {
     method: 'POST',
