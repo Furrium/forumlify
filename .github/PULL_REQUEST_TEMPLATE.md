@@ -36,7 +36,7 @@
 
 <!-- 你如何验证这些改动？/ How did you verify these changes? -->
 
-- [ ] 本地构建通过 / Local build passes (`npm run build`)
+- [ ] 本地构建通过 / Local build passes (`npm run build`，仅 next 分支 / next branch only)
 - [ ] 相关功能已手动测试 / Related features manually tested
 - [ ] 测试用例已更新 / Tests updated
 
