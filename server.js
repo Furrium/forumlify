@@ -1483,6 +1483,10 @@ app.post('/api/auth/reset-password', async (req, res) => {
       'SELECT id, code_hash FROM recovery_codes WHERE user_id = $1 AND is_used = false FOR UPDATE',
       [user.rows[0].id]
     );
+    if (codes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: '恢复码无效或已使用' });
+    }
 
     let matched = false;
     let matchedId = null;
