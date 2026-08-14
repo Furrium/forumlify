@@ -490,7 +490,7 @@ function showCustomPage(pageName) {
   API.getCustomPage(pageName).then(page => {
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'width:100%;min-height:70vh;border:none;border-radius:8px;background:var(--surface);';
-    iframe.sandbox = 'allow-scripts allow-modals';
+    iframe.sandbox = 'allow-scripts allow-modals allow-top-navigation allow-same-origin allow-popups';
     iframe.srcdoc = `
       <!DOCTYPE html>
       <html>
@@ -843,8 +843,12 @@ async function renderSettingsPage(tab = 'profile') {
           await API.changePassword(oldPassword, newPassword);
           document.getElementById('changeOldPassword').value = '';
           document.getElementById('changeNewPassword').value = '';
-          statusEl.textContent = getIcon('success') + ' 密码修改成功！';
+          statusEl.textContent = getIcon('success') + ' 密码修改成功，正在返回登录页…';
           statusEl.style.color = '#22c55e';
+          localStorage.removeItem('token');
+          currentUser = null;
+          renderNav();
+          setTimeout(() => switchPage('login'), 800);
         } catch (err) {
           statusEl.textContent = getIcon('error') + ' ' + err.message;
           statusEl.style.color = '#ef4444';
@@ -867,9 +871,12 @@ async function renderSettingsPage(tab = 'profile') {
           await API.changeEmail(password, newEmail);
           document.getElementById('changeEmailPassword').value = '';
           document.getElementById('changeNewEmail').value = '';
-          currentUser.email = newEmail;
-          statusEl.textContent = getIcon('success') + ' 邮箱修改成功！';
+          statusEl.textContent = getIcon('success') + ' 邮箱修改成功，正在返回登录页…';
           statusEl.style.color = '#22c55e';
+          localStorage.removeItem('token');
+          currentUser = null;
+          renderNav();
+          setTimeout(() => switchPage('login'), 800);
         } catch (err) {
           statusEl.textContent = getIcon('error') + ' ' + err.message;
           statusEl.style.color = '#ef4444';
@@ -1123,7 +1130,7 @@ async function init() {
     try {
       const user = await API.getMe();
       currentUser = user;
-      API.logEvent('login').catch(() => {});
+
     } catch (e) {
       token = null;
       localStorage.removeItem('forumlify-token');
@@ -1278,7 +1285,7 @@ async function init() {
         images.push(uploaded.url);
       }
       await API.createPost(title, content, images);
-      API.logEvent('create_post').catch(() => {});
+
       alert('发布成功！');
       clearSelectedImages();
       switchPage('feed');

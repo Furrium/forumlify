@@ -35,10 +35,10 @@ const API = {
     return data;
   },
 
-  async register(email, password, username) {
+  async register(email, password, username, bootstrapToken = '') {
     const data = await apiFetch('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password, username })
+      body: JSON.stringify({ email, password, username, bootstrap_token: bootstrapToken || undefined })
     });
     if (data.error) throw new Error(data.error);
     return data;
@@ -227,14 +227,6 @@ const API = {
     return data;
   },
 
-  async logEvent(action) {
-    try {
-      await apiFetch('/event-logs', {
-        method: 'POST',
-        body: JSON.stringify({ action })
-      });
-    } catch (e) { /* 静默失败 */ }
-  },
 
   // ============================================================
   //  论坛设置
