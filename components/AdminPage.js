@@ -1,7 +1,7 @@
 'use client';
 
 // 管理后台：侧边栏布局（对齐上游 main 分支）
-import { useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon } from './Icons';
 import AdminReports from './admin/AdminReports';
@@ -25,6 +25,106 @@ const NAV = [
 export default function AdminPage() {
   const { t } = useTranslation();
   const [tab, setTab] = useState('reports');
+  const [panelPhase, setPanelPhase] = useState('idle');
+  const [panelHeight, setPanelHeight] = useState(null);
+  const contentRef = useRef(null);
+  const panelRef = useRef(null);
+  const transitionTimer = useRef(null);
+  const transitionFrame = useRef(null);
+  const pendingTab = useRef('reports');
+  const switching = useRef(false);
+  const panelPhaseRef = useRef(panelPhase);
+
+  panelPhaseRef.current = panelPhase;
+
+  const measurePanelHeight = () => {
+    if (!contentRef.current || !panelRef.current) return null;
+
+    const style = getComputedStyle(panelRef.current);
+    return contentRef.current.scrollHeight
+      + parseFloat(style.paddingTop)
+      + parseFloat(style.paddingBottom)
+      + parseFloat(style.borderTopWidth)
+      + parseFloat(style.borderBottomWidth);
+  };
+
+  useEffect(() => () => {
+    clearTimeout(transitionTimer.current);
+    cancelAnimationFrame(transitionFrame.current);
+  }, []);
+
+  // Keep the outer frame at a concrete height. Data-heavy tabs such as reports
+  // first render a loader, then receive their rows asynchronously. Without
+  // this lock, the frame switches from auto height to the loaded height in one
+  // frame after the drawer has already opened.
+  useLayoutEffect(() => {
+    if (panelHeight != null) return;
+    const height = measurePanelHeight();
+    if (height != null) setPanelHeight(height);
+  }, [panelHeight, tab]);
+
+  useEffect(() => {
+    if (!contentRef.current || typeof ResizeObserver === 'undefined') return undefined;
+
+    const observer = new ResizeObserver(() => {
+      if (panelPhaseRef.current !== 'idle') return;
+      const height = measurePanelHeight();
+      if (height == null) return;
+      setPanelHeight((currentHeight) => (
+        currentHeight != null && Math.abs(currentHeight - height) < 1 ? currentHeight : height
+      ));
+    });
+
+    observer.observe(contentRef.current);
+    return () => observer.disconnect();
+  }, [tab]);
+
+  useLayoutEffect(() => {
+    if (!switching.current || panelPhase !== 'hidden' || !contentRef.current || !panelRef.current) return;
+
+    const targetHeight = measurePanelHeight();
+    if (targetHeight == null) return;
+
+    transitionFrame.current = requestAnimationFrame(() => {
+      setPanelHeight(targetHeight);
+      setPanelPhase('opening');
+      transitionTimer.current = setTimeout(() => {
+        switching.current = false;
+        setPanelPhase('idle');
+        const settledHeight = measurePanelHeight();
+        if (settledHeight != null) setPanelHeight(settledHeight);
+        if (pendingTab.current !== tab) {
+          const queuedTab = pendingTab.current;
+          transitionFrame.current = requestAnimationFrame(() => changeTab(queuedTab));
+        }
+      }, 360);
+    });
+  }, [panelPhase, tab]);
+
+  const changeTab = (nextTab) => {
+    if (nextTab === tab && panelPhase === 'idle') return;
+    pendingTab.current = nextTab;
+    if (switching.current) return;
+
+    switching.current = true;
+    clearTimeout(transitionTimer.current);
+    setPanelHeight(panelRef.current?.getBoundingClientRect().height || null);
+    setPanelPhase('closing');
+    transitionTimer.current = setTimeout(() => {
+      setTab(pendingTab.current);
+      setPanelPhase('hidden');
+    }, 220);
+  };
+
+  const renderPanel = () => {
+    if (tab === 'reports') return <AdminReports />;
+    if (tab === 'users') return <AdminUsers />;
+    if (tab === 'logs') return <AdminLogs />;
+    if (tab === 'links') return <AdminLinks />;
+    if (tab === 'custom') return <AdminCustomPages />;
+    if (tab === 'css') return <AdminCustomCss />;
+    return <AdminForumSettings />;
+  };
 
   return (
     <div className="page-slide active">
@@ -40,7 +140,7 @@ export default function AdminPage() {
                 href="#"
                 className={'admin-nav-item' + (tab === n.key ? ' active' : '')}
                 data-tab={n.key}
-                onClick={(e) => { e.preventDefault(); setTab(n.key); }}
+                onClick={(e) => { e.preventDefault(); changeTab(n.key); }}
               >
                 <span className="nav-icon"><Icon name={n.icon} size={18} /></span>
                 {t(n.labelKey)}
@@ -48,14 +148,17 @@ export default function AdminPage() {
             ))}
           </nav>
         </aside>
-        <main className="admin-content" id="adminContent">
-          {tab === 'reports' && <AdminReports />}
-          {tab === 'users' && <AdminUsers />}
-          {tab === 'logs' && <AdminLogs />}
-          {tab === 'links' && <AdminLinks />}
-          {tab === 'custom' && <AdminCustomPages />}
-          {tab === 'css' && <AdminCustomCss />}
-          {tab === 'settings' && <AdminForumSettings />}
+        <main
+          ref={panelRef}
+          className="admin-content"
+          id="adminContent"
+          style={panelHeight == null ? undefined : { height: panelHeight }}
+        >
+          <div className={'admin-content-drawer ' + panelPhase}>
+            <div ref={contentRef} className="admin-content-drawer-inner">
+              {renderPanel()}
+            </div>
+          </div>
         </main>
       </div>
     </div>

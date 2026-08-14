@@ -3,6 +3,8 @@ import pool from '@/lib/db';
 import { getUser, requireAdmin } from '@/lib/auth';
 import { jsonWithEtag } from '@/lib/http-cache';
 
+const VERSION_COMMIT = (process.env.FORUMLIFY_COMMIT || 'unknown').slice(0, 7);
+
 // 避免 GET 被静态优化导致 PUT 405（动态接口，不能缓存）
 export const dynamic = 'force-dynamic';
 
@@ -16,8 +18,10 @@ export async function GET(req) {
     const r = await pool.query('SELECT key, value FROM settings ORDER BY key');
     const settings = {};
     r.rows.forEach((row) => { settings[row.key] = row.value; });
+    delete settings.favicon_object;
     // 兜底：即使插入失败也保证返回 forum_name
     if (!settings.forum_name) settings.forum_name = 'Forumlify';
+    settings.version_commit = VERSION_COMMIT;
     return jsonWithEtag(req, settings);
   } catch {
     return Response.json({ error: '服务器错误' }, { status: 500 });

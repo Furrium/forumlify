@@ -4,6 +4,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { API, getTheme, setToken, getToken } from '@/lib/api';
+import { applyFavicon } from '@/lib/favicon';
 
 const AppContext = createContext(null);
 
@@ -425,6 +426,7 @@ export default function AppProvider({ children, cachedName = '' }) {
           localStorage.setItem('forumlify-forum-name', s.forum_name);
           syncForumNameCookie(s.forum_name);
         }
+        if (s.favicon_url) applyFavicon(s.favicon_url, s.favicon_version);
         // 先标记论坛名已收到（加载页原地淡入名字），稍后切换主页
         setForumNameLoaded(true);
         setTimeout(() => setReady(true), 650);
@@ -496,6 +498,68 @@ export default function AppProvider({ children, cachedName = '' }) {
     };
 
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (page === 'new' && view === 'feed' && document.startViewTransition && !reduceMotion) {
+      const root = document.documentElement;
+      const sourceIcon = document.querySelector('#feed .fab-btn .new-post-launch-icon');
+      const sourceLabel = document.querySelector('#feed .fab-btn .new-post-launch-label');
+
+      if (!sourceIcon || !sourceLabel) {
+        commitNavigation();
+        return;
+      }
+
+      root.classList.add('new-post-view-transition');
+      sourceIcon.style.viewTransitionName = 'new-post-plus';
+      sourceLabel.style.viewTransitionName = 'new-post-title';
+
+      const transition = document.startViewTransition(() => {
+        sourceIcon.style.viewTransitionName = '';
+        sourceLabel.style.viewTransitionName = '';
+        flushSync(() => commitNavigation(false));
+      });
+      transition.finished.finally(() => {
+        root.classList.remove('new-post-view-transition');
+      });
+      return;
+    }
+
+    if (page === 'feed' && view === 'new' && document.startViewTransition && !reduceMotion) {
+      const root = document.documentElement;
+      const sourceIcon = document.querySelector('#pageNew .new-post-title-icon');
+      const sourceLabel = document.querySelector('#pageNew .new-post-title-label');
+
+      if (!sourceIcon || !sourceLabel) {
+        commitNavigation();
+        return;
+      }
+
+      let targetIcon = null;
+      let targetLabel = null;
+      root.classList.add('new-post-view-transition', 'returning-new-post-home');
+      sourceIcon.style.viewTransitionName = 'new-post-plus';
+      sourceLabel.style.viewTransitionName = 'new-post-title';
+
+      const transition = document.startViewTransition(() => {
+        sourceIcon.style.viewTransitionName = '';
+        sourceLabel.style.viewTransitionName = '';
+        flushSync(() => commitNavigation(false));
+        targetIcon = document.querySelector('#feed .fab-btn .new-post-launch-icon');
+        targetLabel = document.querySelector('#feed .fab-btn .new-post-launch-label');
+        if (targetIcon) targetIcon.style.viewTransitionName = 'new-post-plus';
+        if (targetLabel) targetLabel.style.viewTransitionName = 'new-post-title';
+      });
+      const clearTargetNames = () => {
+        if (targetIcon) targetIcon.style.viewTransitionName = '';
+        if (targetLabel) targetLabel.style.viewTransitionName = '';
+      };
+      transition.ready.then(clearTargetNames, clearTargetNames);
+      transition.finished.finally(() => {
+        root.classList.remove('new-post-view-transition', 'returning-new-post-home');
+        refresh();
+      });
+      return;
+    }
+
     if (page === 'settings' && view !== 'settings' && document.startViewTransition && !reduceMotion) {
       const root = document.documentElement;
       const visibleSource = findSettingsTransitionSource(currentUser?.username);

@@ -45,6 +45,22 @@ test('Chinese and English locales expose the same non-empty keys', async () => {
   }
 });
 
+test('statically referenced translation keys exist in both locales', async () => {
+  const [zh, en] = await Promise.all([readLocale('zh'), readLocale('en')]);
+  const files = await sourceFiles(path.join(projectRoot, 'components'));
+  const referenced = new Set();
+
+  for (const file of files) {
+    const source = await readFile(file, 'utf8');
+    for (const match of source.matchAll(/\bt\(\s*['"]([^'"]+)['"]/g)) {
+      referenced.add(match[1]);
+    }
+  }
+
+  const missing = [...referenced].filter((key) => !zh.has(key) || !en.has(key)).sort();
+  assert.deepEqual(missing, []);
+});
+
 test('runtime UI contains no emoji except the approved chat greeting', async () => {
   const roots = ['app', 'components', 'locales'].map((name) => path.join(projectRoot, name));
   const files = (await Promise.all(roots.map(sourceFiles))).flat();

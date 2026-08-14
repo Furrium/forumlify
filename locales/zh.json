@@ -41,7 +41,13 @@
     "reportReason": "举报原因",
     "confirmDelete": "确定要删除这条帖子吗？",
     "reportTitle": "举报帖子",
-    "submitReport": "提交举报"
+    "submitReport": "提交举报",
+    "imageUpload": "上传图片",
+    "imageUploading": "正在上传...",
+    "imageCompressing": "正在压缩图片...",
+    "imageTooLarge": "原图大小不能超过 20MB",
+    "imageCompressFailed": "无法压缩这张图片，请换一张图片或先缩小尺寸",
+    "imageUploadFailed": "上传失败：{{msg}}"
   },
   "newPost": {
     "title": "标题",
@@ -55,7 +61,10 @@
     "answer": "答案",
     "captchaLoading": "验证码加载中...",
     "drop": "松开上传",
-    "dropHint": "点击或拖拽上传图片"
+    "dropHint": "点击或拖拽上传图片",
+    "compressing": "正在压缩图片...",
+    "imageTooLarge": "原图大小不能超过 20MB",
+    "imageCompressFailed": "无法压缩这张图片，请换一张图片或先缩小尺寸"
   },
   "reply": {
     "loading": "正在加载回复...",
@@ -290,7 +299,20 @@
       "saveFailed": "保存失败",
       "title": "论坛设置",
       "nameLabel": "论坛名称",
-      "save": "保存"
+      "save": "保存",
+      "faviconLabel": "网站图标",
+      "faviconHint": "支持 PNG、JPEG、GIF、WebP 或 ICO，最大 20MB；超过 5MB 时自动压缩。建议使用正方形图片。",
+      "faviconPreview": "当前网站图标",
+      "faviconUpload": "点击或拖拽上传图标",
+      "faviconDrop": "松开上传图标",
+      "faviconUploading": "正在上传...",
+      "faviconCompressing": "正在压缩图片...",
+      "faviconInvalid": "请选择 PNG、JPEG、GIF、WebP 或 ICO 图标",
+      "faviconTooLarge": "原图大小不能超过 20MB",
+      "faviconCompressFailed": "无法压缩这张图片，请换一张图片或先缩小尺寸",
+      "faviconSaved": "网站图标已更新",
+      "faviconSaveFailed": "图标上传失败：{{msg}}",
+      "versionLabel": "当前版本 Commit"
     }
   }
 }

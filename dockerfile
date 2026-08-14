@@ -5,7 +5,9 @@
 # ---- 构建阶段 ----
 FROM node:24-alpine AS builder
 WORKDIR /app
+ARG FORUMLIFY_COMMIT=unknown
 ENV DOCKER=1
+ENV FORUMLIFY_COMMIT=$FORUMLIFY_COMMIT
 
 # 用 bun 装依赖（bun.lock 最新；npm 会读旧的 package-lock.json → react 18 → 构建失败）
 RUN npm i -g bun

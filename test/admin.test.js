@@ -117,6 +117,68 @@ test('获取论坛设置', async () => {
   const { status, data } = await api('/settings');
   assert.equal(status, 200);
   assert.equal(data.forum_name, '测试论坛');
+  assert.match(data.version_commit, /^(?:[0-9a-f]{7}|unknown)$/);
+  assert.equal(data.favicon_object, undefined);
+});
+
+test('未登录用户不能上传网站图标', async () => {
+  const form = new FormData();
+  form.append('file', new Blob([Buffer.from('not-an-image')]), 'favicon.png');
+  const res = await fetch(BASE + '/api/admin/favicon', { method: 'POST', body: form });
+  assert.equal(res.status, 401);
+});
+
+test('管理员上传网站图标', async () => {
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+    'base64'
+  );
+  const form = new FormData();
+  form.append('file', new Blob([png], { type: 'image/png' }), 'favicon.png');
+  const res = await fetch(BASE + '/api/admin/favicon', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${adminToken}` },
+    body: form,
+  });
+  const data = await res.json();
+  assert.equal(res.status, 200);
+  assert.match(data.favicon_url, /^\/uploads\/forumlify-favicon-[\w-]+\.png$/);
+  assert.match(data.favicon_version, /^\d+$/);
+
+  const settings = await api('/settings');
+  assert.equal(settings.data.favicon_url, data.favicon_url);
+  assert.equal(settings.data.favicon_version, data.favicon_version);
+  assert.equal(settings.data.favicon_object, undefined);
+});
+
+test('并发上传网站图标不会遗留未引用对象', async () => {
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+    'base64'
+  );
+  const upload = async (name) => {
+    const form = new FormData();
+    form.append('file', new Blob([png], { type: 'image/png' }), name);
+    const res = await fetch(BASE + '/api/admin/favicon', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: form,
+    });
+    return { status: res.status, data: await res.json() };
+  };
+
+  const uploads = await Promise.all([upload('favicon-a.png'), upload('favicon-b.png')]);
+  assert.deepEqual(uploads.map(({ status }) => status), [200, 200]);
+
+  const settings = await api('/settings');
+  const currentUrl = settings.data.favicon_url;
+  const urls = uploads.map(({ data }) => data.favicon_url);
+  assert.ok(urls.includes(currentUrl));
+
+  const staleUrl = urls.find((url) => url !== currentUrl);
+  assert.ok(staleUrl);
+  assert.equal((await fetch(BASE + currentUrl)).status, 200);
+  assert.equal((await fetch(BASE + staleUrl)).status, 404);
 });
 
 test('添加友情链接', async () => {
