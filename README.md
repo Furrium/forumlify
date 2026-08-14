@@ -41,7 +41,7 @@ Forumlify 提供了两个不同架构的分支版本，以满足不同部署环�
 ```bash
 # 本分支（NEXT 版）；如要部署 LITE 版请 clone main 分支
 git clone -b next https://github.com/forumlify/public.git
-cd forumlify
+cd public
 docker-compose up -d
 ```
 
@@ -78,7 +78,7 @@ docker compose down && docker compose up -d
 ```bash
 # 克隆 next 分支（Next.js 版）；main 分支是 Express 版
 git clone -b next https://github.com/forumlify/public.git
-cd forumlify
+cd public
 npm install
 ```
 

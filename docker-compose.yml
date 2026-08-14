@@ -10,7 +10,7 @@ services:
       - db_data:/var/lib/postgresql/data
   app:
     # 从 GHCR 拉取镜像（每次 push next 自动重建），不再本地构建
-    image: ghcr.io/furrium/forumlify:next
+    image: ghcr.io/forumlify/public:next
     ports:
       - "${FORUMLIFY_PORT:-3000}:3000"
     depends_on:
