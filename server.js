@@ -245,17 +245,32 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 // ============================================================
 //  认证中间件
 // ============================================================
-const auth = (req, res, next) => {
+const auth = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) {
     return res.status(401).json({ error: '请先登录' });
   }
+
+  let decoded;
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    decoded = jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: '登录已过期，请重新登录' });
+  }
+
+  try {
+    const current = await pool.query(
+      'SELECT token_version FROM users WHERE id = $1',
+      [decoded.id]
+    );
+    const tokenVersion = decoded.token_version ?? 0;
+    if (!current.rows[0] || tokenVersion !== current.rows[0].token_version) {
+      return res.status(401).json({ error: '登录已失效，请重新登录' });
+    }
     req.user = decoded;
     next();
   } catch (err) {
-    return res.status(401).json({ error: '登录已过期，请重新登录' });
+    return res.status(500).json({ error: '服务器错误' });
   }
 };
 
@@ -420,7 +435,7 @@ app.post('/api/auth/login', async (req, res) => {
     req.auditUserId = user.id;
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { id: user.id, email: user.email, role: user.role, token_version: user.token_version },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -636,7 +651,10 @@ app.put('/api/users/:id/password', validateUuidId, auth, async (req, res) => {
     }
 
     const hash = await bcrypt.hash(newPassword, 10);
-    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, userId]);
+    await pool.query(
+      'UPDATE users SET password_hash = $1, token_version = token_version + 1 WHERE id = $2',
+      [hash, userId]
+    );
 
     res.json({ success: true });
   } catch (err) {
@@ -673,7 +691,10 @@ app.put('/api/users/:id/email', validateUuidId, auth, async (req, res) => {
       return res.status(400).json({ error: '邮箱已被占用' });
     }
 
-    await pool.query('UPDATE users SET email = $1 WHERE id = $2', [normalizedEmail, userId]);
+    await pool.query(
+      'UPDATE users SET email = $1, token_version = token_version + 1 WHERE id = $2',
+      [normalizedEmail, userId]
+    );
 
     res.json({ success: true });
   } catch (err) {
@@ -1583,39 +1604,36 @@ app.put('/api/notifications/read-all', auth, async (req, res) => {
 
 // 生成随机恢复码
 function generateRecoveryCode() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = '';
-  for (let i = 0; i < 20; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-    if (i === 4 || i === 9 || i === 14) code += '-';
-  }
-  return code;
+  return crypto.randomBytes(12)
+    .toString('hex')
+    .toUpperCase()
+    .match(/.{1,6}/g)
+    .join('-');
 }
 
 // 生成 10 个恢复码
 app.post('/api/auth/recovery-codes/generate', auth, async (req, res) => {
+  let client;
   try {
-    await pool.query('DELETE FROM recovery_codes WHERE user_id = $1', [req.user.id]);
+    const codes = Array.from({ length: 10 }, generateRecoveryCode);
+    const codeHashes = await Promise.all(codes.map(code => bcrypt.hash(code, 10)));
 
-    const codes = [];
-    const codeHashes = [];
-    for (let i = 0; i < 10; i++) {
-      const code = generateRecoveryCode();
-      codes.push(code);
-      const hash = await bcrypt.hash(code, 10);
-      codeHashes.push(hash);
-    }
-
-    for (const hash of codeHashes) {
-      await pool.query(
-        'INSERT INTO recovery_codes (user_id, code_hash) VALUES ($1, $2)',
-        [req.user.id, hash]
-      );
-    }
+    client = await pool.connect();
+    await client.query('BEGIN');
+    await client.query('DELETE FROM recovery_codes WHERE user_id = $1', [req.user.id]);
+    await client.query(
+      `INSERT INTO recovery_codes (user_id, code_hash)
+       SELECT $1, code_hash FROM unnest($2::text[]) AS generated(code_hash)`,
+      [req.user.id, codeHashes]
+    );
+    await client.query('COMMIT');
 
     res.json({ codes });
   } catch (err) {
+    if (client) await client.query('ROLLBACK').catch(() => {});
     res.status(500).json({ error: '生成恢复码失败' });
+  } finally {
+    if (client) client.release();
   }
 });
 
@@ -1641,16 +1659,24 @@ app.post('/api/auth/reset-password', async (req, res) => {
     return res.status(400).json({ error: '请填写完整信息' });
   }
 
+  let client;
   try {
-    const user = await findUserByEmail(pool, email, 'id');
+    client = await pool.connect();
+    await client.query('BEGIN');
+    const user = await findUserByEmail(client, email, 'id');
     if (!user) {
-      return res.status(404).json({ error: '用户不存在' });
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: '恢复码无效或已使用' });
     }
 
-    const codes = await pool.query(
-      'SELECT id, code_hash FROM recovery_codes WHERE user_id = $1 AND is_used = false',
+    const codes = await client.query(
+      'SELECT id, code_hash FROM recovery_codes WHERE user_id = $1 AND is_used = false FOR UPDATE',
       [user.id]
     );
+    if (codes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: '恢复码无效或已使用' });
+    }
 
     let matched = false;
     let matchedId = null;
@@ -1665,17 +1691,27 @@ app.post('/api/auth/reset-password', async (req, res) => {
     }
 
     if (!matched) {
+      await client.query('ROLLBACK');
       return res.status(400).json({ error: '恢复码无效或已使用' });
     }
 
-    await pool.query('UPDATE recovery_codes SET is_used = true WHERE id = $1', [matchedId]);
-
     const hash = await bcrypt.hash(newPassword, 10);
-    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, user.id]);
+    await client.query(
+      'UPDATE recovery_codes SET is_used = true WHERE id = $1 AND is_used = false',
+      [matchedId]
+    );
+    await client.query(
+      'UPDATE users SET password_hash = $1, token_version = token_version + 1 WHERE id = $2',
+      [hash, user.id]
+    );
+    await client.query('COMMIT');
 
     res.json({ success: true });
   } catch (err) {
+    if (client) await client.query('ROLLBACK').catch(() => {});
     res.status(500).json({ error: '重置失败，请稍后重试' });
+  } finally {
+    if (client) client.release();
   }
 });
 

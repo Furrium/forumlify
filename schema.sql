@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
   avatar_url TEXT,
   bio TEXT DEFAULT '',
   role VARCHAR(10) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+  token_version INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -216,6 +217,7 @@ ALTER TABLE posts ADD COLUMN IF NOT EXISTS pinned_at TIMESTAMPTZ;
 CREATE INDEX IF NOT EXISTS idx_posts_is_pinned ON posts(is_pinned);
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS signature TEXT DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAULT 0;
 
 -- Canonicalize conversation pairs and merge any pre-existing reverse/duplicate
 -- conversations before enforcing one row per unordered user pair.
