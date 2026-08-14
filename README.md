@@ -39,14 +39,44 @@ Forumlify 提供了两个不同架构的分支版本，以满足不同部署环�
 ```
 git clone https://github.com/forumlify/public.git
 cd forumlify
-printf 'JWT_SECRET=%s\n' "$(openssl rand -hex 32)" > .env
-docker compose up -d
+
+cp .env.example .env
+# 编辑 .env，为 POSTGRES_PASSWORD 和 JWT_SECRET 设置强随机值
+docker compose up --build -d
+
 ```
 
 旧版 Compose 也可以使用 `docker-compose up -d`。请妥善备份 `.env`；更换
 `JWT_SECRET` 会使现有登录令牌失效。
 
 应用默认运行在 `http://localhost:3000`。
+
+容器启动时会自动执行 `migrations/` 中尚未应用的 SQL 文件。可使用以下命令检查状态：
+
+```bash
+docker compose ps
+docker compose logs -f app
+curl http://localhost:3000/health/live
+curl http://localhost:3000/health/ready
+```
+
+- `/health/live` 表示 Node.js 服务正在运行。
+- `/health/ready` 仅在 PostgreSQL 可用时返回成功。
+- PostgreSQL 不再暴露到宿主机网络；应用通过 Compose 内部网络访问数据库。
+- 应用收到 `SIGTERM`/`SIGINT` 后会停止接收新连接并关闭数据库连接池。
+
+升级代码后执行 `docker compose up --build -d`，应用会在启动前自动应用新增迁移。
+
+#### Docker 数据备份
+
+数据库保存在 `db_data` 卷中，上传文件继续保存在宿主机的 `./uploads` 目录，以兼容旧版部署。升级或删除容器前请备份：
+
+```bash
+docker compose exec -T db pg_dump -U forumlify forumlify > forumlify.sql
+tar czf forumlify-uploads.tar.gz uploads/
+```
+
+`docker compose down` 会保留数据卷；只有明确执行 `docker compose down -v` 才会删除数据。
 
 ---
 
@@ -81,20 +111,25 @@ psql -U postgres -c "CREATE DATABASE forumlify OWNER forumlify;"
 psql -U forumlify -d forumlify -f schema.sql
 ```
 
-3. **配置环境变量**（可选）
+3. **配置环境变量**
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
 | `DATABASE_URL` | `postgresql://forumlify:***@localhost:5432/forumlify` | PostgreSQL 连接串 |
 | `PORT` | `3000` | HTTP 监听端口 |
-| `JWT_SECRET` | 本地开发使用内置值 | JWT 签名密钥；`NODE_ENV=production` 时必须显式设置 |
+| `JWT_SECRET` | 本地开发使用内置值 | JWT 签名密钥；生产环境必须显式设置，建议至少 32 个字符。较短的旧密钥会产生警告但仍可启动，便于安排会话失效窗口后再轮换 |
 | `ALLOWED_ORIGINS` | 空 | 允许跨域访问的来源，多个值用逗号分隔；为空时仅支持同源访问 |
 | `TRUST_PROXY` | `false` | 位于可信反向代理后时设为 `true`，用于正确识别限流 IP |
+
+| `PGHOST` / `PGPORT` / `PGUSER` / `PGPASSWORD` / `PGDATABASE` | PostgreSQL 客户端默认值 | 可替代 `DATABASE_URL`，Compose 使用这些变量避免密码 URL 编码问题 |
+
 | `ADMIN_BOOTSTRAP_TOKEN` | 空 | 首次部署时设置强随机值；注册页填写相同值可创建唯一初始管理员，初始化后应删除该变量 |
 
-4. **启动**
+
+4. **执行迁移并启动**
 
 ```bash
+npm run migrate
 npm start
 ```
 

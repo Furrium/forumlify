@@ -9,8 +9,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
+    "migrate": "node scripts/migrate.js",
     "check": "node scripts/check-syntax.js",
     "test": "node --test"
+
   },
   "dependencies": {
     "bcryptjs": "3.0.3",
