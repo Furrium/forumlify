@@ -69,12 +69,11 @@ curl http://localhost:3000/health/ready
 
 #### Docker 数据备份
 
-数据库与上传文件分别保存在 `db_data` 和 `uploads_data` 卷中。升级或删除容器前请备份：
+数据库保存在 `db_data` 卷中，上传文件继续保存在宿主机的 `./uploads` 目录，以兼容旧版部署。升级或删除容器前请备份：
 
 ```bash
 docker compose exec -T db pg_dump -U forumlify forumlify > forumlify.sql
-docker run --rm -v forumlify_uploads_data:/data -v "$PWD":/backup alpine \
-  tar czf /backup/forumlify-uploads.tar.gz -C /data .
+tar czf forumlify-uploads.tar.gz uploads/
 ```
 
 `docker compose down` 会保留数据卷；只有明确执行 `docker compose down -v` 才会删除数据。
@@ -118,7 +117,7 @@ psql -U forumlify -d forumlify -f schema.sql
 |------|--------|------|
 | `DATABASE_URL` | `postgresql://forumlify:***@localhost:5432/forumlify` | PostgreSQL 连接串 |
 | `PORT` | `3000` | HTTP 监听端口 |
-| `JWT_SECRET` | 本地开发使用内置值 | JWT 签名密钥；生产环境必须显式设置至少 32 个字符 |
+| `JWT_SECRET` | 本地开发使用内置值 | JWT 签名密钥；生产环境必须显式设置，建议至少 32 个字符。较短的旧密钥会产生警告但仍可启动，便于安排会话失效窗口后再轮换 |
 | `ALLOWED_ORIGINS` | 空 | 允许跨域访问的来源，多个值用逗号分隔；为空时仅支持同源访问 |
 | `TRUST_PROXY` | `false` | 位于可信反向代理后时设为 `true`，用于正确识别限流 IP |
 

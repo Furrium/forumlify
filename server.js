@@ -26,8 +26,11 @@ const DEFAULT_JWT_SECRET = 'forumlify-secret-key-change-me-in-production';
 const JWT_SECRET = process.env.JWT_SECRET || DEFAULT_JWT_SECRET;
 
 if (process.env.NODE_ENV === 'production') {
-  if (JWT_SECRET === DEFAULT_JWT_SECRET || JWT_SECRET.length < 32) {
-    throw new Error('JWT_SECRET must contain at least 32 unique characters in production');
+  if (JWT_SECRET === DEFAULT_JWT_SECRET) {
+    throw new Error('JWT_SECRET must be set to a unique value in production');
+  }
+  if (JWT_SECRET.length < 32) {
+    console.warn('Warning: JWT_SECRET should contain at least 32 characters; rotate it during a planned session reset.');
   }
   if (!process.env.DATABASE_URL && !process.env.PGHOST) {
     throw new Error('DATABASE_URL or PGHOST must be configured in production');
