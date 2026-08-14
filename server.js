@@ -98,19 +98,27 @@ const auth = async (req, res, next) => {
   if (!token) {
     return res.status(401).json({ error: '请先登录' });
   }
+
+  let decoded;
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    decoded = jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: '登录已过期，请重新登录' });
+  }
+
+  try {
     const current = await pool.query(
       'SELECT token_version FROM users WHERE id = $1',
       [decoded.id]
     );
-    if (!current.rows[0] || decoded.token_version !== current.rows[0].token_version) {
+    const tokenVersion = decoded.token_version ?? 0;
+    if (!current.rows[0] || tokenVersion !== current.rows[0].token_version) {
       return res.status(401).json({ error: '登录已失效，请重新登录' });
     }
     req.user = decoded;
     next();
   } catch (err) {
-    return res.status(401).json({ error: '登录已过期，请重新登录' });
+    return res.status(500).json({ error: '服务器错误' });
   }
 };
 
