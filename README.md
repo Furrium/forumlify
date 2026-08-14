@@ -37,16 +37,20 @@ Forumlify 提供了两个不同架构的分支版本，以满足不同部署环�
 ### Docker 部署（推荐）
 
 ```
-git clone https://github.com/furrium/forumlify.git
+git clone https://github.com/forumlify/public.git
 cd forumlify
-docker-compose up -d
+printf 'JWT_SECRET=%s\n' "$(openssl rand -hex 32)" > .env
+docker compose up -d
 ```
+
+旧版 Compose 也可以使用 `docker-compose up -d`。请妥善备份 `.env`；更换
+`JWT_SECRET` 会使现有登录令牌失效。
 
 应用默认运行在 `http://localhost:3000`。
 
 ---
 
-> 如需部署 Next.js 版本，请前往 [forumlify/tree/next](https://github.com/furrium/forumlify/tree/next)。
+> 如需部署 Next.js 版本，请前往 [forumlify/tree/next](https://github.com/forumlify/public/tree/next)。
 
 ---
 
@@ -56,7 +60,7 @@ docker-compose up -d
 
 #### 环境要求
 
-- Node.js 18+
+- Node.js 20+
 - PostgreSQL 13+
 
 #### 步骤
@@ -64,7 +68,7 @@ docker-compose up -d
 1. **克隆并安装依赖**
 
 ```bash
-git clone https://github.com/furrium/forumlify.git
+git clone https://github.com/public/tree/lite.git
 cd forumlify
 npm install
 ```
@@ -86,6 +90,7 @@ psql -U forumlify -d forumlify -f schema.sql
 | `JWT_SECRET` | 本地开发使用内置值 | JWT 签名密钥；`NODE_ENV=production` 时必须显式设置 |
 | `ALLOWED_ORIGINS` | 空 | 允许跨域访问的来源，多个值用逗号分隔；为空时仅支持同源访问 |
 | `TRUST_PROXY` | `false` | 位于可信反向代理后时设为 `true`，用于正确识别限流 IP |
+| `ADMIN_BOOTSTRAP_TOKEN` | 空 | 首次部署时设置强随机值；注册页填写相同值可创建唯一初始管理员，初始化后应删除该变量 |
 
 4. **启动**
 
@@ -138,5 +143,4 @@ forumlify/
 ## 📝 License
 
 MIT
-
 

@@ -89,8 +89,19 @@ CREATE TABLE IF NOT EXISTS event_logs (
   user_id UUID REFERENCES users(id) ON DELETE SET NULL,
   action VARCHAR(50) NOT NULL,
   ip VARCHAR(45),
+  method VARCHAR(10),
+  path TEXT,
+  user_agent TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ DEFAULT now()
 );
+
+ALTER TABLE event_logs ADD COLUMN IF NOT EXISTS method VARCHAR(10);
+ALTER TABLE event_logs ADD COLUMN IF NOT EXISTS path TEXT;
+ALTER TABLE event_logs ADD COLUMN IF NOT EXISTS user_agent TEXT;
+ALTER TABLE event_logs ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+CREATE INDEX IF NOT EXISTS idx_event_logs_created_at ON event_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_event_logs_user_id ON event_logs(user_id);
 
 -- ============================================================
 --  论坛设置表
@@ -115,6 +126,7 @@ CREATE TABLE IF NOT EXISTS conversations (
   user2_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   last_message_at TIMESTAMPTZ DEFAULT now(),
   created_at TIMESTAMPTZ DEFAULT now(),
+  CHECK (user1_id < user2_id),
   UNIQUE(user1_id, user2_id)
 );
 
@@ -204,6 +216,69 @@ ALTER TABLE posts ADD COLUMN IF NOT EXISTS pinned_at TIMESTAMPTZ;
 CREATE INDEX IF NOT EXISTS idx_posts_is_pinned ON posts(is_pinned);
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS signature TEXT DEFAULT '';
+
+-- Canonicalize conversation pairs and merge any pre-existing reverse/duplicate
+-- conversations before enforcing one row per unordered user pair.
+ALTER TABLE conversations DROP CONSTRAINT IF EXISTS conversations_user1_id_user2_id_key;
+ALTER TABLE conversations DROP CONSTRAINT IF EXISTS conversations_canonical_pair;
+
+WITH ranked AS (
+  SELECT
+    id,
+    FIRST_VALUE(id) OVER (
+      PARTITION BY LEAST(user1_id, user2_id), GREATEST(user1_id, user2_id)
+      ORDER BY created_at, id
+    ) AS keep_id
+  FROM conversations
+)
+UPDATE messages AS m
+SET conversation_id = ranked.keep_id
+FROM ranked
+WHERE m.conversation_id = ranked.id
+  AND ranked.id <> ranked.keep_id;
+
+WITH ranked AS (
+  SELECT
+    id,
+    ROW_NUMBER() OVER (
+      PARTITION BY LEAST(user1_id, user2_id), GREATEST(user1_id, user2_id)
+      ORDER BY created_at, id
+    ) AS row_number
+  FROM conversations
+)
+DELETE FROM conversations AS c
+USING ranked
+WHERE c.id = ranked.id AND ranked.row_number > 1;
+
+UPDATE conversations
+SET user1_id = LEAST(user1_id, user2_id),
+    user2_id = GREATEST(user1_id, user2_id);
+
+ALTER TABLE conversations
+  ADD CONSTRAINT conversations_canonical_pair CHECK (user1_id < user2_id);
+ALTER TABLE conversations
+  ADD CONSTRAINT conversations_user1_id_user2_id_key UNIQUE (user1_id, user2_id);
+
+-- Keep one pending report per reporter/post at the database layer. Historical
+-- duplicates are rejected before creating the partial unique index.
+WITH duplicates AS (
+  SELECT id, ROW_NUMBER() OVER (
+    PARTITION BY post_id, reporter_id
+    ORDER BY created_at, id
+  ) AS row_number
+  FROM reports
+  WHERE status = 'pending' AND post_id IS NOT NULL
+)
+UPDATE reports AS r
+SET status = 'rejected',
+    handled_at = COALESCE(r.handled_at, NOW()),
+    handler_note = COALESCE(r.handler_note, '重复举报已自动合并')
+FROM duplicates
+WHERE r.id = duplicates.id AND duplicates.row_number > 1;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_reports_unique_pending
+  ON reports(post_id, reporter_id)
+  WHERE status = 'pending' AND post_id IS NOT NULL;
 
 -- ============================================================
 --  论坛默认设置

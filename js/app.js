@@ -458,7 +458,7 @@ function showCustomPage(pageName) {
   API.getCustomPage(pageName).then(page => {
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'width:100%;min-height:70vh;border:none;border-radius:8px;background:var(--surface);';
-    iframe.sandbox = 'allow-scripts allow-modals';
+    iframe.sandbox = 'allow-scripts allow-modals allow-top-navigation allow-same-origin allow-popups';
     iframe.srcdoc = `
       <!DOCTYPE html>
       <html>
@@ -1091,7 +1091,7 @@ async function init() {
     try {
       const user = await API.getMe();
       currentUser = user;
-      API.logEvent('login').catch(() => {});
+
     } catch (e) {
       token = null;
       localStorage.removeItem('forumlify-token');
@@ -1242,7 +1242,7 @@ async function init() {
     });
     try {
       await API.createPost(title, content, images);
-      API.logEvent('create_post').catch(() => {});
+
       alert('发布成功！');
       switchPage('feed');
       renderFeed();
