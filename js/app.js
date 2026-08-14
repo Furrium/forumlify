@@ -162,7 +162,7 @@ function switchPage(page, param) {
     if (page === 'new') {
       document.getElementById('postTitle').value = '';
       document.getElementById('postContent').value = '';
-      document.getElementById('imagePreview').innerHTML = '';
+      clearSelectedImages();
       document.getElementById('fileInput').value = '';
       document.getElementById('postCaptchaInput').value = '';
       refreshCaptcha('post');
@@ -368,24 +368,56 @@ async function openPrivateChat(otherUserId, otherUsername) {
 //  📸 图片上传（拖拽上传）
 // ============================================================
 
+let selectedImageFiles = [];
+
+function clearSelectedImages() {
+  selectedImageFiles.forEach(entry => URL.revokeObjectURL(entry.previewUrl));
+  selectedImageFiles = [];
+  const preview = document.getElementById('imagePreview');
+  if (preview) preview.innerHTML = '';
+}
+
 function handleImageFiles(files) {
   const preview = document.getElementById('imagePreview');
   if (!preview) return;
-  for (let file of files) {
-    if (!file.type.startsWith('image/')) continue;
+
+  for (const file of files) {
+    if (selectedImageFiles.length >= 6) {
+      alert('每篇帖子最多上传 6 张图片');
+      break;
+    }
+    if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+      alert('图片 ' + file.name + ' 格式不支持');
+      continue;
+    }
     if (file.size > 5 * 1024 * 1024) {
       alert('图片 ' + file.name + ' 超过 5MB，请压缩后上传');
       continue;
     }
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const img = document.createElement('img');
-      img.src = e.target.result;
-      img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:4px;border:1px solid var(--border);';
-      preview.appendChild(img);
-    };
-    reader.readAsDataURL(file);
+
+    const entry = { file, previewUrl: URL.createObjectURL(file) };
+    selectedImageFiles.push(entry);
+
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:relative;width:80px;height:80px;';
+    const img = document.createElement('img');
+    img.src = entry.previewUrl;
+    img.alt = file.name;
+    img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:4px;border:1px solid var(--border);';
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.textContent = '×';
+    remove.setAttribute('aria-label', '移除 ' + file.name);
+    remove.style.cssText = 'position:absolute;top:2px;right:2px;width:22px;height:22px;border:0;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;cursor:pointer;';
+    remove.addEventListener('click', () => {
+      selectedImageFiles = selectedImageFiles.filter(item => item !== entry);
+      URL.revokeObjectURL(entry.previewUrl);
+      wrapper.remove();
+    });
+    wrapper.append(img, remove);
+    preview.appendChild(wrapper);
   }
+
   const fileInput = document.getElementById('fileInput');
   if (fileInput) fileInput.value = '';
 }
@@ -1243,19 +1275,27 @@ async function init() {
     const captchaAnswer = parseInt(document.getElementById('postCaptchaInput').dataset.answer);
     if (!content) { alert('请填写内容'); return; }
     if (parseInt(captchaInput) !== captchaAnswer) { alert('验证码错误，请重新计算'); refreshCaptcha('post'); return; }
-    const images = [];
-    document.querySelectorAll('#imagePreview img').forEach(img => {
-      images.push(img.src);
-    });
+    const submitButton = document.getElementById('postSubmit');
+    submitButton.disabled = true;
+    submitButton.textContent = selectedImageFiles.length ? '上传图片中...' : '发布中...';
     try {
+      const images = [];
+      for (const entry of selectedImageFiles) {
+        const uploaded = await API.uploadImage(entry.file);
+        images.push(uploaded.url);
+      }
       await API.createPost(title, content, images);
 
       alert('发布成功！');
+      clearSelectedImages();
       switchPage('feed');
       renderFeed();
       renderStats();
     } catch (err) {
       alert('发布失败：' + err.message);
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = '发布帖子';
     }
   });
 

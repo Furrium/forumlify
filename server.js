@@ -791,12 +791,18 @@ app.post('/api/posts', auth, async (req, res) => {
     return res.status(400).json({ error: '帖子字段长度或图片数量无效' });
   }
 
+  const imagePaths = images || [];
+  const uploadPathPattern = /^\/uploads\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:jpg|png|gif|webp)$/i;
+  if (!Array.isArray(imagePaths) || imagePaths.length > 6 || imagePaths.some(image => !uploadPathPattern.test(image))) {
+    return res.status(400).json({ error: '图片地址无效或数量超过限制' });
+  }
+
   try {
     const r = await pool.query(
       `INSERT INTO posts (user_id, title, content, images)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [req.user.id, title?.trim() || '无标题', content.trim(), images || []]
+      [req.user.id, title?.trim() || '无标题', content.trim(), imagePaths]
     );
     res.json(r.rows[0]);
   } catch (err) {
@@ -1196,29 +1202,51 @@ app.get('/api/event-logs', auth, admin, async (req, res) => {
 //  图片上传
 // ============================================================
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = Date.now() + '-' + Math.round(Math.random() * 10000) + ext;
-    cb(null, name);
-  }
-});
-
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    cb(null, allowed.includes(file.mimetype));
-  }
 });
 
-app.post('/api/upload', auth, upload.single('file'), (req, res) => {
+function detectImageType(buffer) {
+  if (!buffer || buffer.length < 12) return null;
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return { extension: '.jpg', mime: 'image/jpeg' };
+  }
+  if (buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) {
+    return { extension: '.png', mime: 'image/png' };
+  }
+  const header = buffer.subarray(0, 6).toString('ascii');
+  if (header === 'GIF87a' || header === 'GIF89a') {
+    return { extension: '.gif', mime: 'image/gif' };
+  }
+  if (buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP') {
+    return { extension: '.webp', mime: 'image/webp' };
+  }
+  return null;
+}
+
+app.post('/api/upload', auth, upload.single('file'), async (req, res, next) => {
   if (!req.file) {
     return res.status(400).json({ error: '请选择图片' });
   }
-  res.json({ url: '/uploads/' + req.file.filename });
+
+  const imageType = detectImageType(req.file.buffer);
+  if (!imageType) {
+    return res.status(400).json({ error: '仅支持有效的 JPG、PNG、GIF 或 WebP 图片' });
+  }
+
+  const filename = crypto.randomUUID() + imageType.extension;
+  try {
+    await fs.promises.writeFile(path.join(__dirname, 'uploads', filename), req.file.buffer, { flag: 'wx' });
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    return res.status(201).json({
+      url: '/uploads/' + filename,
+      mime: imageType.mime,
+      size: req.file.size,
+    });
+  } catch (error) {
+    return next(error);
+  }
 });
 
 // ============================================================

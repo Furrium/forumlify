@@ -3,15 +3,17 @@
 // ============================================================
 let token = localStorage.getItem('forumlify-token') || null;
 
+function getAuthHeaders() {
+  return token ? { 'Authorization': 'Bearer ' + token } : {};
+}
+
 function apiFetch(path, options = {}) {
   const url = CONFIG.API_BASE_URL + path;
   const headers = {
     'Content-Type': 'application/json',
+    ...getAuthHeaders(),
     ...(options.headers || {})
   };
-  if (token) {
-    headers['Authorization'] = 'Bearer ' + token;
-  }
   return fetch(url, {
     ...options,
     headers
@@ -77,6 +79,19 @@ const API = {
       body: JSON.stringify({ title, content, images: images || [] })
     });
     if (data.error) throw new Error(data.error);
+    return data;
+  },
+
+  async uploadImage(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch(CONFIG.API_BASE_URL + '/upload', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: formData
+    });
+    const data = await response.json().catch(() => ({ error: '上传响应无效' }));
+    if (!response.ok || data.error) throw new Error(data.error || '图片上传失败');
     return data;
   },
 
