@@ -47,14 +47,13 @@ docker-compose up -d
 
 应用默认运行在 `http://localhost:3000`（监听 `0.0.0.0`，局域网可访问）。
 
-##Docker更新
+## Docker 更新
 
+```bash
+./scripts/update-docker.sh
 ```
-# 拉取最新镜像
-docker pull ghcr.io/forumlify/public:next
-# 重启
-docker compose down && docker compose up -d
-```
+
+更新脚本兼容 Docker Compose v2（`docker compose`）和 v1（`docker-compose`）。它会先拉取最新的 `app` 镜像，再让 Compose 在镜像发生变化时重新创建应用容器；数据库容器和数据卷不会重建。
 
 ---
 
